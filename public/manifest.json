@@ -1,0 +1,16 @@
+{
+  "name": "Rumah Pramuka Indramayu",
+  "short_name": "Pramuka IM",
+  "description": "Website Resmi Rumah Pramuka Kwarcab Indramayu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16A34A",
+  "icons": [
+    {
+      "src": "/brand/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

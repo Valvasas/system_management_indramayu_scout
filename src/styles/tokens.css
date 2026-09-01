@@ -1,0 +1,63 @@
+:root {
+  /* Green Palette */
+  --green-50: #F0FDF4;
+  --green-100: #DCFCE7;
+  --green-200: #BBF7D0;
+  --green-300: #86EFAC;
+  --green-400: #4ADE80;
+  --green-500: #22C55E;
+  --green-600: #16A34A;
+  --green-700: #15803D;
+  --green-800: #166534;
+  --green-900: #14532D;
+
+  /* Neutral Palette */
+  --neutral-50: #F8FAFC;
+  --neutral-100: #F1F5F9;
+  --neutral-200: #E2E8F0;
+  --neutral-300: #CBD5E1;
+  --neutral-400: #94A3B8;
+  --neutral-500: #64748B;
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1E293B;
+  --neutral-900: #0F172A;
+
+  /* Accent Colors */
+  --amber-500: #F59E0B;
+  --red-500: #EF4444;
+  --blue-500: #3B82F6;
+
+  /* Semantic Colors */
+  --surface-base: #FFFFFF;
+  --surface-raised: var(--neutral-50);
+  --surface-subtle: var(--neutral-100);
+  
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-600);
+  --text-muted: var(--neutral-400);
+  
+  --action-primary: var(--green-600);
+  --action-hover: var(--green-700);
+  --action-secondary: var(--neutral-200);
+
+  --border-subtle: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+
+  --status-success: var(--green-600);
+  --status-warning: var(--amber-500);
+  --status-danger: var(--red-500);
+  --status-info: var(--blue-500);
+
+  /* Brand Aliases */
+  --brand-50: var(--green-50);
+  --brand-100: var(--green-100);
+  --brand-500: var(--green-500);
+  --brand-600: var(--green-600);
+  --brand-700: var(--green-700);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-dialog: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
