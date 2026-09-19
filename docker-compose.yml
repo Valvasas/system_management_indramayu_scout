@@ -1,18 +1,24 @@
-version: '3.8'
-
 services:
   db:
     image: postgis/postgis:16-3.4
     container_name: rumah_pramuka_db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi di .env}
       POSTGRES_DB: rumah_pramuka
+      APP_DB_USER: rumah_pramuka_app
     ports:
-      - "5432:5432"
+      # Hanya loopback: tidak terekspos ke jaringan kantor/kampus
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rumah_pramuka"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

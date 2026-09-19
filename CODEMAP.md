@@ -1,11 +1,8 @@
 # CODEMAP.md — Indeks Codebase
 
 > Indeks satu-baris-per-file. Cari barisnya, baca **hanya** file itu.
-> Status diverifikasi 19 September 2026 · Baca `AGENTS.md` lebih dulu.
->
-> **`ADA`** = file nyata di disk · **`HILANG`** = dirujuk kode/dokumen tapi tidak ada · **`GEN`** = source-nya saat ini hanya tersimpan di dalam script generator
-
----
+> Diverifikasi 19 Sep 2026 setelah P0 (`tsc` + `next build` lulus). Baca `AGENTS.md` lebih dulu.
+> **`[P#-#]`** = task di `TASKS.md` yang masih menyentuh file itu.
 
 ## Peta Cepat
 
@@ -14,173 +11,104 @@ Ubah tampilan     → src/styles/tokens.css, tailwind.config.ts
 Ubah komponen     → src/components/ui/ (primitive) · src/components/public/ (section)
 Ubah halaman      → src/app/<rute>/page.tsx
 Ubah data         → src/lib/data/mock-data.ts, src/types/index.ts
+Ubah teks bahasa  → src/lib/i18n/translations.ts
 Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json
-Ubah keamanan     → next.config.mjs (headers), docker-compose.yml, .env.example
 ```
-
----
 
 ## Konfigurasi (root)
 
-| File | Status | Isi | Catatan |
-|---|---|---|---|
-| `package.json` | ADA | Next 14.2.24, React 18.3, Tailwind 3.4, framer-motion 13, shadcn 4 | Ada 6 dependensi bermasalah — `TASKS.md` P1-6. Tidak ada script `typecheck` |
-| `tsconfig.json` | ADA | strict, ES2020, alias `@/*` → `src/*` | Meng-`exclude` folder duplikat — tambalan, lihat P0-1 |
-| `next.config.mjs` | ADA | `reactStrictMode`, `images.unoptimized: true` | **Nol security header.** `unoptimized` mematikan optimasi gambar — P1-1, P4-1 |
-| `tailwind.config.ts` | ADA | Warna dipetakan ke CSS variable, radius, shadow | **Rusak:** semua `var(--*)` undefined karena `tokens.css` hilang. `fontFamily` tak pernah didefinisikan → Inter/DM Sans tak pernah aktif — P0-5 |
-| `postcss.config.mjs` | ADA | tailwindcss + autoprefixer | Normal |
-| `components.json` | ADA | Konfigurasi shadcn, style `base-nova` | Menunjuk `src/styles/globals.css`, tapi `layout.tsx` mengimpor `./globals.css` — konflik, P0-4 |
-| `docker-compose.yml` | ADA | PostgreSQL 16 + PostGIS | Password `password`, port terbuka ke semua interface — P1-3 |
-| `.env.example` | ADA | DATABASE_URL, NEXTAUTH_* | Menanam nilai placeholder rahasia — P1-2 |
-| `.env.local` | ADA | Environment lokal | **Tidak ada `.gitignore` di repo** — P0-2 sebelum `git init` |
-| `.gitignore` | HILANG | — | **Prioritas tertinggi** — P0-2 |
-| `.eslintrc*` | HILANG | — | `pnpm lint` tidak melakukan apa-apa tanpa ini — P6-1 |
-| `prisma/schema.prisma` | HILANG | — | docker-compose & script db ada, skemanya tidak — P5-3 |
-
----
+| File | Isi | Catatan |
+|---|---|---|
+| `package.json` | Next 14.2, React 18, Tailwind 3.4. Script: dev/build/start/lint/**typecheck** | Ada dependensi tak terpakai/berbahaya (`cn`, `shadcn`, `framer-motion`, `@base-ui/react`, ...) [P1-6]. Source hanya butuh next, react, tailwind, clsx, tailwind-merge |
+| `tsconfig.json` | strict, alias `@/*` → `src/*` | Bersih |
+| `next.config.mjs` | `reactStrictMode`, `images.unoptimized` | Nol security header [P1-1]; optimasi gambar mati [P4-1] |
+| `tailwind.config.ts` | Warna → CSS var, `fontFamily` sans/display, radius, shadow | Sudah berfungsi. `font-display` belum dipakai halaman mana pun |
+| `components.json` | Konfigurasi shadcn | Menunjuk `src/styles/globals.css` (sudah benar) |
+| `docker-compose.yml` | PostgreSQL 16 + PostGIS | Password lemah, port terbuka [P1-3] |
+| `.env.example` / `.env.local` | Env | Placeholder rahasia [P1-2]. Jangan baca `.env.local` |
+| `.gitignore` | node_modules, .next, .env* | Ada. **Git belum terpasang**, belum ada `git init` |
+| `.eslintrc*` | — | **Belum ada**, `pnpm lint` tak berarti [P6-1] |
+| `prisma/schema.prisma` | — | **Belum ada** [P5-3] |
 
 ## Dokumentasi
 
-| File | Status | Isi |
-|---|---|---|
-| `AGENTS.md` | ADA | Protokol agent, aturan token, invarian. **Titik masuk** |
-| `CODEMAP.md` | ADA | File ini |
-| `TASKS.md` | ADA | Rencana perbaikan P0–P6 dengan acceptance criteria |
-| `PERBAIKAN.md` | ADA | Brief perbaikan asli. Task 1 (helper `cn`) masih relevan |
-| `system_management_indramayu_scout-main/AI_CONTEXT.MD` | ADA | **Tidak akurat** — mendeskripsikan kondisi yang tidak pernah tercapai. Rujuk untuk *niat desain* saja |
-| `README.md` | ADA | Satu baris. Kosong secara praktis |
-| `docs/**` | HILANG | 6 subfolder, nol file. 16 dokumen yang dirujuk `AI_CONTEXT.MD` tidak ada |
-| `skills/frontend-craft/SKILL.md` | HILANG | Dirujuk `AI_CONTEXT.MD` §10 |
-
----
-
-## Script Generator — source of truth saat ini
-
-> Selama `src/` kosong, **di sinilah seluruh kode aplikasi berada**, sebagai template string.
-> Jangan baca utuh. Grep nama rutenya, lalu `Read` dengan offset.
-
-### `generate_pages.js` (ADA · 34 KB · 736 baris) → menulis ke `src/app/`
-
-| Baris | Menghasilkan | Catatan |
-|---|---|---|
-| 7 | `layout.tsx` | Impor `./globals.css` (HILANG), `@/context/LanguageContext` (HILANG), Header/Footer/SkipToContent |
-| 50 | `page.tsx` | Beranda — merangkai 8 section, termasuk `AchievementPreview` yang `return null` |
-| 73 | `tentang/page.tsx` | `"use client"` tanpa perlu; konten placeholder ("Sejarah panjang...") |
-| 116 | `struktur-organisasi/page.tsx` | Pengurus + 31 Kwarran; grid 6 kolom bermasalah di mobile |
-| 158 | `berita/page.tsx` | Filter kategori di `useState` — tidak tersimpan di URL (P4-5); tanpa empty state |
-| 211 | `berita/[slug]/page.tsx` | `<img>` mentah; tanpa `generateStaticParams`/`generateMetadata` |
-| 262 | `agenda/page.tsx` | Filter status; badge hanya dibedakan warna (P3-4) |
-| 318 | `agenda/[slug]/page.tsx` | Detail agenda |
-| 372 | `galeri/page.tsx` | Daftar album |
-| 411 | `galeri/[slug]/page.tsx` | **Modal lightbox tanpa focus trap, tanpa Escape, tanpa `role="dialog"`** — P3-2 |
-| 464 | `prestasi/page.tsx` | Tabel tanpa strategi overflow mobile |
-| 506 | `dokumen/page.tsx` | `<a href={doc.url} download>` tanpa validasi — P1-7 |
-| 537 | `kontak/page.tsx` | **Form tidak berfungsi** — `<button type="button">` tanpa handler; data pengguna hilang senyap — P1-4 |
-| 589 | `kebijakan-privasi/page.tsx` | Menjanjikan kepatuhan UU PDP yang belum diimplementasikan — P1-8 |
-| 614 | `aksesibilitas/page.tsx` | Mengiklankan pintasan `Alt+1` yang tidak ada — P3-6 |
-| 662 | `masuk/page.tsx` | UI login palsu berpola phishing — P1-5. Emoji `⚜️ 👤 🏢 🔒` |
-| 710 | `not-found.tsx` | 404. Emoji `🧭` |
-
-### `create_components.js` (ADA · 17,5 KB · 409 baris) → menulis ke `src/components/`
-
-| Baris | Menghasilkan | Catatan |
-|---|---|---|
-| 7 | `magicui/blur-fade.tsx` | **Bug:** state `visible` memakai `y: -yOffset`, seharusnya `y: 0`. Tanpa `prefers-reduced-motion` — P2-6 |
-| 67 | `Header.tsx` | **`nav` adalah `hidden md:flex` tanpa drawer mobile — navigasi mati di bawah 768px.** Blocker responsivitas, P3-1. Emoji `⚜️` |
-| 94 | `Footer.tsx` | Alamat, tautan, kontak. Target sentuh terlalu kecil |
-| 138 | `SkipToContent.tsx` | Satu-satunya primitive a11y yang ada. Target `#main-content` cocok — pertahankan |
-| 146 | `Hero.tsx` | Dua CTA + tombol hijau di Header = tiga aksi bersaing — P2-3 |
-| 187 | `StatsSection.tsx` | **Data statistik ditanam inline** — duplikasi dengan mock-data, P5-2 |
-| 215 | `AboutPreview.tsx` | Placeholder abu. Emoji `📸` dan `✓` |
-| 257 | `AgendaPreview.tsx` | **Data agenda ditanam inline.** Emoji `📅` |
-| 306 | `NewsPreview.tsx` | **Data berita ditanam inline** |
-| 352 | `GalleryPreview.tsx` | Empat kotak abu "Foto 1–4" |
-| 380 | `AchievementPreview.tsx` | **`return null`** — komponen mati yang masih diimpor beranda, P2-4 |
-| 384 | `MapSection.tsx` | Placeholder peta. Emoji `🗺️`. Leaflet terpasang tapi tak pernah dipakai — P2-5 |
-
----
-
-## `src/` — Target Struktur (semua HILANG saat ini)
-
-> Folder ada, file tidak. Kolom "Sumber" menunjukkan cara memulihkan.
-
-### `src/app/` — Rute
-Semua 16 rute berstatus **GEN** — pulihkan dengan `node generate_pages.js`, lalu commit hasilnya sebagai kode nyata (P5-1).
-
-| Rute | File |
+| File | Isi |
 |---|---|
-| `/` | `app/page.tsx` |
-| `/tentang` | `app/tentang/page.tsx` |
-| `/struktur-organisasi` | `app/struktur-organisasi/page.tsx` |
-| `/berita` · `/berita/[slug]` | `app/berita/page.tsx` · `app/berita/[slug]/page.tsx` |
-| `/agenda` · `/agenda/[slug]` | `app/agenda/page.tsx` · `app/agenda/[slug]/page.tsx` |
-| `/galeri` · `/galeri/[slug]` | `app/galeri/page.tsx` · `app/galeri/[slug]/page.tsx` |
-| `/prestasi` | `app/prestasi/page.tsx` |
-| `/dokumen` | `app/dokumen/page.tsx` |
-| `/kontak` | `app/kontak/page.tsx` |
-| `/kebijakan-privasi` | `app/kebijakan-privasi/page.tsx` |
-| `/aksesibilitas` | `app/aksesibilitas/page.tsx` |
-| `/masuk` | `app/masuk/page.tsx` |
-| 404 | `app/not-found.tsx` |
+| `AGENTS.md` | Protokol agent — **titik masuk** |
+| `TASKS.md` | Rencana P0–P6 + "Status Eksekusi" |
+| `AI_CONTEXT.MD` | Niat desain & konvensi. Sebagian klaim status keliru (lihat AGENTS §2) |
+| `PERBAIKAN.md` | Brief awal. Task 1 (`cn`) sudah dikerjakan |
+| `docs/design/` | design-brief, visual-principles, motion-guidelines, accessibility-checklist |
+| `docs/security/` | authorization-model, data-classification, consent/audit-log/backup/file-upload policy |
+| `docs/product/`, `operations/`, `architecture/`, `testing/` | Visi & MVP, deployment, arsitektur, strategi tes |
+| `skills/frontend-craft/SKILL.md` | Panduan craft frontend. Baca sebelum ubah UI |
 
-Belum ada di mana pun: `loading.tsx`, `error.tsx`, `sitemap.ts`, `robots.ts` (P4-3, P4-4).
+## `src/app/` — Rute (semua ada, semua ter-build)
 
-### `src/components/`
-
-| File | Status | Sumber / Aksi |
+| Rute | File | Catatan |
 |---|---|---|
-| `public/Header.tsx`, `Footer.tsx`, `Hero.tsx`, `StatsSection.tsx`, `AboutPreview.tsx`, `AgendaPreview.tsx`, `NewsPreview.tsx`, `GalleryPreview.tsx`, `MapSection.tsx` | GEN | `create_components.js` — catatan: generator menulisnya **datar** di `components/`, bukan `components/public/`. Rapikan saat pemulihan (P0-6) |
-| `ui/SkipToContent.tsx` | GEN | `create_components.js:138` |
-| `ui/Button.tsx` | HILANG | Tulis baru — P2-2 |
-| `ui/Card.tsx` | HILANG | Tulis baru — P2-2 |
-| `ui/Badge.tsx` | HILANG | Tulis baru — P2-2 |
-| `ui/LanguageSelector.tsx` | HILANG | Tulis baru bila memilih jalur i18n B — P2-8 |
-| `ui/Input.tsx`, `Textarea.tsx`, `Field.tsx` | HILANG | Dibutuhkan untuk perbaikan form kontak — P1-4 |
-| `magicui/blur-fade.tsx` | GEN | `create_components.js:7` — perbaiki bug `y` |
+| layout | `app/layout.tsx` | Font Inter + DM Sans, `LanguageProvider`, Header/Footer. Metadata sama untuk semua rute [P2-7] |
+| `/` | `app/page.tsx` | Merangkai 8 section `components/public/*` |
+| `/tentang` | `app/tentang/page.tsx` | Konten masih placeholder ("Sejarah panjang..."); `"use client"` tak perlu [P2-7] |
+| `/struktur-organisasi` | `app/struktur-organisasi/page.tsx` | Pengurus dikelompokkan per `department`, 31 Kwarran |
+| `/berita`, `/berita/[slug]` | `app/berita/...` | Filter di `useState`, bukan URL [P4-5]. `<img>` mentah [P1-7] |
+| `/agenda`, `/agenda/[slug]` | `app/agenda/...` | Emoji `📅 📍` [P2-1]; badge status hanya warna [P3-4] |
+| `/galeri`, `/galeri/[slug]` | `app/galeri/...` | Lightbox tanpa focus trap/Escape [P3-2] |
+| `/prestasi` | `app/prestasi/page.tsx` | Tabel tanpa strategi overflow mobile [P3-8] |
+| `/dokumen` | `app/dokumen/page.tsx` | Tautan unduh tanpa validasi [P1-7] |
+| `/kontak` | `app/kontak/page.tsx` | Form perlu dicek: kirim ke mana, validasi server [P1-4] |
+| `/kebijakan-privasi`, `/aksesibilitas` | `app/.../page.tsx` | Klaim melebihi implementasi [P1-8, P3-6] |
+| `/masuk` | `app/masuk/page.tsx` | UI login tanpa backend [P1-5] |
+| 404 | `app/not-found.tsx` | |
 
-### `src/lib/`, `src/styles/`, `src/types/`
+Belum ada: `loading.tsx`, `error.tsx`, `sitemap.ts`, `robots.ts` [P4-3, P4-4].
 
-| File | Status | Catatan |
+## `src/components/`
+
+| File | Ekspor | Catatan |
 |---|---|---|
-| `lib/utils.ts` (`cn()`) | HILANG | Kode persisnya ada di `PERBAIKAN.md` Task 1. **Jangan pakai paket npm `cn`** yang ada di `package.json` — itu paket asing, P1-6 |
-| `lib/data/mock-data.ts` | HILANG | Diimpor sebagai `@/lib/mock-data` oleh generator. Perlu: `newsData`, `agendaData`, `galleryData`, `documentsData`, `achievementsData`, `organizationStructure`, `kwartirRanting` (31 entri) |
-| `lib/i18n/LanguageContext.tsx` | HILANG | Diimpor sebagai `@/context/LanguageContext`. Mengekspor `LanguageProvider` + `useLanguage()` → `{ t, language, setLanguage }` |
-| `lib/i18n/translations.ts` | HILANG | Kamus ID/EN/SU |
-| `lib/repositories/*` | HILANG | Lapisan akses data — P5-2 |
-| `styles/tokens.css` | HILANG | **Penyebab tailwind config rusak.** Perlu: `--green-*`, `--neutral-*`, `--surface-*`, `--text-*`, `--action-*`, `--border-*`, `--status-*`, `--brand-50..900`, `--shadow-sm/md/dialog` |
-| `styles/globals.css` | HILANG | Entry CSS. Dirujuk dari dua lokasi berbeda — P0-4 |
-| `styles/utilities.css` | HILANG | `.civic-container`, `.card-subtle` |
-| `types/index.ts` | HILANG | `NewsItem`, `AgendaItem`, `GalleryAlbum`, `DocumentItem`, `Achievement`, `KwarranInfo`, `OrgUnit` |
+| `ui/Button.tsx` | `Button` | Varian + loading |
+| `ui/Card.tsx` | `Card`, `CardHeader`, `CardContent`, `CardFooter` | Compound; prop `hoverable` |
+| `ui/Badge.tsx` | `Badge` | variant: success/warning/info/**danger**/default/brand. Warna literal [P2-2] |
+| `ui/LanguageSelector.tsx` | `LanguageSelector` | Dropdown ID/EN/SU |
+| `ui/SkipToContent.tsx` | `SkipToContent` | Target `#main-content` (cocok dengan layout) |
+| `public/Header.tsx` | `Header` | **Belum ada drawer mobile** [P3-1] |
+| `public/Footer.tsx` | `Footer` | |
+| `public/Hero.tsx`, `StatsSection.tsx`, `AboutPreview.tsx`, `AgendaPreview.tsx`, `NewsPreview.tsx`, `GalleryPreview.tsx`, `AchievementPreview.tsx`, `MapSection.tsx` | masing-masing named export | Section beranda. MapSection masih placeholder, Leaflet belum dipakai [P2-5] |
 
-### `public/`
+**Semua ekspor komponen adalah *named export*** (`import { Header } from ...`), bukan default.
 
-| File | Status |
+## `src/lib/`, `src/styles/`, `src/types/`
+
+| File | Isi |
 |---|---|
-| `manifest.json` | ADA — PWA, tema `#16A34A` (catatan: nilai hex ini tidak cocok dengan hijau `#2f7d52` yang disebut dokumen desain; samakan) |
-| `brand/logo.svg` | HILANG — dirujuk `manifest.json` |
+| `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
+| `lib/data/mock-data.ts` | `mockNews`, `mockAgendas`, `mockGalleryAlbums`, `mockAchievements`, `mockOrganization`, `mockKwarrans`, `statSummary`, `mockDocuments`. Data diimpor langsung oleh halaman [P5-2] |
+| `lib/i18n/LanguageContext.tsx` | `LanguageProvider`, `useLanguage()` → `{ language, setLanguage, t }`. `t()` mengembalikan **key** bila tak ditemukan |
+| `lib/i18n/translations.ts` | Kamus id/en/su: hanya `nav`, `hero`, `filter`, `contact`, `footer` |
+| `styles/tokens.css` | Token 3 tingkat (primitive → semantic → brand 50–900), shadow |
+| `styles/globals.css` | `@import tokens.css`, `@tailwind`, base + reduced-motion, utility `.civic-container` `.card-subtle` `.skip-to-content` |
+| `types/index.ts` | `NewsItem`, `AgendaItem`, `Photo`, `GalleryAlbum`, `AchievementItem`, `OrganizationMember`, `KwarranInfo`, `StatSummary`, `DocumentItem` |
 
----
+## `public/`
 
-## Sistem Design Token (rencana 3 tingkat)
+`manifest.json` (PWA, tema `#16A34A`) · `brand/logo.svg`
 
-```
-Primitive        --green-600, --neutral-200
-  → Semantic     --action-primary, --surface-raised, --text-secondary
-    → Brand      --brand-500, --brand-700
-```
-Didefinisikan di `styles/tokens.css` → dikonsumsi `tailwind.config.ts` → dipakai sebagai kelas (`bg-surface-raised`, `text-text-secondary`).
-**Rantai ini putus di mata rantai pertama.** Perbaiki dulu (P0-5); tanpa itu, pekerjaan UI apa pun sia-sia.
+## Skema data (ringkas, hindari membuka `types/index.ts`)
 
----
+- News: `id slug title category excerpt content coverImage author publishedAt tags status(DRAFT|PUBLISHED|ARCHIVED)`
+- Agenda: `id slug title dateStart dateEnd location organizer description status(UPCOMING|ONGOING|COMPLETED) contactPerson`
+- Album: `id slug title date location organizer description coverImage category photos[Photo]`
+- Achievement: `level(Kecamatan..Internasional) year recipient image`
+- OrganizationMember: `name role department period photoUrl bio`
+- Kwarran: `name code gudepCount activeMembers address leader`
+- Document: `title category type size date url description?`
 
-## Aliran Data
+## Alur data & token
 
-**Sekarang:** `mock-data.ts` (HILANG) → diimpor langsung komponen · sebagian komponen menanam datanya sendiri inline · nol API route · nol koneksi database.
+`mock-data.ts` → dibaca langsung halaman/komponen [target P5-2: lewat `lib/repositories`].
+Token: `tokens.css` → `tailwind.config.ts` → kelas (`bg-surface-raised`). Komponen saat ini masih banyak memakai palet Tailwind langsung (`green-*`, `neutral-*`, `blue-*`), bukan token semantik [P2-2].
 
-**Target (P5-2):** `sumber data` → `lib/repositories/*` → Server Component → komponen presentasi. Hanya repository yang boleh mengimpor mock.
+## Perbarui file ini
 
----
-
-## Perbarui File Ini
-
-Bila kamu menambah, menghapus, atau memindahkan file — perbarui `CODEMAP.md` di PR yang sama. Indeks yang usang mendorong agent berikutnya membaca semuanya, dan itulah yang biayanya mahal.
+Tambah/hapus/pindah file → perbarui `CODEMAP.md` di perubahan yang sama.
