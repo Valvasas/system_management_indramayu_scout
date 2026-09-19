@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { MapPin, Tent } from 'lucide-react';
 import { mockGalleryAlbums } from '@/lib/data/mock-data';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -30,7 +31,7 @@ export default function GaleriPage() {
           >
             <Card hoverable className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:border-green-300">
               <div className="aspect-[4/3] bg-neutral-200 relative overflow-hidden flex items-center justify-center">
-                <span className="text-5xl" aria-hidden="true">🏕️</span>
+                <Tent className="h-12 w-12 text-neutral-500" aria-hidden="true" />
                 <div className="absolute top-3 left-3">
                   <Badge variant="brand">{album.category}</Badge>
                 </div>
@@ -50,7 +51,7 @@ export default function GaleriPage() {
                 </div>
 
                 <div className="text-xs text-neutral-500 flex items-center justify-between pt-3 border-t border-neutral-100">
-                  <span>📍 {album.location}</span>
+                  <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{album.location}</span>
                   <time dateTime={album.date}>{album.date}</time>
                 </div>
               </CardContent>

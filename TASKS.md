@@ -20,6 +20,21 @@
 | P0-5 tailwind + token | SELESAI | `fontFamily` ditambah; token `brand-200..900` dilengkapi |
 | P0-6 alias import | SELESAI | Semua ke `components/public|ui`, `lib/i18n`, `lib/data`. 5 file basi ditulis ulang agar cocok dengan ekspor nyata |
 
+**Sesi lanjutan (19 Sep 2026) — `tsc` + `next build` tetap lulus, 15/15 halaman:**
+
+| Task | Status | Catatan |
+|---|---|---|
+| P1-1 security headers | SELESAI (CSP masih Report-Only) | `next.config.mjs`; naikkan CSP ke enforce setelah console bersih. `poweredByHeader` dimatikan |
+| P1-2 env | SEBAGIAN | `.env.example` tanpa rahasia. **Belum:** validasi Zod `src/lib/env.ts` (belum ada kode yang membaca env) |
+| P1-3 docker | SELESAI | Password wajib, bind 127.0.0.1, healthcheck, user app non-superuser (`docker/db-init/`). Belum dites (Docker tidak dijalankan) |
+| P1-5 `/masuk` | SELESAI | Diganti halaman status jujur; tombol "Masuk" dihapus dari Header (juga menyelesaikan P2-3 di header) |
+| P1-6 dependensi | SEBAGIAN | Dihapus: cn, shadcn, fast-glob, @base-ui/react, tw-animate-css, @swc/helpers, framer-motion, class-variance-authority. Next dipin 14.2.35. **`npm audit --omit=dev` masih 1 critical + 4 high di jalur Next 14; perbaikannya hanya lewat migrasi Next 16 (mayor) — perlu keputusan** |
+| P2-1 emoji | SELESAI | Nol emoji di `src/` (semua diganti lucide) |
+| P3-1 nav mobile | SELESAI | Ternyata drawer sudah ada (CODEMAP usang). Diperbaiki: ikon lucide, `aria-current`, label `nav`, fokus kembali ke tombol saat Escape, breakpoint `lg` |
+| Header | | Logo `/logo-pramuka.png` tidak ada → `/brand/logo.svg` |
+
+**Belum dikerjakan:** P1-4 (form kontak — saat ini menampilkan "Pesan Berhasil Terkirim" padahal tidak mengirim apa pun), P1-7, P1-8, P2-2…P2-8, P3-2…P3-8, P4–P6.
+
 **Temuan tambahan saat eksekusi:** (1) `t("key") \|\| "fallback"` tidak pernah jatuh ke fallback karena `t()` mengembalikan *key*-nya sendiri, sehingga pengunjung akan melihat teks "news_title"; sudah diganti ke key yang ada. (2) Halaman hasil GitHub masih memuat emoji (`📅 📍`) dan warna literal `green-*` → tetap tugas P2. (3) `node_modules` lama tidak lengkap; `npm install` dijalankan ulang. (4) Ada proses lain yang menjalankan `generate_pages.js` di tengah sesi dan menimpa `src/app` dengan template lama; sudah dipulihkan. **Jangan jalankan kedua generator lagi**, keduanya sudah usang.
 
 ---

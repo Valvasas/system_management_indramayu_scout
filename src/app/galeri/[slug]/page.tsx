@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { mockGalleryAlbums } from '@/lib/data/mock-data';
+import { Camera, Image as ImageIcon, X } from 'lucide-react';
 import { Photo } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -69,8 +70,8 @@ export default function DetailGaleriPage() {
             className="group aspect-square bg-neutral-100 rounded-lg overflow-hidden relative border border-neutral-200 text-left focus:outline-none focus:ring-2 focus:ring-green-600 flex flex-col justify-end p-4 hover:shadow-md transition-all min-h-[44px]"
             aria-label={`Buka foto: ${photo.caption}`}
           >
-            <div className="absolute inset-0 flex items-center justify-center text-4xl bg-neutral-100 group-hover:scale-105 transition-transform duration-300">
-              📷
+            <div className="absolute inset-0 flex items-center justify-center text-neutral-400 bg-neutral-100 group-hover:scale-105 transition-transform duration-300">
+              <Camera className="h-10 w-10" aria-hidden="true" />
             </div>
             <div className="relative z-10 bg-black/60 backdrop-blur-sm p-2 rounded text-white text-xs">
               <p className="font-semibold line-clamp-1">{photo.caption}</p>
@@ -104,12 +105,12 @@ export default function DetailGaleriPage() {
                 className="text-neutral-500 hover:text-neutral-800 p-2 rounded-lg hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label="Tutup pratinjau foto"
               >
-                ✕
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="aspect-video bg-neutral-900 rounded-lg flex items-center justify-center text-neutral-400 text-5xl mb-4">
-              📸
+            <div className="aspect-video bg-neutral-900 rounded-lg flex items-center justify-center text-neutral-400 mb-4">
+              <ImageIcon className="h-14 w-14" aria-hidden="true" />
             </div>
 
             <div className="flex justify-between items-center text-xs text-neutral-500 pt-2 border-t border-neutral-100">

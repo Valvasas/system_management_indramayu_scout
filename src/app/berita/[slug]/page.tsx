@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { Image as ImageIcon } from 'lucide-react';
 import { mockNews } from '@/lib/data/mock-data';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -80,7 +81,7 @@ export default function DetailBeritaPage() {
       {/* Featured Image Placeholder / Cover */}
       <div className="aspect-video bg-neutral-200 rounded-lg overflow-hidden mb-8 border border-neutral-300 relative flex items-center justify-center">
         <div className="text-center p-6 text-neutral-500">
-          <span className="text-4xl block mb-2" aria-hidden="true">📸</span>
+          <ImageIcon className="h-10 w-10 mx-auto mb-2" aria-hidden="true" />
           <span className="text-sm font-medium">Dokumentasi: {news.title}</span>
         </div>
       </div>
@@ -130,7 +131,7 @@ export default function DetailBeritaPage() {
             onClick={handleCopyLink}
             aria-label="Salin tautan berita"
           >
-            {copied ? 'Tersalin! ✓' : 'Salin Tautan'}
+            {copied ? 'Tersalin' : 'Salin Tautan'}
           </Button>
           <a
             href={`https://wa.me/?text=${encodeURIComponent(news.title + ' - ' + (typeof window !== 'undefined' ? window.location.href : ''))}`}

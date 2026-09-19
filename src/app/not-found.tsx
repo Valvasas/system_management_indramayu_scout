@@ -1,12 +1,13 @@
 import React from 'react';
 import Link from 'next/link';
+import { Compass } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function NotFound() {
   return (
     <div className="civic-container py-20 min-h-[65vh] flex flex-col items-center justify-center text-center">
-      <div className="w-20 h-20 rounded-full bg-green-50 text-green-700 flex items-center justify-center text-4xl mb-6 shadow-sm border border-green-200">
-        🧭
+      <div className="w-20 h-20 rounded-full bg-green-50 text-green-700 flex items-center justify-center mb-6 shadow-sm border border-green-200">
+        <Compass className="h-9 w-9" aria-hidden="true" />
       </div>
       <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-100 px-3 py-1 rounded-full mb-3">
         Kode Galat: 404

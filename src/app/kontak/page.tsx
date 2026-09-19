@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Phone, MessageCircle, Mail, MapPin, Check } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -66,15 +67,15 @@ export default function KontakPage() {
                 <h3 className="text-sm font-bold text-neutral-900 mb-2">Saluran Komunikasi Resmi:</h3>
                 <ul className="text-xs sm:text-sm text-neutral-700 space-y-2">
                   <li className="flex items-center gap-2">
-                    <span aria-hidden="true">📞</span>
+                    <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>Telepon Kantor: (0234) 123456</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span aria-hidden="true">💬</span>
+                    <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>Hotline WhatsApp: +62 812-3456-7890</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span aria-hidden="true">✉️</span>
+                    <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>Pos-el: info@pramukaindramayu.or.id</span>
                   </li>
                 </ul>
@@ -87,7 +88,7 @@ export default function KontakPage() {
             <CardContent className="p-6">
               <h3 className="font-bold text-neutral-900 mb-2 text-sm">Peta Lokasi Kantor</h3>
               <div className="bg-neutral-100 rounded-lg p-6 text-center border border-neutral-200">
-                <span className="text-3xl block mb-2" aria-hidden="true">🗺️</span>
+                <MapPin className="h-8 w-8 mx-auto mb-2 text-neutral-500" aria-hidden="true" />
                 <p className="text-xs text-neutral-600 mb-3">
                   Peta koordinat sekretariat Simpang Lima Indramayu.
                 </p>
@@ -114,7 +115,7 @@ export default function KontakPage() {
 
             {status === 'success' && (
               <div className="p-4 mb-6 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm flex items-start gap-2">
-                <span className="font-bold" aria-hidden="true">✓</span>
+                <Check className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <div>
                   <strong>Pesan Berhasil Terkirim!</strong>
                   <p className="text-xs text-green-700 mt-0.5">

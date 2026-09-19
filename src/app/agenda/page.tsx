@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { CalendarDays, MapPin } from 'lucide-react';
 import { mockAgendas } from '@/lib/data/mock-data';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { Badge } from '@/components/ui/Badge';
@@ -129,7 +130,7 @@ export default function AgendaPage() {
                       </p>
                       <div className="flex flex-wrap gap-y-1 gap-x-6 text-xs sm:text-sm text-neutral-500 pt-1">
                         <span className="flex items-center gap-1.5">
-                          <span aria-hidden="true">📅</span>
+                          <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
                           <span>
                             {formatDate(agenda.dateStart)}
                             {agenda.dateEnd && agenda.dateEnd !== agenda.dateStart
@@ -138,7 +139,7 @@ export default function AgendaPage() {
                           </span>
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <span aria-hidden="true">📍</span>
+                          <MapPin className="h-4 w-4 shrink-0" aria-hidden="true" />
                           <span>{agenda.location}</span>
                         </span>
                       </div>
