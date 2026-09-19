@@ -36,7 +36,35 @@
 | P1-4 form kontak | SELESAI (tujuan pengiriman belum diset) | `kontak/actions.ts` (Server Action, validasi, honeypot, time-trap, rate limit 3/10 mnt in-memory) + `ContactForm.tsx`. Tanpa `CONTACT_WEBHOOK_URL` form menampilkan galat jujur, bukan sukses palsu. Validasi manual, bukan Zod (belum terpasang) |
 | P3-2 lightbox | SELESAI | Focus trap, fokus kembali ke pemicu, kunci scroll, panah kiri/kanan + tombol sebelumnya/berikutnya |
 
-**Belum dikerjakan:** P1-7, P1-8, P2-2…P2-8, P3-2…P3-8, P4–P6.
+**Sesi ketiga (19 Sep 2026) — blok P2–P4. `tsc` exit 0 · `next lint` bersih · `next build` exit 0 · 30 halaman:**
+
+| Task | Status | Catatan |
+|---|---|---|
+| P1-7 sumber gambar & unduhan | SELESAI | `images.unoptimized` dimatikan, `remotePatterns: []` (hanya aset sendiri). Nol `<img>` mentah — semua lewat `MediaFrame`/`next/image`. Unduhan dokumen divalidasi `isSafeDocumentUrl()`: `#`, `javascript:`, host luar allowlist → dirender sebagai "berkas belum diunggah", bukan tautan |
+| P1-8 janji privasi | SELESAI | `/kebijakan-privasi` ditulis ulang: hanya yang berlaku hari ini (isian form, IP untuk rate limit, log hosting) + bagian eksplisit **"Yang belum berlaku"**. Kanal hak subjek data: `privasi@` |
+| P2-2 UI primitives | SELESAI | `Button`+`ButtonLink`, `Card` (prop `as`), `Badge` (+`AgendaStatusBadge`/`FileTypeBadge`/`CategoryBadge`), `Field`/`Input`/`Textarea`, `FilterChips`, `EmptyState`, `MediaFrame`, `Section`/`PageHeader`, `Skeleton`. Nol warna literal Tailwind di `src/` (ditegakkan ESLint) |
+| P2-3 satu primary action | SELESAI | Hero: satu tombol solid + satu `ghost`. Tautan "lihat semua" per section jadi `ghost` |
+| P2-4 ritme & hierarki | SELESAI | `.civic-container` satu lebar, `.civic-section`/`-sm`, pemisah section = pergantian latar (bukan `border-b` berulang). `AchievementPreview` diimplementasikan sungguhan, bukan render-null |
+| P2-5 placeholder → konten nyata | SELESAI | MapSection kini Leaflet + OpenStreetMap sungguhan (`next/dynamic`, `ssr:false`, `circleMarker` karena ikon default Leaflet dari CDN diblokir CSP). Kotak abu bisu diganti `MediaFrame`: `assetExists()` mengecek berkas di `public/` → gambar nyata bila ada, pita empty state ber-penjelasan bila belum |
+| P2-6 BlurFade | TIDAK BERLAKU | `framer-motion` sudah dihapus di sesi sebelumnya; komponen `magicui/blur-fade` tidak ada lagi. Reduced-motion ditangani global di `globals.css` |
+| P2-7 `"use client"` + metadata | SELESAI | Nol `"use client"` di level halaman; interaktivitas diekstrak ke child kecil (`FilterChips`, `DocumentSearch`, `ShareLink`, `PhotoGallery`, `MapCanvas`, `Header`). Semua rute punya `metadata` unik + `alternates.canonical`; `generateMetadata` + `generateStaticParams` untuk 3 rute dinamis; `metadataBase` di root |
+| P2-8 i18n | SELESAI (Jalur A) | Fase 1 = Bahasa Indonesia saja. `LanguageProvider`, `translations.ts`, dan `LanguageSelector` dihapus — selektor lamanya bahkan tidak tersambung ke context (state lokal sendiri), jadi murni kontrol palsu. Nol pemanggilan `t()` |
+| P3-3 target sentuh | SELESAI | `min-h-touch` (44px) pada seluruh kontrol. Judul kartu memakai `.stretched-link` sehingga area sentuhnya sekartu penuh — diverifikasi lewat `elementFromPoint` di sudut & tengah kartu |
+| P3-4 status ≠ warna saja | SELESAI | Peta status di `Badge.tsx`: Akan Datang (`Clock`), Berlangsung (`PlayCircle`), Selesai (`CheckCircle2`), Dibatalkan (`XCircle`). Setiap badge = ikon + teks + warna |
+| P3-5 kontras | SELESAI | `action-primary` dinaikkan ke green-700 (putih di atas green-600 hanya **3.30:1** — gagal AA). `text-muted` dinaikkan ke neutral-500; neutral-400 tidak lagi jadi token teks. Kontrol Leaflet ditimpa. Tabel rasio: `docs/design/color-contrast.md`. Pemindaian otomatis 15 rute @390px: **nol pelanggaran** |
+| P3-6 janji `/aksesibilitas` | SELESAI | Ditulis ulang jadi "Yang sudah berlaku" + "Keterbatasan yang diketahui". Klaim pintasan `Alt+1` yang tak pernah ada dihapus (alasan dicantumkan: bentrok pintasan pembaca layar) |
+| P3-7 heading & landmark | SELESAI | Satu `h1` per halaman, tanpa lompatan level (diverifikasi otomatis, 15 rute). `nav` ber-label (utama/ponsel/footer ×2). Blok teks panjang pakai `.civic-prose` (`max-w-prose`) |
+| P3-8 breakpoint nyata | SELESAI | Tabel `/prestasi` → kartu di bawah `md`; ≥md dibungkus wrapper `overflow-x-auto` + `role="region"` + `tabIndex=0`. Kwarran 2 kolom di ponsel. **Nol overflow horizontal** pada 12 rute × 360/768/1920px (diukur `scrollWidth` vs `clientWidth`) |
+| P4-1 optimasi gambar | SELESAI | Optimizer aktif, AVIF/WebP, `sizes` eksplisit, `priority` untuk hero berita |
+| P4-2 CLS | SELESAI | Semua media dalam bingkai `aspect-ratio`; `next/font` `display: swap` |
+| P4-3 sitemap/robots/JSON-LD | SELESAI | `sitemap.ts` (11 rute statis + slug berita/agenda/galeri), `robots.ts` (larang `/api/`, `/dashboard/`, `/masuk`), JSON-LD `Organization` + `NewsArticle` + `Event` |
+| P4-4 loading/error/empty | SELESAI | `loading.tsx` skeleton di 5 rute berfilter, `error.tsx` global dengan tombol coba lagi, `EmptyState` + tombol reset filter, `notFound()` di 3 rute detail. `dynamicParams=false` supaya slug asing → **404 sungguhan**, bukan soft-404 berstatus 200 |
+| P4-5 filter di URL | SELESAI | `?kategori=`, `?status=`, `?tingkat=`, `?cari=` via `useSearchParams` + `router.replace({scroll:false})`. Chip pakai `aria-pressed` dalam `role="group"` ber-label; jumlah hasil diumumkan `aria-live` |
+| P5-2 lapisan akses data | SELESAI | `src/lib/repositories/` (7 modul async). Nol data inline di komponen — `StatsSection`/`AgendaPreview`/`NewsPreview` yang dulu menanam arraynya sendiri kini membaca repository. Impor `mock-data` di luar repository ditolak ESLint |
+| P6-1 lint & typecheck | SEBAGIAN | `.eslintrc.json`: `next/core-web-vitals` + `jsx-a11y/recommended` + aturan kustom (larang warna literal Tailwind, emoji, `<img>`, impor `mock-data`). `next lint` bersih. **Belum:** Prettier + Husky/lint-staged (butuh install paket) |
+| P6-4 dokumentasi | SEBAGIAN | `CODEMAP.md` disinkronkan penuh; `docs/design/color-contrast.md` ditulis. **Belum:** menyisir `AI_CONTEXT.MD` |
+
+**Belum dikerjakan:** P0-1 (ratakan folder induk), P0-2 (`git init` — Git tidak terpasang), P1-2 (validasi env Zod), P1-6 (keputusan migrasi Next 16), P5-1, P5-3, P5-4, P5-5, P6-2 (pengujian), P6-3 (CI/CD).
 
 **Temuan tambahan saat eksekusi:** (1) `t("key") \|\| "fallback"` tidak pernah jatuh ke fallback karena `t()` mengembalikan *key*-nya sendiri, sehingga pengunjung akan melihat teks "news_title"; sudah diganti ke key yang ada. (2) Halaman hasil GitHub masih memuat emoji (`📅 📍`) dan warna literal `green-*` → tetap tugas P2. (3) `node_modules` lama tidak lengkap; `npm install` dijalankan ulang. (4) Ada proses lain yang menjalankan `generate_pages.js` di tengah sesi dan menimpa `src/app` dengan template lama; sudah dipulihkan. **Jangan jalankan kedua generator lagi**, keduanya sudah usang.
 

@@ -44,9 +44,12 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
   children,
 }) => {
   const available = assetExists(src);
+  // Empty state tidak perlu setinggi fotonya: pita pendek menyampaikan hal yang
+  // sama tanpa meninggalkan blok abu raksasa di tengah halaman.
+  const ratio = available ? aspects[aspect] : aspects.wide;
 
   return (
-    <div className={cn('relative overflow-hidden bg-surface-sunken', aspects[aspect], className)}>
+    <div className={cn('relative overflow-hidden bg-surface-sunken', ratio, className)}>
       {available ? (
         <Image src={src as string} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
       ) : (

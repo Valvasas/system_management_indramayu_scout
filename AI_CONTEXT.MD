@@ -1,4 +1,4 @@
-# AI_CONTEXT.MD — Rumah Pramuka Indramayu
+﻿# AI_CONTEXT.MD — Rumah Pramuka Indramayu
 
 > **Tujuan file ini:** Panduan cepat bagi AI agent agar dapat memahami seluruh codebase tanpa membaca ulang semua file. Berisi abstraksi project, bukan salinan kode penuh.
 
@@ -12,7 +12,7 @@
 ### Fase Pengembangan
 | Fase | Fokus | Status |
 |------|-------|--------|
-| **Fase 1** | Website publik & landing page (informatif, SEO, PWA, multibahasa) | 🔨 **Aktif — saat ini** |
+| **Fase 1** | Website publik & landing page (informatif, SEO, PWA, Bahasa Indonesia) | 🔨 **Aktif — saat ini** |
 | Fase 2 | Fondasi sistem internal (auth, RBAC, member registration) | Planned |
 | Fase 3 | Operasional organisasi (Gudep, Kwarran, kegiatan, mutasi) | Planned |
 | Fase 4 | Ekosistem digital (reporting, analytics, integrasi) | Planned |
@@ -34,7 +34,7 @@ Masyarakat umum, orang tua/wali, peserta didik (Penggalang/Penegak/Pandega), pem
 ### Core
 | Layer | Teknologi | Catatan |
 |-------|-----------|---------|
-| Framework | **Next.js 14** (App Router) | `next@14.2.24` |
+| Framework | **Next.js 14** (App Router) | `next@14.2.35` |
 | Language | **TypeScript** (strict mode) | Target ES2020 |
 | Styling | **Tailwind CSS 3** + CSS Custom Properties (design tokens) | Token di `tokens.css` |
 | Icons | **Lucide React** | `lucide-react@0.469.0` |
@@ -88,7 +88,7 @@ Auth.js, React Hook Form + Zod, shadcn/ui + Radix UI, Vitest, Playwright, Sentry
 - `prefers-reduced-motion` support
 - Skip-to-content link
 - Semantic HTML landmarks
-- HTML `lang` attribute sinkron dengan bahasa aktif
+- HTML `lang="id"` (Fase 1 satu bahasa — lihat bagian Bahasa di bawah)
 
 ---
 
@@ -98,18 +98,25 @@ Auth.js, React Hook Form + Zod, shadcn/ui + Radix UI, Vitest, Playwright, Sentry
 system_management_indramayu_scout-main/
 ├── src/
 │   ├── app/                          # Next.js App Router (pages & layouts)
-│   │   ├── layout.tsx                # Root layout (fonts, metadata, providers, header/footer)
+│   │   ├── layout.tsx                # Root layout (fonts, metadataBase, JSON-LD, header/footer)
 │   │   ├── page.tsx                  # Homepage — komposisi section components
-│   │   ├── berita/page.tsx           # Halaman daftar berita (client, filter kategori)
+│   │   ├── berita/page.tsx           # Daftar berita (server; filter kategori lewat ?kategori=)
 │   │   ├── tentang/page.tsx          # Halaman profil, sejarah, visi-misi
-│   │   └── struktur-organisasi/page.tsx  # Struktur pengurus & 31 Kwarran
+│   │   ├── struktur-organisasi/page.tsx  # Struktur pengurus & 31 Kwarran
+│   │   ├── sitemap.ts, robots.ts     # SEO teknis
+│   │   └── error.tsx, not-found.tsx  # Batas galat & 404
 │   │
 │   ├── components/
 │   │   ├── ui/                       # Atomic/reusable UI primitives
-│   │   │   ├── Button.tsx            # 5 variants, 3 sizes, loading state, forwardRef
-│   │   │   ├── Card.tsx              # Compound component (Header/Content/Footer)
-│   │   │   ├── Badge.tsx             # Status/category pill (5 variants)
-│   │   │   ├── LanguageSelector.tsx  # Dropdown bahasa (ID/EN/SU), a11y compliant
+│   │   │   ├── Button.tsx            # Button + ButtonLink, 6 varian, 3 ukuran, semua >=44px
+│   │   │   ├── Card.tsx              # Compound component (Header/Content/Footer), prop `as`
+│   │   │   ├── Badge.tsx             # Badge + AgendaStatusBadge/FileTypeBadge/CategoryBadge (ikon + teks)
+│   │   │   ├── Field.tsx             # Field + Input + Textarea + fieldAria
+│   │   │   ├── FilterChips.tsx       # Chip filter yang menulis state ke query param
+│   │   │   ├── EmptyState.tsx        # Ikon + penjelasan + aksi lanjut
+│   │   │   ├── MediaFrame.tsx        # next/image bila aset ada, empty state bila belum (server-only)
+│   │   │   ├── Section.tsx           # Section + PageHeader (ritme & hierarki)
+│   │   │   ├── Skeleton.tsx          # Rangka muat untuk loading.tsx
 │   │   │   └── SkipToContent.tsx     # WCAG bypass block link
 │   │   │
 │   │   └── public/                   # Homepage section components
@@ -125,16 +132,18 @@ system_management_indramayu_scout-main/
 │   │       └── MapSection.tsx        # Peta lokasi sekretariat + kontak
 │   │
 │   ├── lib/
+│   │   ├── repositories/             # SATU-SATUNYA pintu akses data (news, agenda, gallery,
+│   │   │                             # achievements, documents, organization, stats)
 │   │   ├── data/
-│   │   │   └── mock-data.ts          # Mock data realistis (31 Kwarran, berita, agenda, dll)
-│   │   └── i18n/
-│   │       ├── LanguageContext.tsx    # React Context + useLanguage hook + localStorage
-│   │       └── translations.ts       # Dictionary 3 bahasa (ID/EN/SU)
+│   │   │   └── mock-data.ts          # Sumber sementara; hanya boleh diimpor repositories
+│   │   ├── site.ts                   # Identitas situs (nama, URL, kontak) untuk metadata/SEO
+│   │   ├── format.ts                 # formatDate/formatTime/formatDateRange (id-ID, WIB)
+│   │   ├── media.ts                  # assetExists() — cek berkas di public/ (server-only)
+│   │   └── utils.ts                  # cn()
 │   │
 │   ├── styles/
-│   │   ├── globals.css               # Entry CSS — imports + a11y + reduced-motion
-│   │   ├── tokens.css                # Design tokens (CSS custom properties)
-│   │   └── utilities.css             # Custom utility classes (civic-container, card-subtle)
+│   │   ├── globals.css               # Entry CSS — tokens + tailwind + base a11y + utility
+│   │   └── tokens.css                # Design tokens (CSS custom properties)
 │   │
 │   └── types/
 │       └── index.ts                  # Domain interfaces (NewsItem, AgendaItem, KwarranInfo, dll)
@@ -242,17 +251,18 @@ Primitives (--green-600, --neutral-200)
 - **Page Components** (`app/*/page.tsx`): Komposisi section → halaman penuh
 - **Compound Components**: Card menggunakan pola `Card` + `CardHeader` + `CardContent` + `CardFooter`
 
-### i18n Pattern
-```tsx
-const { t } = useLanguage();
-// Akses nested key dengan dot notation
-t("nav.home")    // → "Beranda" (id) / "Home" (en) / "Tepas" (su)
-```
-Bahasa disimpan di `localStorage`, sinkron ke `<html lang="...">`.
+### Bahasa (keputusan 19 Sep 2026 — TASKS.md P2-8 Jalur A)
+Fase 1 **Bahasa Indonesia saja**. `LanguageProvider`, `translations.ts`, dan
+`LanguageSelector` sudah dihapus: selektornya tidak pernah tersambung ke context
+(memakai state lokal sendiri) dan hanya judul yang diterjemahkan, sehingga
+klaim tiga bahasa tidak pernah benar. `<html lang="id">` statis.
+Bila multibahasa dibutuhkan, kerjakan penuh lewat routing `[locale]` (Jalur B),
+bukan mengembalikan pola `t("key") || "fallback"`.
 
-### Import Alias
+### Import Alias & akses data
 ```tsx
-import { Something } from '@/lib/data/mock-data'  // → src/lib/data/mock-data
+import { getNews } from '@/lib/repositories'   // ✅ halaman & komponen
+import { mockNews } from '@/lib/data/mock-data' // ❌ ditolak ESLint di luar repositories
 ```
 
 ---
@@ -270,26 +280,32 @@ import { Something } from '@/lib/data/mock-data'  // → src/lib/data/mock-data
 
 ## 8. Current Focus & Status
 
-### ✅ Sudah Selesai (Fase 1: 100% Halaman Publik Terpasang)
-- Root layout dengan fonts, metadata, PWA manifest
-- Homepage dengan 8 section preview (Hero, Stats, About, Agenda, News, Gallery, Achievement, Map)
-- Seluruh 15 rute publik & detail view:
-  - `/`, `/tentang`, `/struktur-organisasi`, `/berita`, `/berita/[slug]`
-  - `/agenda`, `/agenda/[slug]`, `/galeri`, `/galeri/[slug]`
-  - `/prestasi`, `/dokumen`, `/kontak`, `/kebijakan-privasi`, `/aksesibilitas`, `/masuk`, `not-found`
-- Design token system (CSS variables → Tailwind)
-- UI primitives: Button, Card, Badge, LanguageSelector, SkipToContent
-- i18n support 3 bahasa (ID/EN/SU)
-- Mock data realistis (31 Kwarran Indramayu, berita, agenda, galeri, dokumen, prestasi)
-- Aksesibilitas dasar (skip link, focus ring, reduced-motion, semantic HTML, 44px touch)
-- Dokumentasi lengkap (arsitektur, desain, produk, keamanan, operasional, testing)
-- Sinkronisasi navigasi Header & Footer
+> **Status terverifikasi 19 Sep 2026.** `tsc --noEmit` exit 0 · `next lint` bersih ·
+> `next build` exit 0 (30 halaman). Sumber kebenaran status ada di `TASKS.md`
+> bagian "Status Eksekusi" — bukan di dokumen ini.
 
-### 🔨 Langkah Penyempurnaan Fase 1
-- Integrasi peta interaktif Leaflet dinamis (saat ini placeholder)
-- Integrasi konten media riil (foto kegiatan, PDF dokumen resmi)
-- Setup build script & CI/CD pipeline
-- Audit aksesibilitas Lighthouse / axe-core
+### ✅ Terpasang & terverifikasi
+- 15 rute publik + `not-found` + `error` + `sitemap.xml` + `robots.txt`
+- Beranda 8 section, seluruhnya Server Component yang membaca `lib/repositories`
+- Design token 3 tingkat → Tailwind; nol warna literal (ditegakkan ESLint)
+- UI primitives: `Button`/`ButtonLink`, `Card`, `Badge` (+status/kategori/berkas),
+  `Field`/`Input`/`Textarea`, `FilterChips`, `EmptyState`, `MediaFrame`,
+  `Section`/`PageHeader`, `Skeleton`, `SkipToContent`
+- Lapisan akses data `lib/repositories/` (7 modul async) — siap ditukar ke Prisma
+- Metadata unik + canonical per rute; JSON-LD Organization/NewsArticle/Event
+- Header drawer ponsel & lightbox galeri: focus trap, Escape, fokus kembali (teruji)
+- Peta Leaflet + OpenStreetMap nyata di beranda
+- Keamanan: CSP enforce, HSTS, X-Frame-Options, Permissions-Policy, COOP;
+  optimizer gambar aktif tanpa host luar; unduhan dokumen divalidasi allowlist
+- Aksesibilitas terukur: nol pelanggaran kontras & heading pada 15 rute @390px;
+  nol overflow horizontal pada 360/768/1920px
+
+### 🔨 Belum ada (jangan diklaim di dokumen mana pun)
+- Basis data: tidak ada `prisma/schema.prisma`, migrasi, maupun seed
+- Auth & RBAC: belum ada; `/masuk` sengaja hanya halaman status
+- Pengujian: nol tes (Vitest/Playwright/axe-core) dan belum ada CI/CD
+- Konten media riil: foto kegiatan & PDF resmi belum diunggah ke `public/`
+- Validasi env dengan Zod; Prettier + Husky/lint-staged
 
 ### 📋 Backlog (Fase 2+)
 - Auth system (Auth.js + approval flow)
@@ -336,7 +352,7 @@ pnpm test:coverage    # Coverage report
 3. **Perhatikan aksesibilitas** — setiap komponen harus keyboard-navigable, punya focus state, dan semantic HTML
 4. **Data anak = sangat sensitif** — jangan tampilkan foto wajah anak di halaman publik
 5. **Cek `generate_pages.js`** — berisi template/scaffold untuk semua halaman yang belum dibuat
-6. **i18n** — tambahkan translation key baru ke `translations.ts` jika membuat konten yang visible
+6. **Bahasa** — tulis langsung dalam Bahasa Indonesia; tidak ada kamus terjemahan di Fase 1
 7. **Komponen baru** → taruh di `components/ui/` (atomic) atau `components/public/` (section)
 8. **Path alias** — gunakan `@/` untuk import dari `src/`
 9. **Client component** — tambahkan `"use client"` hanya jika perlu (state, effects, event handlers)

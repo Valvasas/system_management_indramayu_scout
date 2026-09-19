@@ -29,3 +29,4 @@ npm-debug.log*
 
 # scripts
 push_to_github.bat
+start_server.bat
