@@ -26,3 +26,6 @@ next-env.d.ts
 Thumbs.db
 npm-debug.log*
 .vercel
+
+# scripts
+push_to_github.bat

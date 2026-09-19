@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { mockGalleryAlbums } from '@/lib/data/mock-data';
-import { Camera, Image as ImageIcon, X } from 'lucide-react';
+import { Camera, ChevronLeft, ChevronRight, Image as ImageIcon, X } from 'lucide-react';
 import { Photo } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -15,17 +15,56 @@ export default function DetailGaleriPage() {
   const album = mockGalleryAlbums.find((a) => a.slug === slug);
   const [activePhoto, setActivePhoto] = useState<Photo | null>(null);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const isOpen = activePhoto !== null;
+  const photos = album?.photos ?? [];
+
+  const step = (dir: 1 | -1) =>
+    setActivePhoto((cur) => {
+      if (!cur || photos.length === 0) return cur;
+      const i = photos.findIndex((p) => p.id === cur.id);
+      return photos[(i + dir + photos.length) % photos.length];
+    });
+
+  // Buka: simpan pemicu, kunci scroll, fokus ke tombol tutup. Tutup: kembalikan fokus.
   useEffect(() => {
+    if (!isOpen) return;
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      triggerRef.current?.focus();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActivePhoto(null);
+      if (e.key === 'Escape') setActivePhoto(null);
+      else if (e.key === 'ArrowRight') step(1);
+      else if (e.key === 'ArrowLeft') step(-1);
+      else if (e.key === 'Tab' && dialogRef.current) {
+        const f = dialogRef.current.querySelectorAll<HTMLElement>('button, [href], [tabindex]:not([tabindex="-1"])');
+        if (f.length === 0) return;
+        const first = f[0];
+        const last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
-    if (activePhoto) {
-      document.addEventListener('keydown', handleKeyDown);
-    }
+    document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [activePhoto]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, photos.length]);
 
   if (!album) {
     return (
@@ -91,6 +130,7 @@ export default function DetailGaleriPage() {
           onClick={() => setActivePhoto(null)}
         >
           <div
+            ref={dialogRef}
             className="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
@@ -100,6 +140,7 @@ export default function DetailGaleriPage() {
                 <p className="text-xs text-neutral-500 mt-0.5">{activePhoto.altText}</p>
               </div>
               <button
+                ref={closeRef}
                 type="button"
                 onClick={() => setActivePhoto(null)}
                 className="text-neutral-500 hover:text-neutral-800 p-2 rounded-lg hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -111,6 +152,15 @@ export default function DetailGaleriPage() {
 
             <div className="aspect-video bg-neutral-900 rounded-lg flex items-center justify-center text-neutral-400 mb-4">
               <ImageIcon className="h-14 w-14" aria-hidden="true" />
+            </div>
+
+            <div className="flex justify-between items-center gap-2 pb-3">
+              <Button type="button" variant="outline" onClick={() => step(-1)} aria-label="Foto sebelumnya">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button type="button" variant="outline" onClick={() => step(1)} aria-label="Foto berikutnya">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
             </div>
 
             <div className="flex justify-between items-center text-xs text-neutral-500 pt-2 border-t border-neutral-100">
