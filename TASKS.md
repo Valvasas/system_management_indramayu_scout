@@ -33,7 +33,10 @@
 | P3-1 nav mobile | SELESAI | Ternyata drawer sudah ada (CODEMAP usang). Diperbaiki: ikon lucide, `aria-current`, label `nav`, fokus kembali ke tombol saat Escape, breakpoint `lg` |
 | Header | | Logo `/logo-pramuka.png` tidak ada → `/brand/logo.svg` |
 
-**Belum dikerjakan:** P1-4 (form kontak — saat ini menampilkan "Pesan Berhasil Terkirim" padahal tidak mengirim apa pun), P1-7, P1-8, P2-2…P2-8, P3-2…P3-8, P4–P6.
+| P1-4 form kontak | SELESAI (tujuan pengiriman belum diset) | `kontak/actions.ts` (Server Action, validasi, honeypot, time-trap, rate limit 3/10 mnt in-memory) + `ContactForm.tsx`. Tanpa `CONTACT_WEBHOOK_URL` form menampilkan galat jujur, bukan sukses palsu. Validasi manual, bukan Zod (belum terpasang) |
+| P3-2 lightbox | SELESAI | Focus trap, fokus kembali ke pemicu, kunci scroll, panah kiri/kanan + tombol sebelumnya/berikutnya |
+
+**Belum dikerjakan:** P1-7, P1-8, P2-2…P2-8, P3-2…P3-8, P4–P6.
 
 **Temuan tambahan saat eksekusi:** (1) `t("key") \|\| "fallback"` tidak pernah jatuh ke fallback karena `t()` mengembalikan *key*-nya sendiri, sehingga pengunjung akan melihat teks "news_title"; sudah diganti ke key yang ada. (2) Halaman hasil GitHub masih memuat emoji (`📅 📍`) dan warna literal `green-*` → tetap tugas P2. (3) `node_modules` lama tidak lengkap; `npm install` dijalankan ulang. (4) Ada proses lain yang menjalankan `generate_pages.js` di tengah sesi dan menimpa `src/app` dengan template lama; sudah dipulihkan. **Jangan jalankan kedua generator lagi**, keduanya sudah usang.
 
