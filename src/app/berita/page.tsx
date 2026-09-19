@@ -1,110 +1,93 @@
-'use client';
-
-import React, { useState } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { mockNews } from '@/lib/data/mock-data';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { Badge } from '@/components/ui/Badge';
+import { Newspaper } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
+import { CategoryBadge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterChips } from '@/components/ui/FilterChips';
+import { MediaFrame } from '@/components/ui/MediaFrame';
+import { PageHeader } from '@/components/ui/Section';
+import { getNews, getNewsCategories } from '@/lib/repositories';
+import { formatDate } from '@/lib/format';
 
-const ALL = 'Semua';
-
-const formatDate = (isoString: string) => {
-  try {
-    return new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(new Date(isoString));
-  } catch {
-    return isoString;
-  }
+export const metadata: Metadata = {
+  title: 'Berita & Warta Pramuka',
+  description:
+    'Kabar terbaru, pengumuman, dan liputan kegiatan Kwartir Cabang Gerakan Pramuka Indramayu.',
+  alternates: { canonical: '/berita' },
 };
 
-export default function BeritaPage() {
-  const { t } = useLanguage();
-  const [filter, setFilter] = useState<string>(ALL);
+const ALL = 'semua';
 
-  const published = mockNews.filter((n) => n.status === 'PUBLISHED');
-  const categories = [ALL, ...Array.from(new Set(published.map((n) => n.category)))];
-  const filteredNews = filter === ALL ? published : published.filter((n) => n.category === filter);
+export default async function BeritaPage({
+  searchParams,
+}: {
+  searchParams?: { kategori?: string };
+}) {
+  const categories = await getNewsCategories();
+  const requested = searchParams?.kategori;
+  // Nilai tak dikenal diperlakukan sebagai "semua", bukan hasil kosong yang membingungkan.
+  const active = categories.some((c) => c.value === requested) ? (requested as string) : ALL;
+  const news = await getNews({ category: active === ALL ? undefined : active });
 
   return (
     <div className="civic-container py-12">
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
-          {t('nav.news')}
-        </h1>
-        <p className="text-neutral-600 max-w-2xl text-base sm:text-lg">
-          Kabar terbaru, pengumuman, dan liputan kegiatan Kwartir Cabang Indramayu.
-        </p>
-      </header>
+      <PageHeader
+        title="Berita & warta pramuka"
+        description="Kabar terbaru, pengumuman, dan liputan kegiatan Kwartir Cabang Indramayu."
+      />
 
-      <div className="flex flex-wrap gap-2 mb-8" role="group" aria-label="Filter kategori berita">
-        {categories.map((c) => {
-          const isActive = filter === c;
-          return (
-            <button
-              key={c}
-              type="button"
-              aria-pressed={isActive}
-              onClick={() => setFilter(c)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-600 ${
-                isActive
-                  ? 'bg-green-700 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              {c}
-            </button>
-          );
-        })}
+      <div className="mb-8">
+        <FilterChips
+          label="Filter kategori berita"
+          param="kategori"
+          active={active}
+          options={[{ value: ALL, label: 'Semua' }, ...categories]}
+        />
       </div>
 
-      {filteredNews.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <p className="text-neutral-500">Belum ada berita pada kategori ini.</p>
-          </CardContent>
-        </Card>
+      <p className="mb-4 text-sm text-text-secondary" aria-live="polite">
+        {news.length} berita ditampilkan
+        {active === ALL ? '' : ` pada kategori ${categories.find((c) => c.value === active)?.label}`}.
+      </p>
+
+      {news.length === 0 ? (
+        <EmptyState
+          icon={Newspaper}
+          title="Belum ada berita pada kategori ini"
+          description="Coba pilih kategori lain, atau lihat seluruh warta yang sudah terbit."
+          action={{ label: 'Tampilkan semua berita', href: '/berita' }}
+        />
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredNews.map((news) => (
-            <article
-              key={news.id}
-              className="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden flex flex-col"
-            >
-              <div className="aspect-video bg-neutral-200">
-                {news.coverImage && (
-                  <img
-                    src={news.coverImage}
-                    alt=""
-                    className="object-cover w-full h-full"
-                  />
-                )}
-              </div>
-              <div className="p-6 flex-grow flex flex-col">
-                <div className="mb-2">
-                  <Badge variant="brand">{news.category}</Badge>
-                </div>
-                <h2 className="text-xl font-bold mb-2 line-clamp-2">
-                  <Link
-                    href={`/berita/${news.slug}`}
-                    className="hover:text-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 rounded"
-                  >
-                    {news.title}
-                  </Link>
-                </h2>
-                <p className="text-neutral-600 text-sm mb-4 line-clamp-3">{news.excerpt}</p>
-                <div className="mt-auto text-xs text-neutral-500">
-                  <time dateTime={news.publishedAt}>{formatDate(news.publishedAt)}</time>
-                  {' · '}
-                  {news.author}
-                </div>
-              </div>
-            </article>
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {news.map((item) => (
+            <li key={item.id}>
+              <Card as="article" hoverable className="flex h-full flex-col">
+                <MediaFrame
+                  src={item.coverImage}
+                  alt=""
+                  aspect="video"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  fallbackLabel="Foto dokumentasi menyusul"
+                />
+                <CardContent className="flex flex-1 flex-col">
+                  <CategoryBadge className="self-start">{item.category}</CategoryBadge>
+                  <h2 className="mt-3 font-display text-lg font-bold leading-snug text-text-primary">
+                    <Link href={`/berita/${item.slug}`} className="rounded-md hover:text-text-accent">
+                      {item.title}
+                    </Link>
+                  </h2>
+                  <p className="mt-2 flex-1 text-sm text-text-secondary">{item.excerpt}</p>
+                  <p className="mt-4 text-xs text-text-secondary">
+                    <time dateTime={item.publishedAt}>{formatDate(item.publishedAt)}</time>
+                    {' · '}
+                    {item.author}
+                  </p>
+                </CardContent>
+              </Card>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

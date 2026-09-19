@@ -1,132 +1,145 @@
-'use client';
-
-import React, { useState } from 'react';
-import { mockAchievements } from '@/lib/data/mock-data';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
+import type { Metadata } from 'next';
+import { Award, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterChips } from '@/components/ui/FilterChips';
+import { PageHeader } from '@/components/ui/Section';
+import { getAchievementLevels, getAchievements, levelFromSlug, levelSlug } from '@/lib/repositories';
 
-export default function PrestasiPage() {
-  const { t } = useLanguage();
-  const [levelFilter, setLevelFilter] = useState<string>('Semua');
+export const metadata: Metadata = {
+  title: 'Prestasi & Penghargaan',
+  description:
+    'Rekam jejak capaian, penghargaan kwartir, dan prestasi anggota Pramuka se-Kabupaten Indramayu.',
+  alternates: { canonical: '/prestasi' },
+};
 
-  const levels = ['Semua', 'Nasional', 'Provinsi', 'Kabupaten'];
+const ALL = 'semua';
 
-  const filteredAchievements = levelFilter === 'Semua'
-    ? mockAchievements
-    : mockAchievements.filter((a) => a.level === levelFilter);
-
-  const getLevelBadgeVariant = (level: string) => {
-    switch (level) {
-      case 'Nasional':
-        return 'warning';
-      case 'Provinsi':
-        return 'brand';
-      case 'Kabupaten':
-        return 'info';
-      default:
-        return 'default';
-    }
-  };
+export default async function PrestasiPage({
+  searchParams,
+}: {
+  searchParams?: { tingkat?: string };
+}) {
+  const levels = await getAchievementLevels();
+  const level = levelFromSlug(searchParams?.tingkat ?? '');
+  const active = level ? levelSlug(level) : ALL;
+  const achievements = await getAchievements({ level });
 
   return (
     <div className="civic-container py-12">
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
-          {t('nav.achievement') || 'Prestasi & Penghargaan'}
-        </h1>
-        <p className="text-neutral-600 max-w-2xl text-base sm:text-lg">
-          Rekam jejak capaian, penghargaan kwartir, dan prestasi membanggakan anggota Pramuka se-Kabupaten Indramayu.
-        </p>
-      </header>
+      <PageHeader
+        title="Prestasi & penghargaan"
+        description="Rekam jejak capaian, penghargaan kwartir, dan prestasi anggota Pramuka se-Kabupaten Indramayu."
+      />
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8" role="tablist" aria-label="Filter tingkat prestasi">
-        {levels.map((lvl) => {
-          const isActive = levelFilter === lvl;
-          return (
-            <button
-              key={lvl}
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => setLevelFilter(lvl)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-600 ${
-                isActive
-                  ? 'bg-green-700 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-              }`}
-            >
-              {lvl}
-            </button>
-          );
-        })}
+      <div className="mb-8">
+        <FilterChips
+          label="Filter tingkat prestasi"
+          param="tingkat"
+          active={active}
+          options={[
+            { value: ALL, label: 'Semua' },
+            ...levels.map((l) => ({ value: levelSlug(l), label: l })),
+          ]}
+        />
       </div>
 
-      {/* Desktop Table View */}
-      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-neutral-50 border-b border-neutral-200 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
-              <th scope="col" className="py-3.5 px-6">Tahun</th>
-              <th scope="col" className="py-3.5 px-6">Nama Prestasi / Kejuaraan</th>
-              <th scope="col" className="py-3.5 px-6">Tingkat</th>
-              <th scope="col" className="py-3.5 px-6">Penerima / Kontingen</th>
-              <th scope="col" className="py-3.5 px-6">Keterangan</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-neutral-100 text-sm">
-            {filteredAchievements.map((item) => (
-              <tr key={item.id} className="hover:bg-neutral-50 transition-colors">
-                <td className="py-4 px-6 font-semibold text-neutral-800 whitespace-nowrap">
-                  {item.year}
-                </td>
-                <td className="py-4 px-6 font-bold text-neutral-900">
-                  {item.title}
-                </td>
-                <td className="py-4 px-6 whitespace-nowrap">
-                  <Badge variant={getLevelBadgeVariant(item.level)}>
-                    {item.level}
-                  </Badge>
-                </td>
-                <td className="py-4 px-6 text-neutral-700">
-                  {item.recipient}
-                </td>
-                <td className="py-4 px-6 text-neutral-500 text-xs max-w-xs">
-                  {item.description}
-                </td>
-              </tr>
+      <p className="mb-4 text-sm text-text-secondary" aria-live="polite">
+        {achievements.length} prestasi ditampilkan
+        {level ? ` pada tingkat ${level.toLowerCase()}` : ''}.
+      </p>
+
+      {achievements.length === 0 ? (
+        <EmptyState
+          icon={Trophy}
+          title="Belum ada prestasi pada tingkat ini"
+          description="Pilih tingkat lain atau tampilkan seluruh capaian yang sudah terverifikasi."
+          action={{ label: 'Tampilkan semua prestasi', href: '/prestasi' }}
+        />
+      ) : (
+        <>
+          {/* Tabel untuk layar lebar. Wrapper bisa digulir dan fokusabel supaya
+              pengguna keyboard tetap bisa menjangkaunya (WCAG 2.1.1). */}
+          {/* WCAG 2.1.1: wadah yang bisa digulir harus dapat difokuskan agar
+              pengguna keyboard bisa menggulirnya. role="region" + aria-label
+              membuatnya tetap bermakna di pohon aksesibilitas. */}
+          <div
+            className="hidden overflow-x-auto rounded-lg border border-border-subtle md:block"
+            tabIndex={0}
+            role="region"
+            aria-label="Tabel prestasi dan penghargaan"
+          >
+            <table className="w-full border-collapse text-left text-sm">
+              <caption className="sr-only">
+                Daftar prestasi Pramuka Indramayu beserta tahun, tingkat, dan penerima
+              </caption>
+              <thead>
+                <tr className="border-b border-border-subtle bg-surface-subtle text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                  <th scope="col" className="px-6 py-3.5">
+                    Tahun
+                  </th>
+                  <th scope="col" className="px-6 py-3.5">
+                    Prestasi
+                  </th>
+                  <th scope="col" className="px-6 py-3.5">
+                    Tingkat
+                  </th>
+                  <th scope="col" className="px-6 py-3.5">
+                    Penerima
+                  </th>
+                  <th scope="col" className="px-6 py-3.5">
+                    Keterangan
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-subtle">
+                {achievements.map((item) => (
+                  <tr key={item.id}>
+                    <th scope="row" className="whitespace-nowrap px-6 py-4 font-semibold text-text-primary">
+                      {item.year}
+                    </th>
+                    <td className="px-6 py-4 font-medium text-text-primary">{item.title}</td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <Badge tone="warning" icon={Award}>
+                        {item.level}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-text-secondary">{item.recipient}</td>
+                    <td className="max-w-xs px-6 py-4 text-text-secondary">{item.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Di bawah md tabel berubah jadi kartu, bukan tabel yang terpotong. */}
+          <ul className="space-y-4 md:hidden">
+            {achievements.map((item) => (
+              <li key={item.id}>
+                <Card as="article">
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-text-primary">{item.year}</span>
+                      <Badge tone="warning" icon={Award}>
+                        {item.level}
+                      </Badge>
+                    </div>
+                    <h2 className="font-display text-lg font-bold leading-snug text-text-primary">
+                      {item.title}
+                    </h2>
+                    <p className="text-sm text-text-secondary">
+                      <span className="block text-xs text-text-muted">Penerima</span>
+                      {item.recipient}
+                    </p>
+                    <p className="text-sm text-text-secondary">{item.description}</p>
+                  </CardContent>
+                </Card>
+              </li>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
-        {filteredAchievements.map((item) => (
-          <Card key={item.id}>
-            <CardContent className="p-5 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-green-800 bg-green-50 px-2 py-0.5 rounded border border-green-200">
-                  Tahun {item.year}
-                </span>
-                <Badge variant={getLevelBadgeVariant(item.level)}>
-                  {item.level}
-                </Badge>
-              </div>
-              <h2 className="font-bold text-lg text-neutral-900 leading-snug">
-                {item.title}
-              </h2>
-              <div className="text-sm text-neutral-700">
-                <span className="text-xs text-neutral-500 block">Penerima:</span>
-                <strong>{item.recipient}</strong>
-              </div>
-              <p className="text-xs text-neutral-600 bg-neutral-50 p-2.5 rounded border border-neutral-100">
-                {item.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+          </ul>
+        </>
+      )}
     </div>
   );
 }

@@ -1,20 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useFormState, useFormStatus } from 'react-dom';
-import { Check, AlertCircle } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Field, Input, Textarea, fieldAria } from '@/components/ui/Field';
 import { submitContact, type ContactState } from './actions';
 
 const initial: ContactState = { status: 'idle' };
-const inputClass =
-  'w-full px-3.5 py-2.5 rounded-lg border border-neutral-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 text-sm bg-white min-h-[44px]';
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" className="w-full mt-2" isLoading={pending}>
-      Kirim Pesan
+    <Button type="submit" className="w-full" isLoading={pending} loadingLabel="Mengirim pesan">
+      Kirim pesan
     </Button>
   );
 }
@@ -22,72 +22,95 @@ function Submit() {
 export function ContactForm() {
   const [state, action] = useFormState(submitContact, initial);
   const [openedAt, setOpenedAt] = useState('');
+
   useEffect(() => setOpenedAt(String(Date.now())), []);
 
   const err = state.errors ?? {};
-  const field = (id: 'name' | 'email' | 'message') => ({
-    'aria-invalid': err[id] ? true : undefined,
-    'aria-describedby': err[id] ? `${id}-error` : undefined,
-  });
 
   return (
-    <form action={action} className="space-y-4" noValidate={false}>
+    <form action={action} className="space-y-5">
+      {/* Status pengiriman diumumkan ke pembaca layar tanpa memindahkan fokus. */}
       <div aria-live="polite">
         {state.status === 'success' && (
-          <div className="p-4 mb-2 bg-green-50 border border-green-200 rounded-lg text-green-900 text-sm flex items-start gap-2">
+          <p className="flex items-start gap-2 rounded-md border border-status-success-border bg-status-success-surface p-4 text-sm text-status-success-text">
             <Check className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <p>{state.message}</p>
-          </div>
+            {state.message}
+          </p>
         )}
         {state.status === 'error' && state.message && (
-          <div className="p-4 mb-2 bg-red-50 border border-red-200 rounded-lg text-red-900 text-sm flex items-start gap-2">
+          <p className="flex items-start gap-2 rounded-md border border-status-danger-border bg-status-danger-surface p-4 text-sm text-status-danger-text">
             <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <p>{state.message}</p>
-          </div>
+            {state.message}
+          </p>
         )}
       </div>
 
       <input type="hidden" name="openedAt" value={openedAt} />
-      {/* Honeypot: disembunyikan dari pengguna & pembaca layar */}
+      {/* Honeypot: tersembunyi dari mata dan dari pembaca layar. */}
       <div className="absolute -left-[9999px]" aria-hidden="true">
         <label htmlFor="website">Jangan diisi</label>
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div>
-        <label htmlFor="name" className="block text-xs font-semibold text-neutral-700 mb-1">
-          Nama Lengkap <span aria-hidden="true">*</span>
-        </label>
-        <input id="name" name="name" type="text" required minLength={2} maxLength={100} autoComplete="name" className={inputClass} {...field('name')} />
-        {err.name && <p id="name-error" className="mt-1 text-xs text-red-800">{err.name}</p>}
-      </div>
+      <Field id="name" label="Nama lengkap" required error={err.name}>
+        <Input
+          id="name"
+          name="name"
+          type="text"
+          required
+          minLength={2}
+          maxLength={100}
+          autoComplete="name"
+          {...fieldAria('name', err.name)}
+        />
+      </Field>
 
-      <div>
-        <label htmlFor="email" className="block text-xs font-semibold text-neutral-700 mb-1">
-          Alamat Pos-el (Email) <span aria-hidden="true">*</span>
-        </label>
-        <input id="email" name="email" type="email" required maxLength={254} autoComplete="email" className={inputClass} {...field('email')} />
-        {err.email && <p id="email-error" className="mt-1 text-xs text-red-800">{err.email}</p>}
-      </div>
+      <Field id="email" label="Alamat pos-el (email)" required error={err.email}>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          required
+          maxLength={254}
+          autoComplete="email"
+          {...fieldAria('email', err.email)}
+        />
+      </Field>
 
-      <div>
-        <label htmlFor="organization" className="block text-xs font-semibold text-neutral-700 mb-1">
-          Gugus Depan / Kwartir Ranting
-        </label>
-        <input id="organization" name="organization" type="text" maxLength={150} autoComplete="organization" className={inputClass} />
-      </div>
+      <Field
+        id="organization"
+        label="Gugus depan / kwartir ranting"
+        hint="Opsional — membantu kami mengarahkan pesan Anda."
+      >
+        <Input
+          id="organization"
+          name="organization"
+          type="text"
+          maxLength={150}
+          autoComplete="organization"
+          {...fieldAria('organization', undefined, 'Opsional')}
+        />
+      </Field>
 
-      <div>
-        <label htmlFor="message" className="block text-xs font-semibold text-neutral-700 mb-1">
-          Isi Pesan <span aria-hidden="true">*</span>
-        </label>
-        <textarea id="message" name="message" required minLength={10} maxLength={2000} rows={4} className={`${inputClass} resize-none`} {...field('message')} />
-        {err.message && <p id="message-error" className="mt-1 text-xs text-red-800">{err.message}</p>}
-      </div>
+      <Field id="message" label="Isi pesan" required error={err.message}>
+        <Textarea
+          id="message"
+          name="message"
+          required
+          minLength={10}
+          maxLength={2000}
+          rows={5}
+          {...fieldAria('message', err.message)}
+        />
+      </Field>
 
-      <p className="text-xs text-neutral-600 leading-relaxed">
-        Data yang Anda isi hanya dipakai untuk menanggapi pesan ini oleh sekretariat Kwarcab dan tidak dibagikan ke pihak lain.
-        Lihat <a href="/kebijakan-privasi" className="underline">Kebijakan Privasi</a>. Anak di bawah 18 tahun sebaiknya mengirim melalui orang tua/wali atau pembina.
+      <p className="text-xs leading-relaxed text-text-secondary">
+        Data yang Anda isi hanya dipakai sekretariat kwarcab untuk menanggapi pesan ini dan tidak
+        dibagikan ke pihak lain. Lihat{' '}
+        <Link href="/kebijakan-privasi" className="text-text-accent underline">
+          kebijakan privasi
+        </Link>
+        . Anggota di bawah 18 tahun sebaiknya mengirim melalui orang tua/wali atau pembina.
       </p>
 
       <Submit />

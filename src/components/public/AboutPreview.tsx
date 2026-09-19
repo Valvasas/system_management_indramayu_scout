@@ -1,38 +1,54 @@
 import React from 'react';
-import { Button } from '../ui/Button';
-import Link from 'next/link';
+import { Check } from 'lucide-react';
+import { ButtonLink } from '../ui/Button';
+import { MediaFrame } from '../ui/MediaFrame';
 
-export const AboutPreview: React.FC = () => {
-  return (
-    <section className="py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
-          <div className="mb-10 lg:mb-0">
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-4">
-              Membangun Karakter Generasi Muda Indramayu
-            </h2>
-            <div className="prose prose-green prose-lg text-gray-600 mb-6">
-              <p className="mb-4">
-                Kwartir Cabang Gerakan Pramuka Indramayu memiliki komitmen kuat dalam menyelenggarakan pendidikan kepramukaan yang berkualitas, inklusif, dan adaptif terhadap perkembangan zaman.
-              </p>
-              <p>
-                Kami berperan aktif dalam membina mental, spiritual, dan fisik kaum muda Indramayu agar menjadi warga negara yang bertanggung jawab, mandiri, dan berkarakter mulia.
-              </p>
-            </div>
-            <Link href="/tentang" tabIndex={-1}>
-              <Button variant="outline" size="lg">Pelajari Lebih Lanjut</Button>
-            </Link>
-          </div>
-          
-          <div className="relative">
-            <div className="aspect-w-4 aspect-h-3 rounded-lg bg-gray-100 overflow-hidden shadow-sm relative min-h-[300px]">
-              <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-400">Ilustrasi / Foto Kegiatan Pramuka</span>
-              </div>
-            </div>
-          </div>
+const pillars = [
+  'Pendidikan kepramukaan berjenjang dari Siaga hingga Pandega',
+  'Pembinaan pembina dan pelatih melalui Pusdiklatcab',
+  'Kegiatan bakti masyarakat dan kepedulian lingkungan',
+];
+
+export const AboutPreview: React.FC = () => (
+  <section aria-labelledby="about-title" className="bg-surface-subtle civic-section">
+    <div className="civic-container">
+      <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+        <div>
+          <h2
+            id="about-title"
+            className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-text-primary"
+          >
+            Membangun karakter generasi muda Indramayu
+          </h2>
+          <p className="mt-4 civic-prose">
+            Kwartir Cabang Gerakan Pramuka Indramayu menyelenggarakan pendidikan kepramukaan bagi
+            gugus depan di seluruh kecamatan — membina mental, keterampilan, dan kepedulian sosial
+            kaum muda agar tumbuh menjadi warga negara yang mandiri dan bertanggung jawab.
+          </p>
+
+          <ul className="mt-6 space-y-3">
+            {pillars.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-text-secondary">
+                <Check className="h-5 w-5 shrink-0 text-text-accent" aria-hidden="true" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+
+          <ButtonLink href="/tentang" variant="outline" className="mt-8">
+            Pelajari profil kwarcab
+          </ButtonLink>
         </div>
+
+        <MediaFrame
+          src="/images/about/sekretariat.jpg"
+          alt="Gedung sekretariat Kwartir Cabang Gerakan Pramuka Indramayu"
+          aspect="4/3"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="rounded-lg border border-border-subtle"
+          fallbackLabel="Foto sekretariat menyusul — dokumentasi resmi sedang disiapkan"
+        />
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);

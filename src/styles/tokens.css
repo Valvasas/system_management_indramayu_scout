@@ -1,5 +1,9 @@
+/* Design token Rumah Pramuka Indramayu.
+   Urutan: primitive -> semantic -> alias. Komponen HANYA memakai token semantic.
+   Rasio kontras tiap pasangan diukur di docs/design/color-contrast.md (WCAG 2.2 AA). */
+
 :root {
-  /* Green Palette */
+  /* ---------- Primitive: Green ---------- */
   --green-50: #F0FDF4;
   --green-100: #DCFCE7;
   --green-200: #BBF7D0;
@@ -11,7 +15,7 @@
   --green-800: #166534;
   --green-900: #14532D;
 
-  /* Neutral Palette */
+  /* ---------- Primitive: Neutral ---------- */
   --neutral-50: #F8FAFC;
   --neutral-100: #F1F5F9;
   --neutral-200: #E2E8F0;
@@ -23,33 +27,94 @@
   --neutral-800: #1E293B;
   --neutral-900: #0F172A;
 
-  /* Accent Colors */
+  /* ---------- Primitive: Accent (hanya untuk status) ---------- */
+  --amber-50: #FFFBEB;
+  --amber-200: #FDE68A;
   --amber-500: #F59E0B;
-  --red-500: #EF4444;
-  --blue-500: #3B82F6;
+  --amber-800: #92400E;
 
-  /* Semantic Colors */
+  --red-50: #FEF2F2;
+  --red-200: #FECACA;
+  --red-500: #EF4444;
+  --red-700: #B91C1C;
+  --red-800: #991B1B;
+
+  --blue-50: #EFF6FF;
+  --blue-200: #BFDBFE;
+  --blue-500: #3B82F6;
+  --blue-800: #1E40AF;
+
+  /* ---------- Semantic: Surface ---------- */
   --surface-base: #FFFFFF;
-  --surface-raised: var(--neutral-50);
-  --surface-subtle: var(--neutral-100);
-  
+  --surface-raised: #FFFFFF;
+  --surface-subtle: var(--neutral-50);
+  --surface-sunken: var(--neutral-100);
+  --surface-inverse: var(--neutral-900);
+  /* Scrim modal/drawer: alpha sudah menyatu di token agar tidak bergantung
+     pada modifier opacity Tailwind (tidak bekerja untuk nilai var()). */
+  --surface-scrim: rgb(15 23 42 / 0.45);
+
+  /* ---------- Semantic: Text ----------
+     Diukur di atas --surface-base (#FFFFFF):
+       primary   neutral-900  17.8:1
+       secondary neutral-600   7.6:1
+       muted     neutral-500   4.8:1  (batas bawah; jangan dipakai < 12px)
+       inverse   putih di atas surface-inverse 17.8:1
+     neutral-400 (2.8:1) sengaja TIDAK dijadikan token teks. */
   --text-primary: var(--neutral-900);
   --text-secondary: var(--neutral-600);
-  --text-muted: var(--neutral-400);
-  
-  --action-primary: var(--green-600);
-  --action-hover: var(--green-700);
-  --action-secondary: var(--neutral-200);
+  --text-muted: var(--neutral-500);
+  --text-inverse: #FFFFFF;
+  --text-on-brand: #FFFFFF;
 
+  /* ---------- Semantic: Action ----------
+     green-600 + teks putih hanya 3.3:1 -> GAGAL AA.
+     Karena itu aksi utama memakai green-700 (5.0:1) dan hover green-800 (7.1:1). */
+  --action-primary: var(--green-700);
+  --action-primary-hover: var(--green-800);
+  --action-primary-active: var(--green-900);
+  --action-secondary: var(--green-50);
+  --action-secondary-hover: var(--green-100);
+  --action-secondary-text: var(--green-800);
+  --action-danger: var(--red-700);
+  --action-danger-hover: var(--red-800);
+
+  /* Tautan & teks aksentuasi di atas latar terang */
+  --accent-text: var(--green-800);
+
+  /* ---------- Semantic: Border ---------- */
   --border-subtle: var(--neutral-200);
   --border-strong: var(--neutral-300);
+  --border-brand: var(--green-300);
 
-  --status-success: var(--green-600);
-  --status-warning: var(--amber-500);
-  --status-danger: var(--red-500);
-  --status-info: var(--blue-500);
+  /* ---------- Semantic: Focus ---------- */
+  --focus-ring: var(--green-800);
+  --focus-ring-inverse: #FFFFFF;
 
-  /* Brand Aliases */
+  /* ---------- Semantic: Status ----------
+     Tiap status punya trio surface/text/border. Rasio text-di-atas-surface >= 6.5:1.
+     Warna TIDAK PERNAH jadi satu-satunya pembeda: Badge selalu ikon + teks (WCAG 1.4.1). */
+  --status-info-surface: var(--blue-50);
+  --status-info-text: var(--blue-800);
+  --status-info-border: var(--blue-200);
+
+  --status-success-surface: var(--green-50);
+  --status-success-text: var(--green-800);
+  --status-success-border: var(--green-200);
+
+  --status-warning-surface: var(--amber-50);
+  --status-warning-text: var(--amber-800);
+  --status-warning-border: var(--amber-200);
+
+  --status-danger-surface: var(--red-50);
+  --status-danger-text: var(--red-800);
+  --status-danger-border: var(--red-200);
+
+  --status-neutral-surface: var(--neutral-100);
+  --status-neutral-text: var(--neutral-700);
+  --status-neutral-border: var(--neutral-200);
+
+  /* ---------- Brand alias (dipakai tailwind.config) ---------- */
   --brand-50: var(--green-50);
   --brand-100: var(--green-100);
   --brand-200: var(--green-200);
@@ -61,8 +126,12 @@
   --brand-800: var(--green-800);
   --brand-900: var(--green-900);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-dialog: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  /* ---------- Elevation ---------- */
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+  --shadow-dialog: 0 20px 25px -5px rgb(15 23 42 / 0.18), 0 8px 10px -6px rgb(15 23 42 / 0.12);
+
+  /* ---------- Ritme vertikal section (P2-4) ---------- */
+  --section-y-primary: 6rem;   /* 96px  - section utama */
+  --section-y-secondary: 4rem; /* 64px  - section pendukung */
 }

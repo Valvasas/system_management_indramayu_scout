@@ -1,60 +1,51 @@
 import React from 'react';
+import { Award, Trophy } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import Link from 'next/link';
+import { EmptyState } from '../ui/EmptyState';
+import { Section } from '../ui/Section';
+import { getAchievements } from '@/lib/repositories';
 
-export const AchievementPreview: React.FC = () => {
-  const achievements = [
-    {
-      id: 1,
-      title: 'Kwarcab Tergiat II Tingkat Jawa Barat',
-      year: '2025',
-      description: 'Penghargaan atas dedikasi dan keaktifan Kwarcab Indramayu dalam membina generasi muda di tingkat daerah.',
-    },
-    {
-      id: 2,
-      title: 'Juara Umum Lomba Tingkat IV (LT-IV) Jabar',
-      year: '2024',
-      description: 'Regu putra utusan Kwarcab Indramayu berhasil meraih predikat regu berprestasi tinggi tingkat daerah.',
-    },
-  ];
+export const AchievementPreview = async () => {
+  const achievements = await getAchievements({ limit: 2 });
 
   return (
-    <section className="py-12 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Prestasi</h2>
-            <p className="mt-1 text-sm text-gray-600">Capaian membanggakan Pramuka Indramayu.</p>
-          </div>
-          <div className="hidden sm:block">
-            <Link href="/prestasi" tabIndex={-1}>
-              <Button variant="outline">Lihat Semua Prestasi</Button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <Section
+      id="prestasi"
+      title="Prestasi terkini"
+      description="Capaian kontingen dan anggota Pramuka Indramayu."
+      action={{ label: 'Semua prestasi', href: '/prestasi' }}
+    >
+      {achievements.length === 0 ? (
+        <EmptyState
+          icon={Trophy}
+          title="Belum ada prestasi tercatat"
+          description="Capaian kontingen akan dicantumkan setelah diverifikasi bidang binamuda."
+        />
+      ) : (
+        <ul className="grid gap-6 md:grid-cols-2">
           {achievements.map((item) => (
-            <Card key={item.id} className="border-l-4 border-l-green-600">
-              <CardContent>
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 leading-tight pr-4">{item.title}</h3>
-                  <Badge variant="brand">{item.year}</Badge>
-                </div>
-                <p className="text-sm text-gray-600">{item.description}</p>
-              </CardContent>
-            </Card>
+            <li key={item.id}>
+              <Card className="h-full border-l-4 border-l-action-primary">
+                <CardContent className="h-full">
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="font-display text-lg font-bold leading-snug text-text-primary">
+                      {item.title}
+                    </h3>
+                    <Badge tone="warning" icon={Award} className="shrink-0">
+                      {item.year}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-text-secondary">
+                    Tingkat {item.level} · {item.recipient}
+                  </p>
+                  <p className="mt-3 text-sm text-text-secondary">{item.description}</p>
+                </CardContent>
+              </Card>
+            </li>
           ))}
-        </div>
-        
-        <div className="mt-8 sm:hidden">
-          <Link href="/prestasi" tabIndex={-1}>
-            <Button variant="outline" className="w-full">Lihat Semua Prestasi</Button>
-          </Link>
-        </div>
-      </div>
-    </section>
+        </ul>
+      )}
+    </Section>
   );
 };

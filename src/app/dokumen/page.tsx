@@ -1,142 +1,113 @@
-'use client';
-
-import React, { useState } from 'react';
-import { mockDocuments } from '@/lib/data/mock-data';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
-import { Badge } from '@/components/ui/Badge';
+import type { Metadata } from 'next';
+import { Download, FileSearch, Lock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { FileTypeBadge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterChips } from '@/components/ui/FilterChips';
+import { PageHeader } from '@/components/ui/Section';
+import { DocumentSearch } from './DocumentSearch';
+import { getDocumentCategories, getDocuments } from '@/lib/repositories';
+import { formatDate } from '@/lib/format';
 
-export default function DokumenPage() {
-  const { t } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Semua');
+export const metadata: Metadata = {
+  title: 'Pusat Dokumen',
+  description:
+    'Petunjuk penyelenggaraan, surat keputusan, formulir, dan template administrasi Kwartir Cabang Indramayu.',
+  alternates: { canonical: '/dokumen' },
+};
 
-  const categories = [
-    'Semua',
-    'Jukran & Juklak',
-    'Surat Keputusan',
-    'Formulir',
-    'Panduan Teknis',
-    'Template Administrasi',
-  ];
+const ALL = 'semua';
 
-  const filteredDocuments = mockDocuments.filter((doc) => {
-    const matchesCat = selectedCategory === 'Semua' || doc.category === selectedCategory;
-    const matchesSearch =
-      doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesCat && matchesSearch;
+export default async function DokumenPage({
+  searchParams,
+}: {
+  searchParams?: { kategori?: string; cari?: string };
+}) {
+  const categories = await getDocumentCategories();
+  const requested = searchParams?.kategori;
+  const active = categories.some((c) => c.value === requested) ? (requested as string) : ALL;
+  const search = (searchParams?.cari ?? '').slice(0, 100);
+
+  const documents = await getDocuments({
+    category: active === ALL ? undefined : active,
+    search: search || undefined,
   });
-
-  const getFormatBadgeVariant = (type: string) => {
-    switch (type.toUpperCase()) {
-      case 'PDF':
-        return 'danger';
-      case 'DOCX':
-        return 'info';
-      case 'XLSX':
-        return 'success';
-      default:
-        return 'default';
-    }
-  };
 
   return (
     <div className="civic-container py-12">
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
-          {t('nav.document') || 'Pusat Unduhan Dokumen'}
-        </h1>
-        <p className="text-neutral-600 max-w-2xl text-base sm:text-lg">
-          Kumpulan berkas resmi, petunjuk penyelenggaraan (Juklak/Juknis), Surat Keputusan, dan formulir administrasi kepramukaan Indramayu.
-        </p>
-      </header>
+      <PageHeader
+        title="Pusat dokumen"
+        description="Petunjuk penyelenggaraan (Jukran/Juklak), surat keputusan, formulir, dan template administrasi kepramukaan Indramayu."
+      />
 
-      {/* Search & Filter Bar */}
       <div className="mb-8 space-y-4">
-        <div className="max-w-md">
-          <label htmlFor="search-doc" className="sr-only">
-            Cari dokumen
-          </label>
-          <input
-            id="search-doc"
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari judul dokumen atau kata kunci..."
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-green-600 text-sm bg-white"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter kategori dokumen">
-          {categories.map((cat) => {
-            const isActive = selectedCategory === cat;
-            return (
-              <button
-                key={cat}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-600 ${
-                  isActive
-                    ? 'bg-green-700 text-white'
-                    : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
+        <DocumentSearch initialValue={search} />
+        <FilterChips
+          label="Filter kategori dokumen"
+          param="kategori"
+          active={active}
+          options={[{ value: ALL, label: 'Semua' }, ...categories]}
+        />
       </div>
 
-      {/* Document Grid */}
-      {filteredDocuments.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <p className="text-neutral-500">Tidak ada dokumen yang sesuai dengan pencarian Anda.</p>
-          </CardContent>
-        </Card>
+      <p className="mb-4 text-sm text-text-secondary" aria-live="polite">
+        {documents.length} dokumen ditemukan
+        {search ? ` untuk pencarian "${search}"` : ''}.
+      </p>
+
+      {documents.length === 0 ? (
+        <EmptyState
+          icon={FileSearch}
+          title="Tidak ada dokumen yang cocok"
+          description="Coba kata kunci lain atau hapus filter kategori untuk melihat seluruh berkas."
+          action={{ label: 'Hapus semua filter', href: '/dokumen' }}
+        />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDocuments.map((doc) => (
-            <Card key={doc.id} hoverable className="h-full flex flex-col justify-between">
-              <CardContent className="p-6 flex-grow flex flex-col">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <Badge variant={getFormatBadgeVariant(doc.type)}>
-                    {doc.type}
-                  </Badge>
-                  <span className="text-xs text-neutral-400 font-mono">
-                    {doc.size}
-                  </span>
-                </div>
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {documents.map((doc) => (
+            <li key={doc.id}>
+              <Card as="article" hoverable className="flex h-full flex-col">
+                <CardContent className="flex flex-1 flex-col">
+                  <div className="flex items-center justify-between gap-2">
+                    <FileTypeBadge type={doc.type} />
+                    <span className="text-xs text-text-secondary">{doc.size}</span>
+                  </div>
 
-                <h2 className="font-bold text-base sm:text-lg text-neutral-900 leading-snug mb-2">
-                  {doc.title}
-                </h2>
+                  <h2 className="mt-3 font-display text-base font-bold leading-snug text-text-primary">
+                    {doc.title}
+                  </h2>
+                  <p className="mt-2 flex-1 text-sm text-text-secondary">{doc.description}</p>
 
-                <p className="text-xs text-neutral-600 flex-grow mb-4 leading-relaxed">
-                  {doc.description || 'Dokumen resmi terverifikasi Kwartir Cabang Indramayu.'}
-                </p>
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle pt-4">
+                    <span className="text-xs text-text-secondary">
+                      Rilis <time dateTime={doc.date}>{formatDate(doc.date)}</time>
+                    </span>
 
-                <div className="pt-4 border-t border-neutral-100 mt-auto flex items-center justify-between">
-                  <span className="text-[11px] text-neutral-400">
-                    Rilis: {doc.date}
-                  </span>
-                  <a
-                    href={doc.url}
-                    download
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 rounded px-2 py-1 min-h-[44px]"
-                    aria-label={`Unduh ${doc.title} format ${doc.type}`}
-                  >
-                    Unduh Berkas <span aria-hidden="true">&darr;</span>
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
+                    {doc.available ? (
+                      <a
+                        href={doc.url}
+                        download
+                        {...(doc.isExternal ? { rel: 'noopener noreferrer' } : {})}
+                        className="inline-flex min-h-touch items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-text-accent hover:underline"
+                        aria-label={`Unduh ${doc.title}, format ${doc.type}, ukuran ${doc.size}`}
+                      >
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                        Unduh
+                      </a>
+                    ) : (
+                      // Tautan '#' atau host di luar allowlist tidak pernah dirender
+                      // sebagai tombol unduh (P1-7).
+                      <span className="inline-flex min-h-touch items-center gap-1.5 px-2 text-xs font-medium text-text-secondary">
+                        <Lock className="h-4 w-4" aria-hidden="true" />
+                        Berkas belum diunggah
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );

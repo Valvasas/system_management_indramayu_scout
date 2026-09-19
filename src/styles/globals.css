@@ -7,16 +7,38 @@
 /* Utility custom. Harus satu file dengan @tailwind: @layer tidak bisa
    berada di file yang di-@import (dulu utilities.css, menyebabkan build gagal). */
 @layer utilities {
+  /* Satu lebar kontainer untuk seluruh situs (P2-4). */
   .civic-container {
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Ritme vertikal: utama vs pendukung. Pemisah antar-section memakai
+     pergantian latar, bukan garis border berulang. */
+  .civic-section {
+    @apply py-16 sm:py-24;
+  }
+
+  .civic-section-sm {
+    @apply py-12 sm:py-16;
   }
 
   .card-subtle {
     @apply bg-surface-base border border-border-subtle rounded-md shadow-sm;
   }
 
-  .skip-to-content {
-    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-surface-base focus:text-action-primary focus:border focus:border-action-primary focus:rounded-md;
+  /* Blok teks panjang: ~65 karakter per baris (P3-7). */
+  .civic-prose {
+    @apply max-w-prose text-text-secondary leading-relaxed;
+  }
+
+  /* Judul kartu sebagai tautan setinggi satu baris gagal target 44px.
+     Pseudo-element ini menjadikan seluruh kartu area sentuhnya (WCAG 2.5.8),
+     tanpa menyarangkan elemen interaktif. Induk wajib `relative`. */
+  .stretched-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
   }
 }
 
@@ -29,11 +51,41 @@
 
   html {
     scroll-behavior: smooth;
+    /* Cegah teks terpotong saat tab/drawer memakai anchor scroll */
+    scroll-padding-top: 6rem;
   }
 
+  /* Satu gaya fokus untuk seluruh situs. Kontras 7.1:1 terhadap putih. */
   *:focus-visible {
-    outline: 2px solid var(--action-primary);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Di atas latar gelap, cincin fokus hijau tenggelam. */
+  .on-inverse *:focus-visible {
+    outline-color: var(--focus-ring-inverse);
+  }
+
+  /* Kontrol bawaan Leaflet tidak memenuhi standar kontras & target sentuh,
+     jadi ditimpa di sini alih-alih dibiarkan apa adanya. */
+  .leaflet-control-attribution {
+    background: var(--surface-base) !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .leaflet-control-attribution a {
+    color: var(--accent-text) !important;
+    text-decoration: underline;
+  }
+
+  .leaflet-bar a {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    line-height: 2.75rem !important;
+    color: var(--text-primary) !important;
   }
 
   @media (prefers-reduced-motion: reduce) {

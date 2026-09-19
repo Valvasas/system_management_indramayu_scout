@@ -1,38 +1,39 @@
 import React from 'react';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
-import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { ButtonLink } from '../ui/Button';
 
-export const Hero: React.FC = () => {
-  return (
-    <section className="relative bg-gray-50 pt-16 pb-20 px-4 sm:px-6 lg:pt-24 lg:pb-28 lg:px-8 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto text-center">
-        <div className="mb-6 flex justify-center">
-          <Badge variant="success">Portal Resmi Kwarcab Indramayu</Badge>
-        </div>
-        
-        <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6">
-          Rumah Digital <br className="hidden sm:inline" />
-          <span className="text-green-700">Gerakan Pramuka Indramayu</span>
-        </h1>
-        
-        <p className="mt-3 max-w-2xl mx-auto text-lg text-gray-600 sm:text-xl md:mt-5 md:max-w-3xl mb-10">
-          Pusat informasi resmi kegiatan, publikasi, dan layanan Kwartir Cabang Gerakan Pramuka Indramayu.
+/**
+ * Satu aksi utama per konteks (P2-3): hanya "Lihat Agenda Kegiatan" yang
+ * berbobot penuh; aksi kedua sengaja subordinat (ghost + panah).
+ */
+export const Hero: React.FC = () => (
+  <section aria-labelledby="hero-title" className="bg-surface-subtle">
+    <div className="civic-container py-16 sm:py-24 lg:py-28">
+      <div className="max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-widest text-text-accent">
+          Portal resmi Kwartir Cabang
         </p>
-        
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Link href="/agenda" tabIndex={-1}>
-            <Button variant="primary" size="lg" className="w-full sm:w-auto">
-              Lihat Agenda Kegiatan
-            </Button>
-          </Link>
-          <Link href="/berita" tabIndex={-1}>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Baca Warta Terbaru
-            </Button>
-          </Link>
+        <h1
+          id="hero-title"
+          className="mt-4 font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary"
+        >
+          Rumah digital Gerakan Pramuka Indramayu
+        </h1>
+        <p className="mt-6 max-w-prose text-lg text-text-secondary leading-relaxed">
+          Jadwal kegiatan, warta kwartir, dokumen resmi, dan layanan informasi bagi anggota,
+          pembina, gugus depan, serta masyarakat Kabupaten Indramayu.
+        </p>
+
+        <div className="mt-10 flex flex-col sm:flex-row gap-3">
+          <ButtonLink href="/agenda" size="lg" className="w-full sm:w-auto">
+            Lihat Agenda Kegiatan
+          </ButtonLink>
+          <ButtonLink href="/berita" variant="ghost" size="lg" className="w-full sm:w-auto">
+            Baca warta terbaru
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </ButtonLink>
         </div>
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);

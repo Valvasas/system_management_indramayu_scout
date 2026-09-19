@@ -1,3 +1,14 @@
+export type NewsStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export type AgendaStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+
+export type AchievementLevel =
+  | 'Kecamatan'
+  | 'Kabupaten'
+  | 'Provinsi'
+  | 'Nasional'
+  | 'Internasional';
+
 export interface NewsItem {
   id: string;
   slug: string;
@@ -9,7 +20,7 @@ export interface NewsItem {
   author: string;
   publishedAt: string;
   tags: string[];
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: NewsStatus;
 }
 
 export interface AgendaItem {
@@ -21,7 +32,7 @@ export interface AgendaItem {
   location: string;
   organizer: string;
   description: string;
-  status: 'UPCOMING' | 'ONGOING' | 'COMPLETED';
+  status: AgendaStatus;
   contactPerson: string;
 }
 
@@ -49,7 +60,7 @@ export interface AchievementItem {
   id: string;
   slug: string;
   title: string;
-  level: 'Kecamatan' | 'Kabupaten' | 'Provinsi' | 'Nasional' | 'Internasional';
+  level: AchievementLevel;
   year: number;
   recipient: string;
   description: string;

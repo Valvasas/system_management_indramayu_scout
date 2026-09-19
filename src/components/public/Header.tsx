@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
-import { LanguageSelector } from '../ui/LanguageSelector';
+import { cn } from '@/lib/utils';
+import { site } from '@/lib/site';
 
 const navLinks = [
   { label: 'Beranda', href: '/' },
@@ -22,108 +24,146 @@ export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
-  useEffect(() => {
+  const close = useCallback((returnFocus = false) => {
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+    if (returnFocus) toggleRef.current?.focus();
+  }, []);
 
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+
+  // Escape menutup, Tab terperangkap di dalam drawer, scroll body terkunci.
   useEffect(() => {
     if (!isMobileMenuOpen) return;
-    const handleEscape = (e: KeyboardEvent) => {
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsMobileMenuOpen(false);
-        toggleRef.current?.focus();
+        close(true);
+        return;
+      }
+      if (e.key !== 'Tab' || !drawerRef.current) return;
+      const focusables = drawerRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isMobileMenuOpen]);
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isMobileMenuOpen, close]);
 
   const linkClass = (href: string, extra: string) =>
-    `${extra} font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 rounded ${
-      isActive(href) ? 'text-green-800 underline underline-offset-8 decoration-2' : 'text-neutral-700 hover:text-green-800'
-    }`;
+    cn(
+      extra,
+      'font-medium rounded-md transition-colors',
+      isActive(href)
+        ? 'text-text-accent bg-action-secondary'
+        : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle',
+    );
 
   return (
-    <header className="bg-white border-b border-neutral-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
-          <div className="flex items-center">
-            <Link
-              href="/"
-              className="flex-shrink-0 flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 rounded"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="h-10 w-auto sm:h-12" src="/brand/logo.svg" alt="" width={120} height={36} />
-              <div className="ml-3 flex flex-col justify-center">
-                <span className="text-sm font-bold text-neutral-900 leading-tight">KWARTIR CABANG</span>
-                <span className="text-xs text-neutral-700 leading-tight">GERAKAN PRAMUKA INDRAMAYU</span>
-              </div>
-            </Link>
-          </div>
+    <header className="bg-surface-base border-b border-border-subtle sticky top-0 z-40">
+      <div className="civic-container">
+        <div className="flex items-center justify-between gap-4 h-20">
+          <Link
+            href="/"
+            className="flex items-center gap-3 rounded-md py-2"
+            aria-label={`${site.name} — kembali ke beranda`}
+          >
+            <Image
+              src="/brand/logo.svg"
+              alt=""
+              width={48}
+              height={48}
+              priority
+              className="h-10 w-10 sm:h-12 sm:w-12"
+            />
+            <span className="flex flex-col justify-center leading-tight">
+              <span className="text-sm font-bold text-text-primary">KWARTIR CABANG</span>
+              <span className="text-xs text-text-secondary">GERAKAN PRAMUKA INDRAMAYU</span>
+            </span>
+          </Link>
 
-          <nav aria-label="Navigasi utama" className="hidden lg:flex space-x-5 items-center">
+          <nav aria-label="Navigasi utama" className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 aria-current={isActive(link.href) ? 'page' : undefined}
-                className={linkClass(link.href, 'px-1 py-3 text-sm inline-flex items-center min-h-[44px]')}
+                className={linkClass(link.href, 'inline-flex items-center min-h-touch px-3 text-sm')}
               >
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center">
-            <LanguageSelector />
-          </div>
-
-          <div className="flex items-center lg:hidden">
-            <button
-              ref={toggleRef}
-              type="button"
-              className="inline-flex items-center justify-center rounded-md text-neutral-700 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700 min-h-[44px] min-w-[44px]"
-              aria-controls="mobile-menu"
-              aria-expanded={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen((open) => !open)}
-            >
-              <span className="sr-only">{isMobileMenuOpen ? 'Tutup menu utama' : 'Buka menu utama'}</span>
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="h-6 w-6" aria-hidden="true" />
-              )}
-            </button>
-          </div>
+          <button
+            ref={toggleRef}
+            type="button"
+            className="lg:hidden inline-flex items-center justify-center rounded-md min-h-touch min-w-touch text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+            aria-controls="mobile-menu"
+            aria-expanded={isMobileMenuOpen}
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+          >
+            <span className="sr-only">{isMobileMenuOpen ? 'Tutup menu utama' : 'Buka menu utama'}</span>
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" aria-hidden="true" />
+            ) : (
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            )}
+          </button>
         </div>
       </div>
 
       {isMobileMenuOpen && (
-        <nav
-          id="mobile-menu"
-          aria-label="Navigasi utama (ponsel)"
-          className="lg:hidden absolute w-full bg-white border-b border-neutral-200 z-50 shadow-md max-h-[calc(100vh-5rem)] overflow-y-auto"
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={isActive(link.href) ? 'page' : undefined}
-                className={linkClass(link.href, 'flex items-center px-3 min-h-[44px] text-base hover:bg-neutral-50')}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="px-3 py-2">
-              <LanguageSelector />
-            </div>
+        <>
+          <div
+            className="lg:hidden fixed inset-0 top-20 z-40 bg-surface-scrim"
+            onClick={() => close(true)}
+            aria-hidden="true"
+          />
+          <div
+            ref={drawerRef}
+            className="lg:hidden absolute inset-x-0 z-50 bg-surface-base border-b border-border-subtle shadow-md max-h-[calc(100vh-5rem)] overflow-y-auto"
+          >
+            <nav id="mobile-menu" aria-label="Navigasi utama (ponsel)" className="civic-container py-3">
+              <ul className="space-y-1">
+                {navLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      aria-current={isActive(link.href) ? 'page' : undefined}
+                      className={linkClass(link.href, 'flex items-center min-h-touch px-3 text-base')}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
-        </nav>
+        </>
       )}
     </header>
   );

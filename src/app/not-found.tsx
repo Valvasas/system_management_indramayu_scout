@@ -1,34 +1,33 @@
 import React from 'react';
-import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Compass } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/Button';
+
+export const metadata: Metadata = {
+  title: 'Halaman tidak ditemukan',
+  robots: { index: false },
+};
 
 export default function NotFound() {
   return (
-    <div className="civic-container py-20 min-h-[65vh] flex flex-col items-center justify-center text-center">
-      <div className="w-20 h-20 rounded-full bg-green-50 text-green-700 flex items-center justify-center mb-6 shadow-sm border border-green-200">
-        <Compass className="h-9 w-9" aria-hidden="true" />
-      </div>
-      <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-100 px-3 py-1 rounded-full mb-3">
-        Kode Galat: 404
+    <div className="civic-container flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-action-secondary text-text-accent">
+        <Compass className="h-8 w-8" aria-hidden="true" />
       </span>
-      <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
-        Waduh, Salah Jejak!
-      </h1>
-      <p className="text-neutral-600 max-w-md text-base sm:text-lg mb-8 leading-relaxed">
-        Halaman atau rute yang Kakak tuju sepertinya tidak ditemukan, telah dipindahkan, atau alamat tautannya keliru.
+      <p className="mt-6 text-sm font-semibold uppercase tracking-widest text-text-secondary">
+        Galat 404
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        <Link href="/">
-          <Button variant="primary">
-            Kembali ke Beranda
-          </Button>
-        </Link>
-        <Link href="/kontak">
-          <Button variant="outline">
-            Hubungi Bantuan
-          </Button>
-        </Link>
+      <h1 className="mt-2 font-display text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">
+        Halaman tidak ditemukan
+      </h1>
+      <p className="mt-4 max-w-prose text-text-secondary">
+        Alamat yang Anda tuju tidak tersedia, sudah dipindahkan, atau tautannya keliru.
+      </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <ButtonLink href="/">Kembali ke beranda</ButtonLink>
+        <ButtonLink href="/kontak" variant="ghost">
+          Hubungi sekretariat
+        </ButtonLink>
       </div>
     </div>
   );

@@ -1,150 +1,161 @@
-'use client';
-
-import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { mockAgendas } from '@/lib/data/mock-data';
-import { Badge } from '@/components/ui/Badge';
+import { notFound } from 'next/navigation';
+import { ArrowLeft, CalendarDays, MapPin, Phone, Users } from 'lucide-react';
+import { AgendaStatusBadge, agendaStatusLabel } from '@/components/ui/Badge';
+import { ButtonLink } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { getAgendaBySlug, getAgendaSlugs } from '@/lib/repositories';
+import { formatDate, formatDateRange } from '@/lib/format';
+import { absoluteUrl } from '@/lib/site';
 
-export default function AgendaDetailPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  const agenda = mockAgendas.find((a) => a.slug === slug);
+interface Params {
+  params: { slug: string };
+}
 
-  if (!agenda) {
-    return (
-      <div className="civic-container py-20 text-center">
-        <h1 className="text-2xl font-bold text-neutral-800 mb-4">Agenda Tidak Ditemukan</h1>
-        <p className="text-neutral-600 mb-6">
-          Kegiatan dengan alamat tautan tersebut tidak terdaftar atau telah diarsipkan.
-        </p>
-        <Link href="/agenda">
-          <Button variant="primary">Kembali ke Daftar Agenda</Button>
-        </Link>
-      </div>
-    );
-  }
+/** Slug di luar daftar -> 404 sungguhan, bukan halaman galat berstatus 200. */
+export const dynamicParams = false;
 
-  const formatDate = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(date);
-    } catch {
-      return isoString;
-    }
+export async function generateStaticParams() {
+  const slugs = await getAgendaSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const agenda = await getAgendaBySlug(params.slug);
+  if (!agenda) return { title: 'Agenda tidak ditemukan', robots: { index: false } };
+
+  const url = `/agenda/${agenda.slug}`;
+  return {
+    title: agenda.title,
+    description: `${agenda.description} — ${formatDateRange(agenda.dateStart, agenda.dateEnd)} di ${agenda.location}.`,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      title: agenda.title,
+      description: agenda.description,
+      url: absoluteUrl(url),
+    },
   };
+}
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'UPCOMING':
-        return 'info';
-      case 'ONGOING':
-        return 'success';
-      case 'COMPLETED':
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
+export default async function AgendaDetailPage({ params }: Params) {
+  const agenda = await getAgendaBySlug(params.slug);
+  if (!agenda) notFound();
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'UPCOMING':
-        return 'Akan Datang';
-      case 'ONGOING':
-        return 'Sedang Berlangsung';
-      case 'COMPLETED':
-        return 'Selesai';
-      default:
-        return status;
-    }
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: agenda.title,
+    description: agenda.description,
+    startDate: agenda.dateStart,
+    endDate: agenda.dateEnd,
+    eventStatus:
+      agenda.status === 'CANCELLED'
+        ? 'https://schema.org/EventCancelled'
+        : 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: { '@type': 'Place', name: agenda.location },
+    organizer: { '@type': 'Organization', name: agenda.organizer },
+    url: absoluteUrl(`/agenda/${agenda.slug}`),
   };
 
   return (
-    <div className="civic-container py-12 max-w-4xl">
-      <nav className="mb-6" aria-label="Breadcrumb">
+    <div className="civic-container py-12">
+      <nav aria-label="Remah roti" className="mb-6">
         <Link
           href="/agenda"
-          className="text-green-700 font-medium inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 focus:ring-green-600 rounded"
+          className="inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-medium text-text-accent hover:underline"
         >
-          <span aria-hidden="true">&larr;</span> Kembali ke Daftar Agenda
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Kembali ke daftar agenda
         </Link>
       </nav>
 
-      <Card>
-        <CardContent className="p-6 sm:p-10">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Badge variant={getStatusBadgeVariant(agenda.status)}>
-              {getStatusLabel(agenda.status)}
-            </Badge>
-            <span className="text-sm text-neutral-500 font-medium">
-              Penyelenggara: {agenda.organizer}
-            </span>
+      <article className="max-w-3xl">
+        <AgendaStatusBadge status={agenda.status} />
+        <h1 className="mt-4 font-display text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-text-primary">
+          {agenda.title}
+        </h1>
+
+        <Card className="mt-8">
+          <CardContent>
+            <h2 className="sr-only">Rincian pelaksanaan</h2>
+            <dl className="grid gap-5 sm:grid-cols-2">
+              <div className="flex gap-3">
+                <dt className="shrink-0">
+                  <CalendarDays className="h-5 w-5 text-text-muted" aria-hidden="true" />
+                  <span className="sr-only">Jadwal</span>
+                </dt>
+                <dd>
+                  <span className="block text-xs text-text-secondary">Jadwal pelaksanaan</span>
+                  <strong className="text-text-primary">
+                    <time dateTime={agenda.dateStart}>
+                      {formatDateRange(agenda.dateStart, agenda.dateEnd)}
+                    </time>
+                  </strong>
+                </dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="shrink-0">
+                  <MapPin className="h-5 w-5 text-text-muted" aria-hidden="true" />
+                  <span className="sr-only">Lokasi</span>
+                </dt>
+                <dd>
+                  <span className="block text-xs text-text-secondary">Lokasi kegiatan</span>
+                  <strong className="text-text-primary">{agenda.location}</strong>
+                </dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="shrink-0">
+                  <Users className="h-5 w-5 text-text-muted" aria-hidden="true" />
+                  <span className="sr-only">Penyelenggara</span>
+                </dt>
+                <dd>
+                  <span className="block text-xs text-text-secondary">Penyelenggara</span>
+                  <strong className="text-text-primary">{agenda.organizer}</strong>
+                </dd>
+              </div>
+              <div className="flex gap-3">
+                <dt className="shrink-0">
+                  <Phone className="h-5 w-5 text-text-muted" aria-hidden="true" />
+                  <span className="sr-only">Narahubung</span>
+                </dt>
+                <dd>
+                  <span className="block text-xs text-text-secondary">Narahubung</span>
+                  <strong className="text-text-primary">{agenda.contactPerson}</strong>
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+
+        <section className="mt-8">
+          <h2 className="font-display text-xl font-bold text-text-primary">Deskripsi kegiatan</h2>
+          <p className="mt-3 civic-prose">{agenda.description}</p>
+          <p className="mt-3 text-sm text-text-muted">
+            Status terkini: {agendaStatusLabel(agenda.status)} · diperbarui{' '}
+            {formatDate(agenda.dateStart)}.
+          </p>
+        </section>
+
+        <section className="mt-8 flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-semibold text-text-primary">Petunjuk pelaksanaan & teknis</h2>
+            <p className="text-sm text-text-secondary">
+              Edaran dan panduan resmi panitia tersedia di pusat dokumen.
+            </p>
           </div>
+          <ButtonLink href="/dokumen" variant="outline" className="shrink-0">
+            Buka pusat dokumen
+          </ButtonLink>
+        </section>
+      </article>
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 leading-tight mb-6">
-            {agenda.title}
-          </h1>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-neutral-50 rounded-lg border border-neutral-200 mb-8">
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-neutral-500 block">Jadwal Pelaksanaan</span>
-                <strong className="text-neutral-800">
-                  {formatDate(agenda.dateStart)}
-                  {agenda.dateEnd && agenda.dateEnd !== agenda.dateStart
-                    ? ` s.d. ${formatDate(agenda.dateEnd)}`
-                    : ''}
-                </strong>
-              </div>
-              <div>
-                <span className="text-neutral-500 block">Lokasi Kegiatan</span>
-                <strong className="text-neutral-800">{agenda.location}</strong>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-neutral-500 block">Narahubung / Kontak</span>
-                <strong className="text-neutral-800">{agenda.contactPerson}</strong>
-              </div>
-              <div>
-                <span className="text-neutral-500 block">Status Pelaksanaan</span>
-                <strong className="text-neutral-800">{getStatusLabel(agenda.status)}</strong>
-              </div>
-            </div>
-          </div>
-
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-neutral-900 mb-3">Deskripsi Kegiatan</h2>
-            <div className="prose prose-neutral max-w-none text-neutral-700 leading-relaxed space-y-4">
-              <p>{agenda.description}</p>
-              <p>
-                Kegiatan ini dirancang untuk menumbuhkan kedisiplinan, mempererat persaudaraan antaranggota
-                Gerakan Pramuka se-Kwartir Cabang Indramayu, serta mengasah keterampilan hidup dan kepemimpinan.
-              </p>
-            </div>
-          </section>
-
-          <section className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-neutral-900">Petunjuk Pelaksanaan & Teknis</h3>
-              <p className="text-xs text-neutral-500">Unduh dokumen edaran dan panduan resmi panitia.</p>
-            </div>
-            <Link href="/dokumen">
-              <Button variant="outline">
-                Lihat di Pusat Dokumen &rarr;
-              </Button>
-            </Link>
-          </section>
-        </CardContent>
-      </Card>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </div>
   );
 }

@@ -1,148 +1,165 @@
-'use client';
-
-import React, { useState } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Image as ImageIcon } from 'lucide-react';
-import { mockNews } from '@/lib/data/mock-data';
-import { Badge } from '@/components/ui/Badge';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { notFound } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { CategoryBadge } from '@/components/ui/Badge';
+import { MediaFrame } from '@/components/ui/MediaFrame';
+import { ShareLink } from './ShareLink';
+import { getNews, getNewsBySlug, getNewsSlugs } from '@/lib/repositories';
+import { formatDate } from '@/lib/format';
+import { absoluteUrl, site } from '@/lib/site';
 
-export default function DetailBeritaPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  const news = mockNews.find((n) => n.slug === slug);
-  const [copied, setCopied] = useState(false);
+interface Params {
+  params: { slug: string };
+}
 
-  if (!news) {
-    return (
-      <div className="civic-container py-20 text-center">
-        <h1 className="text-2xl font-bold text-neutral-800 mb-4">Berita Tidak Ditemukan</h1>
-        <p className="text-neutral-600 mb-6">
-          Warta yang Anda cari mungkin telah diarsipkan atau tautannya keliru.
-        </p>
-        <Link href="/berita">
-          <Button variant="primary">Kembali ke Daftar Berita</Button>
-        </Link>
-      </div>
-    );
-  }
+/**
+ * Hanya slug hasil generateStaticParams yang dilayani. Tanpa ini, slug asing
+ * dirender on-demand dan menghasilkan "soft 404" (halaman 404 dengan status 200)
+ * yang membuat mesin pencari mengindeks halaman galat.
+ */
+export const dynamicParams = false;
 
-  const formatDate = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      return new Intl.DateTimeFormat('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }).format(date);
-    } catch {
-      return isoString;
-    }
+export async function generateStaticParams() {
+  const slugs = await getNewsSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const news = await getNewsBySlug(params.slug);
+  if (!news) return { title: 'Berita tidak ditemukan', robots: { index: false } };
+
+  const url = `/berita/${news.slug}`;
+  return {
+    title: news.title,
+    description: news.excerpt,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      title: news.title,
+      description: news.excerpt,
+      url: absoluteUrl(url),
+      publishedTime: news.publishedAt,
+      authors: [news.author],
+      tags: news.tags,
+    },
   };
+}
 
-  const handleCopyLink = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+export default async function DetailBeritaPage({ params }: Params) {
+  const news = await getNewsBySlug(params.slug);
+  if (!news) notFound();
+
+  const related = (await getNews({ category: undefined, limit: 4 })).filter(
+    (n) => n.slug !== news.slug,
+  );
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: news.title,
+    description: news.excerpt,
+    datePublished: news.publishedAt,
+    author: { '@type': 'Organization', name: news.author },
+    publisher: {
+      '@type': 'Organization',
+      name: site.organization,
+      logo: { '@type': 'ImageObject', url: absoluteUrl(site.logo) },
+    },
+    mainEntityOfPage: absoluteUrl(`/berita/${news.slug}`),
   };
 
   return (
-    <article className="civic-container py-12 max-w-3xl">
-      <nav className="mb-6" aria-label="Breadcrumb">
+    <div className="civic-container py-12">
+      <nav aria-label="Remah roti" className="mb-6">
         <Link
           href="/berita"
-          className="text-green-700 font-medium inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 focus:ring-green-600 rounded"
+          className="inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-medium text-text-accent hover:underline"
         >
-          <span aria-hidden="true">&larr;</span> Kembali ke Warta Terkini
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Kembali ke daftar berita
         </Link>
       </nav>
 
-      <header className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="brand">{news.category}</Badge>
-          <span className="text-xs text-neutral-500">
-            {formatDate(news.publishedAt)}
-          </span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 leading-tight mb-4">
-          {news.title}
-        </h1>
-        <div className="flex items-center gap-3 text-sm text-neutral-600 pb-6 border-b border-neutral-200">
-          <span>Oleh: <strong className="text-neutral-800">{news.author}</strong></span>
-          <span aria-hidden="true">•</span>
-          <span>Kwarcab Gerakan Pramuka Indramayu</span>
-        </div>
-      </header>
+      <article className="max-w-3xl">
+        <header>
+          <CategoryBadge>{news.category}</CategoryBadge>
+          <h1 className="mt-4 font-display text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-text-primary">
+            {news.title}
+          </h1>
+          <p className="mt-4 border-b border-border-subtle pb-6 text-sm text-text-secondary">
+            <time dateTime={news.publishedAt}>{formatDate(news.publishedAt)}</time>
+            {' · '}
+            Oleh {news.author}
+          </p>
+        </header>
 
-      {/* Featured Image Placeholder / Cover */}
-      <div className="aspect-video bg-neutral-200 rounded-lg overflow-hidden mb-8 border border-neutral-300 relative flex items-center justify-center">
-        <div className="text-center p-6 text-neutral-500">
-          <ImageIcon className="h-10 w-10 mx-auto mb-2" aria-hidden="true" />
-          <span className="text-sm font-medium">Dokumentasi: {news.title}</span>
+        <MediaFrame
+          src={news.coverImage}
+          alt={`Dokumentasi kegiatan: ${news.title}`}
+          aspect="video"
+          sizes="(max-width: 768px) 100vw, 768px"
+          priority
+          className="mt-8 rounded-lg border border-border-subtle"
+          fallbackLabel="Foto dokumentasi kegiatan ini belum diunggah"
+        />
+
+        <div className="mt-8 space-y-5 text-base leading-relaxed text-text-primary">
+          <p className="text-lg font-medium">{news.excerpt}</p>
+          <p>{news.content}</p>
         </div>
-      </div>
 
-      {/* Article Body */}
-      <div className="prose prose-neutral max-w-none text-neutral-800 leading-relaxed space-y-5 text-base sm:text-lg">
-        <p className="lead font-medium text-lg sm:text-xl text-neutral-900">
-          {news.excerpt}
-        </p>
-        <p>{news.content}</p>
-        <p>
-          Gerakan Pramuka Kwartir Cabang Indramayu senantiasa berkomitmen untuk memberikan pembinaan
-          karakter terbaik bagi peserta didik dari jenjang Siaga, Penggalang, Penegak, hingga Pandega.
-          Dukungan seluruh jajaran pimpinan kwartir ranting dan gugus depan pangkalan sekolah menjadi
-          kunci terlaksananya kegiatan positif ini secara berkesinambungan.
-        </p>
-        <p>
-          Melalui kegiatan ini diharapkan para kader pramuka di wilayah Kabupaten Indramayu dapat semakin
-          tangguh, mandiri, peduli terhadap sesama dan lingkungan, serta siap menjadi teladan bagi masyarakat sekitar.
-        </p>
-      </div>
-
-      {/* Tags */}
-      {news.tags && news.tags.length > 0 && (
-        <div className="mt-8 pt-6 border-t border-neutral-200">
-          <span className="text-xs uppercase font-semibold text-neutral-500 block mb-2">Topik Terkait:</span>
-          <div className="flex flex-wrap gap-2">
-            {news.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 bg-neutral-100 text-neutral-700 text-xs rounded-full font-medium"
-              >
-                #{tag}
-              </span>
-            ))}
+        {news.tags.length > 0 && (
+          <div className="mt-8 border-t border-border-subtle pt-6">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
+              Topik terkait
+            </h2>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {news.tags.map((tag) => (
+                <li
+                  key={tag}
+                  className="rounded-pill border border-border-subtle bg-surface-subtle px-3 py-1 text-xs font-medium text-text-secondary"
+                >
+                  {tag}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
+
+        <footer className="mt-8 flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-text-primary">Bagikan warta ini</p>
+          <ShareLink title={news.title} />
+        </footer>
+      </article>
+
+      {related.length > 0 && (
+        <section aria-labelledby="terkait-title" className="mt-12 max-w-3xl">
+          <h2 id="terkait-title" className="font-display text-xl font-bold text-text-primary">
+            Warta lainnya
+          </h2>
+          <ul className="mt-4 divide-y divide-border-subtle border-t border-border-subtle">
+            {related.slice(0, 3).map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={`/berita/${item.slug}`}
+                  className="flex min-h-touch flex-col justify-center rounded-md py-4 hover:text-text-accent"
+                >
+                  <span className="font-medium">{item.title}</span>
+                  <time className="text-xs text-text-secondary" dateTime={item.publishedAt}>
+                    {formatDate(item.publishedAt)}
+                  </time>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      {/* Social Share */}
-      <footer className="mt-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <span className="text-sm font-semibold text-neutral-700">Bagikan Warta Ini:</span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyLink}
-            aria-label="Salin tautan berita"
-          >
-            {copied ? 'Tersalin' : 'Salin Tautan'}
-          </Button>
-          <a
-            href={`https://wa.me/?text=${encodeURIComponent(news.title + ' - ' + (typeof window !== 'undefined' ? window.location.href : ''))}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded min-h-[44px] inline-flex items-center"
-          >
-            WhatsApp
-          </a>
-        </div>
-      </footer>
-    </article>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </div>
   );
 }

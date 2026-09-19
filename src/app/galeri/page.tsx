@@ -1,64 +1,74 @@
-'use client';
-
-import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { MapPin, Tent } from 'lucide-react';
-import { mockGalleryAlbums } from '@/lib/data/mock-data';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { Images, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { CategoryBadge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { MediaFrame } from '@/components/ui/MediaFrame';
+import { PageHeader } from '@/components/ui/Section';
+import { getGalleryAlbums } from '@/lib/repositories';
+import { formatDate } from '@/lib/format';
 
-export default function GaleriPage() {
-  const { t } = useLanguage();
+export const metadata: Metadata = {
+  title: 'Galeri Dokumentasi',
+  description:
+    'Rekaman visual perkemahan, upacara, dan kegiatan bakti Pramuka di Kabupaten Indramayu.',
+  alternates: { canonical: '/galeri' },
+};
+
+export default async function GaleriPage() {
+  const albums = await getGalleryAlbums();
 
   return (
     <div className="civic-container py-12">
-      <header className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 tracking-tight mb-3">
-          {t('nav.gallery') || 'Galeri Dokumentasi'}
-        </h1>
-        <p className="text-neutral-600 max-w-2xl text-base sm:text-lg">
-          Rekaman visual aktivitas, perkemahan, upacara, dan kegiatan bakti Pramuka di Kabupaten Indramayu.
-        </p>
-      </header>
+      <PageHeader
+        title="Galeri dokumentasi"
+        description="Rekaman visual perkemahan, upacara, dan kegiatan bakti Pramuka di Kabupaten Indramayu."
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockGalleryAlbums.map((album) => (
-          <Link
-            key={album.id}
-            href={`/galeri/${album.slug}`}
-            className="group block focus:outline-none focus:ring-2 focus:ring-green-600 rounded-lg"
-          >
-            <Card hoverable className="overflow-hidden h-full flex flex-col transition-all duration-200 group-hover:border-green-300">
-              <div className="aspect-[4/3] bg-neutral-200 relative overflow-hidden flex items-center justify-center">
-                <Tent className="h-12 w-12 text-neutral-500" aria-hidden="true" />
-                <div className="absolute top-3 left-3">
-                  <Badge variant="brand">{album.category}</Badge>
-                </div>
-                <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2.5 py-1 rounded backdrop-blur-sm font-medium">
-                  {album.photos.length} Foto
-                </div>
-              </div>
-
-              <CardContent className="p-5 flex-grow flex flex-col justify-between">
-                <div>
-                  <h2 className="font-bold text-lg text-neutral-900 group-hover:text-green-700 transition-colors line-clamp-1 mb-1">
-                    {album.title}
+      {albums.length === 0 ? (
+        <EmptyState
+          icon={Images}
+          title="Album belum tersedia"
+          description="Dokumentasi diunggah setelah kurasi dan pemeriksaan privasi anggota anak selesai."
+        />
+      ) : (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {albums.map((album) => (
+            <li key={album.id}>
+              <Card as="article" hoverable className="flex h-full flex-col">
+                <MediaFrame
+                  src={album.coverImage}
+                  alt=""
+                  aspect="4/3"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  fallbackLabel="Foto sampul menyusul"
+                >
+                  <div className="absolute left-3 top-3">
+                    <CategoryBadge>{album.category}</CategoryBadge>
+                  </div>
+                </MediaFrame>
+                <CardContent className="flex flex-1 flex-col">
+                  <h2 className="font-display text-lg font-bold leading-snug text-text-primary">
+                    <Link href={`/galeri/${album.slug}`} className="rounded-md hover:text-text-accent">
+                      {album.title}
+                    </Link>
                   </h2>
-                  <p className="text-sm text-neutral-600 line-clamp-2 mb-3">
-                    {album.description}
+                  <p className="mt-2 flex-1 text-sm text-text-secondary">{album.description}</p>
+                  <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                      {album.location}
+                    </span>
+                    <time dateTime={album.date}>{formatDate(album.date)}</time>
+                    <span>{album.photos.length} foto</span>
                   </p>
-                </div>
-
-                <div className="text-xs text-neutral-500 flex items-center justify-between pt-3 border-t border-neutral-100">
-                  <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" aria-hidden="true" />{album.location}</span>
-                  <time dateTime={album.date}>{album.date}</time>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+                </CardContent>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
