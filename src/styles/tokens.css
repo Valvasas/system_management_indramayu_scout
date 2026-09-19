@@ -52,9 +52,14 @@
   /* Brand Aliases */
   --brand-50: var(--green-50);
   --brand-100: var(--green-100);
+  --brand-200: var(--green-200);
+  --brand-300: var(--green-300);
+  --brand-400: var(--green-400);
   --brand-500: var(--green-500);
   --brand-600: var(--green-600);
   --brand-700: var(--green-700);
+  --brand-800: var(--green-800);
+  --brand-900: var(--green-900);
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);

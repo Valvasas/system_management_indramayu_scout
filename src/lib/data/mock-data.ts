@@ -6,6 +6,7 @@ import {
   OrganizationMember,
   KwarranInfo,
   StatSummary,
+  DocumentItem,
 } from '../../types';
 
 export const mockNews: NewsItem[] = [
@@ -290,3 +291,56 @@ export const statSummary: StatSummary = {
   totalActivities: 125,
   verifiedPercent: 88,
 };
+
+export const mockDocuments: DocumentItem[] = [
+  {
+    id: 'doc-1',
+    title: 'Petunjuk Penyelenggaraan Raimuna Cabang Indramayu 2026',
+    category: 'Jukran & Juklak',
+    type: 'PDF',
+    size: '2.4 MB',
+    date: '2026-08-20',
+    url: '#',
+    description: 'Pedoman teknis pelaksanaan Raimuna Cabang bagi pangkalan SMA/SMK/MA se-Kabupaten Indramayu.',
+  },
+  {
+    id: 'doc-2',
+    title: 'Surat Keputusan Susunan Pengurus Kwarcab Indramayu',
+    category: 'Surat Keputusan',
+    type: 'PDF',
+    size: '1.8 MB',
+    date: '2026-07-15',
+    url: '#',
+    description: 'Salinan resmi SK pengurus Kwartir Cabang masa bakti 2026-2031.',
+  },
+  {
+    id: 'doc-3',
+    title: 'Formulir Pendaftaran Ulang Gugus Depan 2026',
+    category: 'Formulir',
+    type: 'DOCX',
+    size: '420 KB',
+    date: '2026-06-01',
+    url: '#',
+    description: 'Formulir registrasi dan pemutakhiran data Gudep pangkalan SD, SMP, SMA.',
+  },
+  {
+    id: 'doc-4',
+    title: 'Panduan Penilaian Lomba Tingkat Regu Penggalang (LT-III)',
+    category: 'Panduan Teknis',
+    type: 'PDF',
+    size: '3.1 MB',
+    date: '2026-08-05',
+    url: '#',
+    description: 'Kriteria dan rubrik penilaian mata lomba kepramukaan untuk pembina pendamping.',
+  },
+  {
+    id: 'doc-5',
+    title: 'Format Laporan Bulanan Kegiatan Kwartir Ranting',
+    category: 'Template Administrasi',
+    type: 'XLSX',
+    size: '150 KB',
+    date: '2026-05-10',
+    url: '#',
+    description: 'Template spreadsheet standar pelaporan aktivitas kepramukaan di tingkat ranting.',
+  },
+];

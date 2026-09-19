@@ -1,11 +1,11 @@
 "use client";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function TentangPage() {
   const { t } = useLanguage();
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-green-800 mb-8">{t("about_title") || "Tentang Kami"}</h1>
+      <h1 className="text-4xl font-bold text-green-800 mb-8">{t("nav.about")}</h1>
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-4">Sejarah Gerakan Pramuka Indramayu</h2>
         <p className="text-neutral-700 leading-relaxed">

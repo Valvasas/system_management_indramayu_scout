@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# environment (jangan pernah di-commit; pakai .env.example)
+.env
+.env.local
+.env.*.local
+
+# secrets
+*.pem
+
+# testing
+/coverage
+/playwright-report
+/test-results
+
+# misc
+.DS_Store
+Thumbs.db
+npm-debug.log*
+.vercel

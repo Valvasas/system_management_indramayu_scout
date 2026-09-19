@@ -11,7 +11,7 @@ export const Header: React.FC = () => {
   const navLinks = [
     { label: 'Beranda', href: '/' },
     { label: 'Tentang', href: '/tentang' },
-    { label: 'Struktur', href: '/struktur' },
+    { label: 'Struktur', href: '/struktur-organisasi' },
     { label: 'Berita', href: '/berita' },
     { label: 'Agenda', href: '/agenda' },
     { label: 'Galeri', href: '/galeri' },
@@ -57,7 +57,9 @@ export const Header: React.FC = () => {
 
           <div className="hidden md:flex items-center space-x-4">
             <LanguageSelector />
-            <Button variant="primary">Masuk</Button>
+            <Link href="/masuk">
+              <Button variant="primary">Masuk</Button>
+            </Link>
           </div>
 
           <div className="flex items-center md:hidden">
@@ -94,7 +96,9 @@ export const Header: React.FC = () => {
               <LanguageSelector />
             </div>
             <div className="px-3 py-2 mt-2">
-              <Button variant="primary" className="w-full">Masuk</Button>
+              <Link href="/masuk" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="primary" className="w-full">Masuk</Button>
+              </Link>
             </div>
           </div>
         </div>

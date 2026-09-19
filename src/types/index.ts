@@ -83,3 +83,14 @@ export interface StatSummary {
   totalActivities: number;
   verifiedPercent: number;
 }
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  category: string;
+  type: string;
+  size: string;
+  date: string;
+  url: string;
+  description?: string;
+}
