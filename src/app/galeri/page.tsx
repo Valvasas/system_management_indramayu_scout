@@ -36,7 +36,7 @@ export default async function GaleriPage() {
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {albums.map((album) => (
             <li key={album.id}>
-              <Card as="article" hoverable className="flex h-full flex-col">
+              <Card as="article" hoverable className="relative flex h-full flex-col">
                 <MediaFrame
                   src={album.coverImage}
                   alt=""
@@ -50,7 +50,10 @@ export default async function GaleriPage() {
                 </MediaFrame>
                 <CardContent className="flex flex-1 flex-col">
                   <h2 className="font-display text-lg font-bold leading-snug text-text-primary">
-                    <Link href={`/galeri/${album.slug}`} className="rounded-md hover:text-text-accent">
+                    <Link
+                      href={`/galeri/${album.slug}`}
+                      className="stretched-link rounded-md hover:text-text-accent"
+                    >
                       {album.title}
                     </Link>
                   </h2>

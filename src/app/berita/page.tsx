@@ -62,7 +62,7 @@ export default async function BeritaPage({
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {news.map((item) => (
             <li key={item.id}>
-              <Card as="article" hoverable className="flex h-full flex-col">
+              <Card as="article" hoverable className="relative flex h-full flex-col">
                 <MediaFrame
                   src={item.coverImage}
                   alt=""
@@ -73,7 +73,10 @@ export default async function BeritaPage({
                 <CardContent className="flex flex-1 flex-col">
                   <CategoryBadge className="self-start">{item.category}</CategoryBadge>
                   <h2 className="mt-3 font-display text-lg font-bold leading-snug text-text-primary">
-                    <Link href={`/berita/${item.slug}`} className="rounded-md hover:text-text-accent">
+                    <Link
+                      href={`/berita/${item.slug}`}
+                      className="stretched-link rounded-md hover:text-text-accent"
+                    >
                       {item.title}
                     </Link>
                   </h2>

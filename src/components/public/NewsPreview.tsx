@@ -40,7 +40,10 @@ export const NewsPreview = async () => {
                 <CardContent className="flex flex-1 flex-col">
                   <CategoryBadge className="self-start">{item.category}</CategoryBadge>
                   <h3 className="mt-3 font-display text-lg font-bold leading-snug text-text-primary">
-                    <Link href={`/berita/${item.slug}`} className="rounded-md hover:text-text-accent">
+                    <Link
+                      href={`/berita/${item.slug}`}
+                      className="stretched-link rounded-md hover:text-text-accent"
+                    >
                       {item.title}
                     </Link>
                   </h3>

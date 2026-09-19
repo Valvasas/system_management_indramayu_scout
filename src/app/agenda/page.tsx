@@ -63,14 +63,14 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
         <ul className="space-y-4">
           {agendas.map((agenda) => (
             <li key={agenda.id}>
-              <Card as="article" hoverable>
+              <Card as="article" hoverable className="relative">
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
                     <AgendaStatusBadge status={agenda.status} />
                     <h2 className="mt-3 font-display text-xl font-bold leading-snug text-text-primary">
                       <Link
                         href={`/agenda/${agenda.slug}`}
-                        className="rounded-md hover:text-text-accent"
+                        className="stretched-link rounded-md hover:text-text-accent"
                       >
                         {agenda.title}
                       </Link>
