@@ -1,0 +1,252 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { and, desc, eq } from 'drizzle-orm';
+import { AlertTriangle, Lock, Pencil, RotateCcw } from 'lucide-react';
+import { getDb, schema } from '@/db';
+import { ActionButton } from '@/components/dashboard/ConfirmButton';
+import { ArchiveForm, PortalAccountForm, VerifyForm } from '@/components/dashboard/members/MemberActions';
+import { InfoList, MemberStatusBadge, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
+import { ButtonLink } from '@/components/ui/Button';
+import { archiveMemberAction, createPortalAccountAction, restoreMemberAction, verifyMemberAction } from '@/features/members/actions';
+import { getMember } from '@/features/members/queries';
+import { resetPesertaPasswordAction } from '@/features/users/actions';
+import { can, requirePermission } from '@/lib/auth/session';
+import { GENDER_LABELS, ageOn, golonganLabel } from '@/lib/domain';
+import { formatDate, formatTime } from '@/lib/format';
+
+export const metadata: Metadata = { title: 'Detail anggota' };
+
+const SAVED: Record<string, string> = {
+  baru: 'Anggota tersimpan.',
+  ubah: 'Perubahan tersimpan.',
+  setuju: 'Data disetujui. Anggota kini berstatus Aktif.',
+  kembali: 'Data dikembalikan ke pengisi beserta catatan Anda.',
+  arsip: 'Anggota diarsipkan.',
+  pulih: 'Anggota dipulihkan dan menunggu verifikasi ulang.',
+};
+
+export default async function DetailAnggotaPage({ params, searchParams }: { params: { id: string }; searchParams?: { tersimpan?: string } }) {
+  const user = await requirePermission('members.read');
+  const row = await getMember(user, params.id);
+  if (!row) notFound();
+  const { m, gudep } = row;
+  const sensitive = can(user, 'members.view_sensitive');
+  const db = await getDb();
+
+  const [history, registrations] = await Promise.all([
+    db
+      .select()
+      .from(schema.auditLogs)
+      .where(and(eq(schema.auditLogs.entityType, 'member'), eq(schema.auditLogs.entityId, m.id)))
+      .orderBy(desc(schema.auditLogs.at))
+      .limit(15),
+    db
+      .select({ title: schema.events.title, dateStart: schema.events.dateStart })
+      .from(schema.eventRegistrations)
+      .innerJoin(schema.events, eq(schema.events.id, schema.eventRegistrations.eventId))
+      .where(eq(schema.eventRegistrations.memberId, m.id))
+      .orderBy(desc(schema.events.dateStart))
+      .limit(10),
+  ]);
+
+  // Melihat data sensitif anggota lintas wilayah tercatat (kebijakan audit).
+  if (sensitive && (user.role === 'ADMIN_KWARCAB' || user.role === 'SUPER_ADMIN')) {
+    const { audit } = await import('@/lib/auth/audit');
+    await audit(user, { action: 'member.view_sensitive', summary: `Melihat data lengkap ${m.fullName}`, entityType: 'member', entityId: m.id });
+  }
+
+  const archived = m.status === 'ARCHIVED';
+  const canVerify = can(user, 'members.verify') && (m.status === 'PENDING' || m.status === 'NEEDS_FIX');
+
+  return (
+    <>
+      <PortalHeader
+        title={m.fullName}
+        back={{ href: '/dashboard/anggota', label: 'Kembali ke daftar anggota' }}
+        description={
+          <span className="flex flex-wrap items-center gap-3">
+            <MemberStatusBadge status={m.status} />
+            <span>
+              {golonganLabel(m.golongan)} · {gudep.name}
+            </span>
+          </span>
+        }
+        actions={
+          can(user, 'members.update') && !archived ? (
+            <ButtonLink href={`/dashboard/anggota/${m.id}/ubah`} variant="outline">
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Ubah data
+            </ButtonLink>
+          ) : undefined
+        }
+      />
+      {searchParams?.tersimpan && SAVED[searchParams.tersimpan] && <Notice>{SAVED[searchParams.tersimpan]}</Notice>}
+
+      {m.status === 'NEEDS_FIX' && m.reviewNote && (
+        <div role="note" className="mb-6 flex gap-3 rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Catatan verifikator</p>
+            <p className="mt-0.5 whitespace-pre-line">{m.reviewNote}</p>
+            {can(user, 'members.update') && (
+              <Link href={`/dashboard/anggota/${m.id}/ubah`} className="mt-2 inline-flex min-h-touch items-center font-semibold underline">
+                Perbaiki data sekarang
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          {canVerify && (
+            <Panel title="Verifikasi data" description="Cocokkan dengan dokumen gudep sebelum memutuskan." className="border-border-brand">
+              <VerifyForm action={verifyMemberAction.bind(null, m.id)} currentKta={m.kta} />
+            </Panel>
+          )}
+
+          <Panel title="Identitas">
+            <InfoList
+              items={[
+                { label: 'Nama lengkap', value: m.fullName },
+                { label: 'Nomor KTA', value: m.kta },
+                { label: 'Jenis kelamin', value: GENDER_LABELS[m.gender] },
+                { label: 'Tanggal lahir', value: `${formatDate(m.birthDate)} (${ageOn(m.birthDate)} tahun)` },
+                { label: 'Golongan', value: golonganLabel(m.golongan) },
+                { label: 'Bergabung', value: m.joinedAt ? formatDate(m.joinedAt) : null },
+              ]}
+            />
+          </Panel>
+
+          <Panel title="Gudep">
+            <InfoList
+              items={[
+                {
+                  label: 'Gugus depan',
+                  value: can(user, 'gudep.read') ? (
+                    <Link href={`/dashboard/gudep/${gudep.id}`} className="text-text-accent underline">
+                      {gudep.name}
+                    </Link>
+                  ) : (
+                    gudep.name
+                  ),
+                },
+                { label: 'Nomor gudep', value: gudep.number },
+                { label: 'Kwarran', value: row.kwarranName },
+                { label: 'Pembina / kontak', value: gudep.contactName },
+              ]}
+            />
+          </Panel>
+
+          <Panel title="Orang tua/wali & kontak" description="Data sangat sensitif — jangan dibagikan di luar keperluan kegiatan.">
+            {sensitive ? (
+              <InfoList
+                items={[
+                  { label: 'Nama orang tua/wali', value: m.guardianName },
+                  { label: 'Telepon orang tua/wali', value: m.guardianPhone ? <a href={`tel:${m.guardianPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">{m.guardianPhone}</a> : null },
+                  { label: 'Persetujuan wali', value: m.guardianConsentAt ? formatDate(m.guardianConsentAt) : ageOn(m.birthDate) < 18 ? <span className="text-status-danger-text">Belum ada</span> : 'Tidak diperlukan (dewasa)' },
+                  { label: 'Telepon anggota', value: m.phone },
+                  { label: 'Alamat', value: m.address },
+                ]}
+              />
+            ) : (
+              <p className="flex items-center gap-2 text-text-secondary">
+                <Lock className="h-4 w-4" aria-hidden="true" />
+                Anda tidak berwenang melihat data ini.
+              </p>
+            )}
+          </Panel>
+
+          {m.notes && (
+            <Panel title="Catatan internal">
+              <p className="whitespace-pre-line text-text-secondary">{m.notes}</p>
+            </Panel>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <Panel title="Status verifikasi">
+            <InfoList
+              columns={1}
+              items={[
+                { label: 'Status', value: <MemberStatusBadge status={m.status} /> },
+                { label: 'Diverifikasi oleh', value: row.verifiedByName },
+                { label: 'Tanggal verifikasi', value: m.verifiedAt ? formatDate(m.verifiedAt.toISOString()) : null },
+                { label: 'Terakhir diubah', value: `${formatDate(m.updatedAt.toISOString())}, ${formatTime(m.updatedAt.toISOString())}` },
+              ]}
+            />
+          </Panel>
+
+          {can(user, 'users.create_peserta') && !archived && (
+            <Panel title="Akun portal peserta">
+              {row.portalUsername ? (
+                <>
+                  <p className="text-text-secondary">
+                    Nama pengguna: <span className="font-semibold text-text-primary">{row.portalUsername}</span>
+                    {!row.portalActive && ' (nonaktif)'}
+                  </p>
+                  <div className="mt-4">
+                    <PortalAccountForm action={resetPesertaPasswordAction.bind(null, m.id)} reset />
+                  </div>
+                </>
+              ) : m.status === 'ACTIVE' ? (
+                <>
+                  <p className="mb-4 text-sm text-text-secondary">Peserta dapat melihat kegiatan, mendaftar, dan membaca pengumuman gudep.</p>
+                  <PortalAccountForm action={createPortalAccountAction.bind(null, m.id)} />
+                </>
+              ) : (
+                <p className="text-sm text-text-secondary">Akun dapat dibuat setelah data diverifikasi (status Aktif).</p>
+              )}
+            </Panel>
+          )}
+
+          <Panel title="Kegiatan diikuti">
+            {registrations.length === 0 ? (
+              <p className="text-sm text-text-secondary">Belum ada pendaftaran kegiatan.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {registrations.map((r) => (
+                  <li key={r.title + r.dateStart.toISOString()}>
+                    <p className="font-medium text-text-primary">{r.title}</p>
+                    <p className="text-text-secondary">{formatDate(r.dateStart.toISOString())}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel title="Riwayat perubahan">
+            {history.length === 0 ? (
+              <p className="text-sm text-text-secondary">Belum ada riwayat.</p>
+            ) : (
+              <ol className="space-y-3 text-sm">
+                {history.map((h) => (
+                  <li key={h.id}>
+                    <p className="text-text-primary">{h.summary}</p>
+                    <p className="text-text-secondary">
+                      {h.actorName} · {formatDate(h.at.toISOString())}, {formatTime(h.at.toISOString())}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
+
+          {can(user, 'members.archive') && (
+            <Panel title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'} description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}>
+              {archived ? (
+                <ActionButton action={restoreMemberAction.bind(null, m.id)} confirm={`Pulihkan ${m.fullName} dari arsip?`}>
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Pulihkan
+                </ActionButton>
+              ) : (
+                <ArchiveForm action={archiveMemberAction.bind(null, m.id)} />
+              )}
+            </Panel>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

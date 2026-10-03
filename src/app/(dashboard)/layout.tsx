@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 
 /*
- * Dasbor internal. Saat ini PRATINJAU DESAIN berisi data fiktif.
- * Sebelum memuat data nyata, wajib ada autentikasi + pemeriksaan peran & cakupan
- * di server (middleware dan repository) — menyembunyikan menu bukan kontrol akses.
+ * Portal internal (pengurus, staf, peserta). Tidak diindeks mesin pencari.
+ * Kontrol akses: sesi divalidasi di dashboard/layout.tsx, dan SETIAP halaman/aksi
+ * memeriksa izin + cakupan di server (src/lib/auth). Menu yang disembunyikan bukan kontrol akses.
  */
 export const metadata: Metadata = {
+  title: { template: '%s | Portal Kwarcab Indramayu', default: 'Portal Kwarcab Indramayu' },
   robots: { index: false, follow: false },
 };
 

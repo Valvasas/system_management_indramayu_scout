@@ -79,7 +79,8 @@ interface Analysed {
 }
 
 async function analyse(user: SessionUser, csv: string): Promise<Analysed | string> {
-  const table = parseCsv(csv);
+  // Baris yang diawali '#' adalah contoh/komentar dan diabaikan.
+  const table = parseCsv(csv).filter((row, i) => i === 0 || !row[0]?.startsWith('#'));
   if (table.length < 2) return 'Berkas kosong atau hanya berisi judul kolom.';
   if (table.length - 1 > MAX_ROWS) return `Maksimal ${MAX_ROWS} baris per impor. Pecah berkas menjadi beberapa bagian.`;
 

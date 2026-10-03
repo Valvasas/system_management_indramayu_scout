@@ -1,76 +1,55 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ChevronRight, Clock, LucideIcon, ShieldCheck, Tent, Users } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { LockKeyhole } from 'lucide-react';
+import { ActionForm, SubmitButton } from '@/components/forms/ActionForm';
+import { TextField } from '@/components/forms/Fields';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
+import { loginAction } from '@/features/auth/actions';
+import { getSessionUser } from '@/lib/auth/session';
+import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'Portal Internal',
-  description: 'Portal internal Kwarcab Indramayu belum aktif dan dijadwalkan pada Fase 2.',
+  title: 'Masuk Portal',
+  description: 'Masuk ke portal pengurus, pembina, dan peserta Kwarcab Indramayu.',
   robots: { index: false, follow: false },
 };
 
-const previews: { href: string; title: string; description: string; icon: LucideIcon }[] = [
-  {
-    href: '/dashboard/peserta',
-    title: 'Peserta',
-    description: 'Kegiatan, progres SKU, dan pengumuman gudep.',
-    icon: Tent,
-  },
-  {
-    href: '/dashboard/pegawai',
-    title: 'Pegawai',
-    description: 'Verifikasi data anggota dan status gudep wilayah.',
-    icon: Users,
-  },
-  {
-    href: '/dashboard/admin',
-    title: 'Admin',
-    description: 'Tinjauan konten, akses akun, dan keamanan sistem.',
-    icon: ShieldCheck,
-  },
-];
+export default async function MasukPage() {
+  if (await getSessionUser()) redirect('/dashboard');
 
-export default function MasukPage() {
   return (
-    <div className="civic-container py-16">
-      <div className="mx-auto max-w-2xl">
-        <div className="text-center">
-          <Clock className="mx-auto h-10 w-10 text-text-muted" aria-hidden="true" />
-          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-text-primary">
-            Portal internal belum aktif
-          </h1>
-          <p className="mx-auto mt-3 max-w-prose leading-relaxed text-text-secondary">
-            Layanan masuk untuk peserta, pegawai, dan admin dijadwalkan pada Fase 2. Belum ada akun
-            atau kata sandi yang perlu Anda masukkan di mana pun.
+    <div className="civic-container py-10 sm:py-16">
+      <Breadcrumbs items={[{ label: 'Masuk Portal' }]} />
+      <div className="mx-auto mt-6 grid max-w-4xl gap-10 lg:grid-cols-2 lg:items-start">
+        <div>
+          <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-tag-surface text-tag-text">
+            <LockKeyhole className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-text-primary">Masuk Portal</h1>
+          <p className="mt-3 leading-relaxed text-text-secondary">
+            Untuk pengurus Kwarcab, staf Kwarran, pembina gudep, dan peserta yang sudah memiliki akun.
           </p>
+          <div className="mt-6 rounded-lg border border-border-subtle bg-surface-base p-5">
+            <h2 className="font-display text-base font-bold text-text-primary">Belum punya akun?</h2>
+            <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+              Akun tidak dibuat sendiri. Peserta mendapat akun dari pembina gudep setelah datanya diverifikasi. Staf dan
+              pembina menghubungi sekretariat Kwarcab di {site.contact.phone}.
+            </p>
+          </div>
         </div>
 
-        <section aria-labelledby="pratinjau-title" className="mt-12">
-          <h2 id="pratinjau-title" className="font-display text-lg font-bold text-text-primary">
-            Pratinjau tampilan portal
-          </h2>
-          <p className="mt-1 text-sm text-text-secondary">Berisi data contoh untuk keperluan uji desain.</p>
-          <ul className="mt-4 space-y-3">
-            {previews.map((p) => (
-              <li
-                key={p.href}
-                className="group relative flex items-center gap-4 rounded-lg border border-border-subtle bg-surface-base p-5 shadow-sm transition-shadow hover:shadow-md"
-              >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-tag-surface text-tag-text">
-                  <p.icon className="h-6 w-6" aria-hidden="true" />
-                </span>
-                <div className="flex-1">
-                  <h3 className="font-display text-base font-bold text-text-primary">
-                    <Link href={p.href} className="stretched-link rounded-lg group-hover:text-text-accent">
-                      Dasbor {p.title}
-                    </Link>
-                  </h3>
-                  <p className="text-sm text-text-secondary">{p.description}</p>
-                </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div className="rounded-lg border border-border-subtle bg-surface-base p-6 shadow-sm sm:p-8">
+          <ActionForm action={loginAction} aria-label="Formulir masuk portal">
+            <TextField name="username" label="Nama pengguna" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
+            <TextField name="password" label="Kata sandi" type="password" autoComplete="current-password" required />
+            <SubmitButton className="w-full" pendingLabel="Memeriksa">
+              Masuk
+            </SubmitButton>
+            <p className="text-sm text-text-secondary">
+              Lupa kata sandi? Minta pengurus yang membuatkan akun Anda untuk meresetnya.
+            </p>
+          </ActionForm>
+        </div>
       </div>
     </div>
   );

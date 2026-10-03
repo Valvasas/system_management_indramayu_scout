@@ -110,6 +110,11 @@ export async function updateMemberAction(id: string, _prev: FormState, formData:
   }
 
   const row = toRow(input);
+  // Kolom yang tidak boleh dilihat pengubah tidak ikut terkirim di formulir: pertahankan nilai lama.
+  if (!can(user, 'members.view_sensitive')) {
+    row.phone = current.m.phone;
+    row.address = current.m.address;
+  }
   const changed = (Object.keys(LABELS) as (keyof typeof row)[]).filter(
     (k) => k in row && (row[k] ?? null) !== ((current.m as Record<string, unknown>)[k] ?? null),
   );
