@@ -24,7 +24,7 @@ export const UserForm: React.FC<{
   const desc = roles.find((r) => r.value === role)?.description;
 
   return (
-    <ActionForm action={action} resetOnSuccess={isNew} className="space-y-6">
+    <ActionForm action={action} className="space-y-6">
       <FieldGroup title="Identitas akun">
         <TextField name="name" label="Nama lengkap" defaultValue={defaults.name} required />
         <div className="grid gap-4 sm:grid-cols-2">

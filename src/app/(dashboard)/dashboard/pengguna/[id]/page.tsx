@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { asc, eq } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
+import type { Role } from '@/db/schema';
 import { ResetPasswordForm, UserForm } from '@/components/dashboard/users/UserForm';
 import { Panel, PortalHeader } from '@/components/dashboard/ui';
 import { createUserAction, resetPasswordAction, updateUserAction } from '@/features/users/actions';
@@ -31,7 +32,7 @@ export default async function AkunPenggunaPage({ params }: { params: { id: strin
 
   const editable = assignableRoles(actor.role).filter((r) => r !== 'PESERTA');
   // Peran target saat ini tetap tampil walau tidak bisa diberikan aktor (mis. admin melihat akun admin lain).
-  const roleList = target && !editable.includes(target.role) ? [target.role, ...editable] : editable;
+  const roleList: Role[] = target && !(editable as Role[]).includes(target.role) ? [target.role, ...editable] : editable;
   const locked = !!target && target.role === 'SUPER_ADMIN' && actor.role !== 'SUPER_ADMIN';
 
   return (
