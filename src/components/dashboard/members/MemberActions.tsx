@@ -22,16 +22,29 @@ export const VerifyForm: React.FC<{ action: Action; currentKta: string | null }>
               { v: 'return', label: 'Kembalikan', desc: 'Ada yang perlu diperbaiki pengisi data.' },
             ] as const
           ).map((o) => (
-            <label
+            <div
               key={o.v}
-              className={`flex cursor-pointer gap-3 rounded-lg border p-4 ${mode === o.v ? 'border-action-primary bg-surface-brand-tint' : 'border-border-subtle bg-surface-base'}`}
+              className={`flex gap-3 rounded-lg border p-4 ${mode === o.v ? 'border-action-primary bg-surface-brand-tint' : 'border-border-subtle bg-surface-base'}`}
             >
-              <input type="radio" name="decision" value={o.v} checked={mode === o.v} onChange={() => setMode(o.v)} className="mt-1 h-4 w-4 accent-action-primary" />
-              <span>
-                <span className="block font-semibold text-text-primary">{o.label}</span>
-                <span className="block text-sm text-text-secondary">{o.desc}</span>
-              </span>
-            </label>
+              <input
+                id={`decision-${o.v}`}
+                type="radio"
+                name="decision"
+                value={o.v}
+                checked={mode === o.v}
+                onChange={() => setMode(o.v)}
+                aria-describedby={`decision-${o.v}-desc`}
+                className="mt-1 h-4 w-4 accent-action-primary"
+              />
+              <div>
+                <label htmlFor={`decision-${o.v}`} className="block cursor-pointer font-semibold text-text-primary">
+                  {o.label}
+                </label>
+                <p id={`decision-${o.v}-desc`} className="text-sm text-text-secondary">
+                  {o.desc}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
       </fieldset>
