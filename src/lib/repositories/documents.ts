@@ -1,5 +1,7 @@
-import { mockDocuments } from '@/lib/data/mock-data';
+import { desc, eq } from 'drizzle-orm';
+import { getDb, schema } from '@/db';
 import type { DocumentItem } from '@/types';
+import { formatBytes } from '@/lib/storage';
 
 /** Host luar yang boleh menyajikan dokumen resmi. Kosong = hanya berkas sendiri. */
 const ALLOWED_DOCUMENT_HOSTS = ['pramukaindramayu.or.id', 'www.pramukaindramayu.or.id'];
@@ -28,12 +30,6 @@ export type DocumentEntry = DocumentItem & {
   isExternal: boolean;
 };
 
-const decorate = (doc: DocumentItem): DocumentEntry => ({
-  ...doc,
-  available: isSafeDocumentUrl(doc.url),
-  isExternal: /^https?:\/\//i.test(doc.url),
-});
-
 export const documentCategorySlug = (category: string) =>
   category
     .toLowerCase()
@@ -41,31 +37,51 @@ export const documentCategorySlug = (category: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
+async function publishedDocuments(): Promise<DocumentEntry[]> {
+  const db = await getDb();
+  const rows = await db
+    .select()
+    .from(schema.documents)
+    .where(eq(schema.documents.published, true))
+    .orderBy(desc(schema.documents.date));
+  return rows.map((d) => {
+    const url = d.fileUrl ?? '';
+    return {
+      id: d.id,
+      title: d.title,
+      category: d.category,
+      type: d.fileType,
+      size: formatBytes(d.fileSize),
+      date: d.date,
+      url,
+      description: d.description ?? undefined,
+      available: isSafeDocumentUrl(url),
+      isExternal: /^https?:\/\//i.test(url),
+    };
+  });
+}
+
 export interface DocumentQuery {
   category?: string;
   search?: string;
+  limit?: number;
 }
 
-export async function getDocuments({ category, search }: DocumentQuery = {}): Promise<
-  DocumentEntry[]
-> {
-  let items = [...mockDocuments].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-  );
+export async function getDocuments({ category, search, limit }: DocumentQuery = {}): Promise<DocumentEntry[]> {
+  let items = await publishedDocuments();
   if (category) items = items.filter((d) => documentCategorySlug(d.category) === category);
   if (search) {
     const q = search.toLowerCase();
     items = items.filter(
-      (d) =>
-        d.title.toLowerCase().includes(q) || (d.description ?? '').toLowerCase().includes(q),
+      (d) => d.title.toLowerCase().includes(q) || (d.description ?? '').toLowerCase().includes(q),
     );
   }
-  return items.map(decorate);
+  return typeof limit === 'number' ? items.slice(0, limit) : items;
 }
 
 export async function getDocumentCategories(): Promise<{ value: string; label: string }[]> {
   const seen = new Map<string, string>();
-  for (const d of mockDocuments) seen.set(documentCategorySlug(d.category), d.category);
+  for (const d of await publishedDocuments()) seen.set(documentCategorySlug(d.category), d.category);
   return Array.from(seen, ([value, label]) => ({ value, label })).sort((a, b) =>
     a.label.localeCompare(b.label, 'id'),
   );

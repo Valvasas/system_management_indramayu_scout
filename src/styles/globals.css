@@ -23,7 +23,7 @@
   }
 
   .card-subtle {
-    @apply bg-surface-base border border-border-subtle rounded-md shadow-sm;
+    @apply bg-surface-base border border-border-subtle rounded-lg shadow-sm;
   }
 
   /* Blok teks panjang: ~65 karakter per baris (P3-7). */
@@ -44,7 +44,7 @@
 
 @layer base {
   body {
-    background-color: var(--surface-base);
+    background-color: var(--surface-canvas);
     color: var(--text-primary);
     font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
@@ -55,14 +55,14 @@
     scroll-padding-top: 6rem;
   }
 
-  /* Satu gaya fokus untuk seluruh situs. Kontras 7.1:1 terhadap putih. */
+  /* Satu gaya fokus untuk seluruh situs. Kontras 7.6:1 terhadap putih. */
   *:focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
     border-radius: 2px;
   }
 
-  /* Di atas latar gelap, cincin fokus hijau tenggelam. */
+  /* Di atas latar gelap, cincin fokus cokelat tenggelam. */
   .on-inverse *:focus-visible {
     outline-color: var(--focus-ring-inverse);
   }

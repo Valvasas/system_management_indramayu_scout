@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter, DM_Sans } from 'next/font/google';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { SkipToContent } from '@/components/ui/SkipToContent';
-import { Header } from '@/components/public/Header';
-import { Footer } from '@/components/public/Footer';
 import { site, absoluteUrl } from '@/lib/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans', display: 'swap' });
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -56,14 +54,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={site.lang} className={`${inter.variable} ${dmSans.variable}`}>
-      <body className="antialiased font-sans text-text-primary bg-surface-base flex flex-col min-h-screen">
+    <html lang={site.lang} className={`${inter.variable} ${jakarta.variable}`}>
+      <body className="antialiased font-sans text-text-primary bg-surface-canvas min-h-screen">
         <SkipToContent />
-        <Header />
-        <main id="main-content" className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+        {/* Kerangka (header/footer publik atau shell dasbor) ada di layout route group. */}
+        {children}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

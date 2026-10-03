@@ -42,6 +42,12 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Paket native/WASM dijalankan apa adanya di server, tidak dibundel webpack.
+    serverComponentsExternalPackages: ['@electric-sql/pglite', 'pg', 'sharp', 'bcryptjs'],
+    // Unggahan foto/dokumen lewat Server Action (batas per berkas dicek lagi di lib/storage.ts).
+    serverActions: { bodySizeLimit: '32mb' },
+  },
   images: {
     // Optimizer aktif (P4-1). Tanpa remotePatterns, hanya berkas dari
     // origin sendiri yang boleh dioptimalkan — host tak terdaftar ditolak (P1-7).

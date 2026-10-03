@@ -23,6 +23,8 @@ export interface MediaFrameProps {
   /** Kalimat yang tampil saat berkas gambar belum diunggah. */
   fallbackLabel?: string;
   fallbackIcon?: LucideIcon;
+  /** Pertahankan rasio asli meski berkas belum ada (mis. slot foto hero). */
+  keepAspect?: boolean;
   children?: React.ReactNode;
 }
 
@@ -41,12 +43,13 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
   className,
   fallbackLabel = 'Dokumentasi foto belum diunggah',
   fallbackIcon: FallbackIcon = ImageOff,
+  keepAspect = false,
   children,
 }) => {
   const available = assetExists(src);
   // Empty state tidak perlu setinggi fotonya: pita pendek menyampaikan hal yang
   // sama tanpa meninggalkan blok abu raksasa di tengah halaman.
-  const ratio = available ? aspects[aspect] : aspects.wide;
+  const ratio = available || keepAspect ? aspects[aspect] : aspects.wide;
 
   return (
     <div className={cn('relative overflow-hidden bg-surface-sunken', ratio, className)}>
@@ -55,7 +58,7 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
           <FallbackIcon className="h-8 w-8 text-text-muted" aria-hidden="true" />
-          <span className="text-xs text-text-secondary">{fallbackLabel}</span>
+          <span className="text-sm text-text-secondary">{fallbackLabel}</span>
         </div>
       )}
       {children}

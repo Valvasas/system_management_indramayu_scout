@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/Section';
+import { GolonganIcon } from '@/components/public/GolonganIcon';
+import { golongan, golonganAnchor } from '@/lib/golongan';
 
 export const metadata: Metadata = {
   title: 'Tentang Kwarcab Indramayu',
@@ -108,6 +110,29 @@ export default function TentangPage() {
               </CardContent>
             </Card>
           </div>
+        </section>
+
+        <section aria-labelledby="golongan-title">
+          <h2 id="golongan-title" className="font-display text-2xl font-bold text-text-primary">
+            Golongan &amp; pembina
+          </h2>
+          <ul className="mt-4 space-y-3">
+            {golongan.map((g) => (
+              <li
+                key={g.id}
+                id={golonganAnchor(g.id)}
+                className="flex scroll-mt-24 gap-4 rounded-lg border border-border-subtle bg-surface-base p-5 target:border-border-brand target:bg-surface-brand-tint"
+              >
+                <GolonganIcon id={g.id} />
+                <div>
+                  <h3 className="font-display text-lg font-bold text-text-primary">
+                    {g.name} <span className="text-base font-normal text-text-secondary">· {g.age}</span>
+                  </h3>
+                  <p className="mt-1 text-text-secondary">{g.summary}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section

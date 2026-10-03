@@ -1,9 +1,9 @@
-import React, { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
+import React, { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const control =
-  'w-full min-h-touch rounded-md border bg-surface-base px-3.5 py-2.5 text-sm text-text-primary ' +
+  'w-full min-h-touch rounded-lg border bg-surface-base px-3.5 py-2.5 text-base text-text-primary ' +
   'placeholder:text-text-muted border-border-strong ' +
   'aria-[invalid=true]:border-status-danger-text aria-[invalid=true]:bg-status-danger-surface ' +
   'disabled:bg-surface-subtle disabled:text-text-muted';
@@ -46,7 +46,7 @@ export const Field: React.FC<FieldProps> = ({
       )}
     </label>
     {hint && (
-      <p id={`${id}-hint`} className="text-xs text-text-secondary">
+      <p id={`${id}-hint`} className="text-sm text-text-secondary">
         {hint}
       </p>
     )}
@@ -54,9 +54,9 @@ export const Field: React.FC<FieldProps> = ({
     {error && (
       <p
         id={`${id}-error`}
-        className="flex items-start gap-1.5 text-xs font-medium text-status-danger-text"
+        className="flex items-start gap-1.5 text-sm font-medium text-status-danger-text"
       >
-        <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-px" aria-hidden="true" />
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         {error}
       </p>
     )}
@@ -85,3 +85,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
   ),
 );
 Textarea.displayName = 'Textarea';
+
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
+  ({ className, ...props }, ref) => (
+    <select ref={ref} className={cn(control, 'pr-8', className)} {...props} />
+  ),
+);
+Select.displayName = 'Select';

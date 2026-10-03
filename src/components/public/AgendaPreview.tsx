@@ -16,7 +16,7 @@ export const AgendaPreview = async () => {
       id="agenda"
       title="Agenda kegiatan"
       description="Jadwal resmi kegiatan kwartir cabang dan ranting terdekat."
-      surface="subtle"
+      surface="base"
       emphasis="primary"
       action={{ label: 'Semua agenda', href: '/agenda' }}
     >

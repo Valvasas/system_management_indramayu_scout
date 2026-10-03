@@ -12,11 +12,14 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['var(--font-dm-sans)', 'var(--font-inter)', 'ui-sans-serif', 'sans-serif'],
+        // Plus Jakarta Sans untuk heading, Inter untuk teks isi.
+        display: ['var(--font-jakarta)', 'var(--font-inter)', 'ui-sans-serif', 'sans-serif'],
       },
       colors: {
         surface: {
+          canvas: 'var(--surface-canvas)',
           base: 'var(--surface-base)',
+          'brand-tint': 'var(--surface-brand-tint)',
           raised: 'var(--surface-raised)',
           subtle: 'var(--surface-subtle)',
           sunken: 'var(--surface-sunken)',
@@ -28,6 +31,7 @@ const config: Config = {
           secondary: 'var(--text-secondary)',
           muted: 'var(--text-muted)',
           inverse: 'var(--text-inverse)',
+          'inverse-muted': 'var(--text-inverse-muted)',
           'on-brand': 'var(--text-on-brand)',
           accent: 'var(--accent-text)',
         },
@@ -38,8 +42,15 @@ const config: Config = {
           secondary: 'var(--action-secondary)',
           'secondary-hover': 'var(--action-secondary-hover)',
           'secondary-text': 'var(--action-secondary-text)',
+          accent: 'var(--action-accent)',
+          'accent-hover': 'var(--action-accent-hover)',
           danger: 'var(--action-danger)',
           'danger-hover': 'var(--action-danger-hover)',
+        },
+        tag: {
+          surface: 'var(--tag-surface)',
+          text: 'var(--tag-text)',
+          border: 'var(--tag-border)',
         },
         border: {
           subtle: 'var(--border-subtle)',
@@ -104,11 +115,12 @@ const config: Config = {
       minWidth: {
         touch: '2.75rem',
       },
+      // 8px (rounded-lg) adalah radius standar kartu, input, dan tombol.
       borderRadius: {
-        sm: '0.375rem',
-        md: '0.625rem',
-        lg: '0.875rem',
-        xl: '1.25rem',
+        sm: '0.25rem',
+        md: '0.375rem',
+        lg: '0.5rem',
+        xl: '0.75rem',
         pill: '999px',
       },
       boxShadow: {

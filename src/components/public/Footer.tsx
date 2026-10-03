@@ -1,104 +1,145 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, Mail, Phone } from 'lucide-react';
+import { Clock, Facebook, Instagram, LucideIcon, Mail, MapPin, Phone, Youtube } from 'lucide-react';
 import { site } from '@/lib/site';
 
-const quickLinks = [
-  { label: 'Tentang Kami', href: '/tentang' },
+const siteLinks = [
+  { label: 'Profil Kwarcab', href: '/tentang' },
   { label: 'Struktur Organisasi', href: '/struktur-organisasi' },
-  { label: 'Berita Terkini', href: '/berita' },
+  { label: 'Berita', href: '/berita' },
   { label: 'Agenda Kegiatan', href: '/agenda' },
-];
-
-const infoLinks = [
-  { label: 'Dokumen Resmi', href: '/dokumen' },
+  { label: 'Galeri', href: '/galeri' },
   { label: 'Prestasi', href: '/prestasi' },
-  { label: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
-  { label: 'Pernyataan Aksesibilitas', href: '/aksesibilitas' },
+  { label: 'Pusat Dokumen', href: '/dokumen' },
+  { label: 'Kontak', href: '/kontak' },
 ];
 
-const footerLinkClass =
-  'inline-flex items-center min-h-touch text-neutral-300 hover:text-white rounded-md';
+const policyLinks = [
+  { label: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
+  { label: 'Aksesibilitas', href: '/aksesibilitas' },
+];
 
-export const Footer: React.FC = () => (
-  <footer className="on-inverse bg-surface-inverse text-neutral-300">
-    <div className="civic-container py-12">
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <Image
-              src={site.logo}
-              alt=""
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded bg-white p-1"
-            />
-            <span className="font-display font-bold text-white">{site.shortName}</span>
+const socialIcons: Record<string, LucideIcon> = {
+  Instagram,
+  Facebook,
+  YouTube: Youtube,
+};
+
+const linkClass =
+  'inline-flex min-h-touch items-center rounded-lg text-text-inverse-muted transition-colors hover:text-text-inverse';
+
+export const Footer: React.FC = () => {
+  const { address } = site.contact;
+  const social = site.social.filter((s) => s.url);
+
+  return (
+    <footer className="on-inverse bg-surface-inverse text-text-inverse-muted">
+      <div className="civic-container py-14">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
+          {/* Identitas & alamat */}
+          <div className="md:col-span-5">
+            <div className="flex items-center gap-3">
+              <Image
+                src={site.logo}
+                alt=""
+                width={44}
+                height={44}
+                className="h-11 w-11 rounded-lg bg-surface-base p-1"
+              />
+              <div className="leading-tight">
+                <p className="font-display text-base font-bold text-text-inverse">Kwarcab Indramayu</p>
+                <p className="text-sm">Gerakan Pramuka</p>
+              </div>
+            </div>
+            <address className="mt-6 flex gap-3 not-italic leading-relaxed">
+              <MapPin className="mt-1 h-5 w-5 shrink-0" aria-hidden="true" />
+              <span>
+                {address.street}
+                <br />
+                {address.locality}, {address.region} {address.postalCode}
+              </span>
+            </address>
           </div>
-          <p className="text-sm leading-relaxed max-w-prose">{site.description}</p>
-          <address className="not-italic text-sm mt-4 leading-relaxed">
-            {site.contact.address.street}
-            <br />
-            {site.contact.address.locality}, {site.contact.address.region}{' '}
-            {site.contact.address.postalCode}
-          </address>
+
+          {/* Tautan situs */}
+          <nav aria-label="Navigasi footer" className="md:col-span-4">
+            <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-text-inverse">
+              Jelajahi
+            </h2>
+            <ul className="mt-3 grid grid-cols-2 gap-x-6">
+              {siteLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className={linkClass}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Kontak & media sosial */}
+          <div className="md:col-span-3">
+            <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-text-inverse">
+              Hubungi Kami
+            </h2>
+            <ul className="mt-3">
+              <li>
+                <a href={`tel:${site.contact.phone.replace(/[^\d+]/g, '')}`} className={linkClass}>
+                  <Phone className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
+                  {site.contact.phone}
+                </a>
+              </li>
+              <li>
+                <a href={`mailto:${site.contact.email}`} className={`${linkClass} break-all`}>
+                  <Mail className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
+                  {site.contact.email}
+                </a>
+              </li>
+              <li className="flex min-h-touch items-center">
+                <Clock className="mr-3 h-4 w-4 shrink-0" aria-hidden="true" />
+                {site.contact.officeHours}
+              </li>
+            </ul>
+
+            {social.length > 0 && (
+              <ul className="mt-4 flex gap-2" aria-label="Media sosial">
+                {social.map((s) => {
+                  const Icon = socialIcons[s.label] ?? Mail;
+                  return (
+                    <li key={s.label}>
+                      <a
+                        href={s.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-neutral-600 text-text-inverse-muted transition-colors hover:border-neutral-400 hover:text-text-inverse"
+                      >
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                        <span className="sr-only">{s.label} (tab baru)</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
 
-        <nav aria-label="Navigasi footer — tautan cepat">
-          <h2 className="text-white font-semibold mb-2">Tautan Cepat</h2>
-          <ul>
-            {quickLinks.map((link) => (
+        <div className="mt-12 flex flex-col gap-2 border-t border-neutral-700 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            &copy; {new Date().getFullYear()} {site.organization}
+          </p>
+          <ul className="flex gap-4">
+            {policyLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className={footerLinkClass}>
+                <Link href={link.href} className={linkClass}>
                   {link.label}
                 </Link>
               </li>
             ))}
           </ul>
-        </nav>
-
-        <nav aria-label="Navigasi footer — informasi">
-          <h2 className="text-white font-semibold mb-2">Informasi</h2>
-          <ul>
-            {infoLinks.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className={footerLinkClass}>
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div>
-          <h2 className="text-white font-semibold mb-2">Hubungi Kami</h2>
-          <ul className="text-sm">
-            <li>
-              <a href={`tel:${site.contact.phone.replace(/[^\d+]/g, '')}`} className={footerLinkClass}>
-                <Phone className="h-4 w-4 mr-2 shrink-0" aria-hidden="true" />
-                {site.contact.phone}
-              </a>
-            </li>
-            <li>
-              <a href={`mailto:${site.contact.email}`} className={footerLinkClass}>
-                <Mail className="h-4 w-4 mr-2 shrink-0" aria-hidden="true" />
-                {site.contact.email}
-              </a>
-            </li>
-            <li className="flex items-start gap-2 min-h-touch pt-2">
-              <Clock className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Senin – Jumat, 08.00 – 16.00 WIB</span>
-            </li>
-          </ul>
         </div>
       </div>
-
-      <div className="mt-10 pt-6 border-t border-neutral-700 text-sm">
-        <p>
-          &copy; {new Date().getFullYear()} {site.organization}. Hak cipta dilindungi.
-        </p>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};

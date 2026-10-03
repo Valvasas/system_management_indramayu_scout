@@ -24,7 +24,14 @@ export const site = {
       postalCode: '45211',
       country: 'ID',
     },
+    officeHours: 'Senin – Jumat, 08.00 – 16.00 WIB',
   },
+  // VERIFIKASI sebelum rilis: ganti dengan akun resmi Kwarcab. Entri tanpa URL tidak dirender.
+  social: [
+    { label: 'Instagram', url: 'https://www.instagram.com/pramukaindramayu' },
+    { label: 'Facebook', url: 'https://www.facebook.com/pramukaindramayu' },
+    { label: 'YouTube', url: 'https://www.youtube.com/@pramukaindramayu' },
+  ],
 } as const;
 
 export const absoluteUrl = (path: string) =>

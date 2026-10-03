@@ -3,20 +3,22 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const base =
-  'inline-flex items-center justify-center gap-2 font-medium rounded-md transition-colors ' +
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors ' +
   'disabled:opacity-60 disabled:pointer-events-none aria-disabled:opacity-60';
 
 const variants: Record<ButtonVariant, string> = {
-  // Kontras teks putih di atas action-primary (green-700) = 5.0:1 -> lolos AA.
+  // Kontras teks putih di atas action-primary (brown-600) = 7.6:1 -> lolos AA.
   primary: 'bg-action-primary text-text-on-brand hover:bg-action-primary-hover active:bg-action-primary-active',
   secondary:
     'bg-action-secondary text-action-secondary-text border border-border-brand hover:bg-action-secondary-hover',
   outline: 'bg-surface-base text-text-primary border border-border-strong hover:bg-surface-subtle',
   ghost: 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary',
+  // Merah aksen: hanya untuk aksi yang menyangkut peringatan penting.
+  accent: 'bg-action-accent text-text-on-brand hover:bg-action-accent-hover',
   danger: 'bg-action-danger text-text-on-brand hover:bg-action-danger-hover',
   link: 'text-text-accent underline underline-offset-4 hover:text-action-primary-hover px-0',
 };

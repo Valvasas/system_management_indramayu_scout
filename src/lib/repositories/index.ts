@@ -1,10 +1,9 @@
 /**
- * Lapisan akses data (TASKS.md P5-2).
+ * Lapisan baca data PUBLIK (situs). Semua fungsi membaca database lewat `@/db`
+ * dan hanya mengembalikan data berklasifikasi publik (konten terbit, angka agregat).
  *
- * Aturan: HANYA file di direktori ini yang boleh mengimpor `@/lib/data/mock-data`.
- * Halaman dan komponen memanggil repository, tidak pernah sumber datanya langsung.
- * Saat Prisma masuk (P5-3), isi fungsi di sini diganti query database — pemanggil
- * tidak berubah karena semua fungsi sudah async dan mengembalikan tipe domain.
+ * Data internal (anggota, gudep, akun) TIDAK di sini — ada di `src/features/*`
+ * dan selalu mensyaratkan pengguna + cakupan.
  */
 
 export * from './news';
@@ -14,3 +13,4 @@ export * from './achievements';
 export * from './documents';
 export * from './organization';
 export * from './stats';
+export * from './settings';

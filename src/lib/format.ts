@@ -30,3 +30,26 @@ export function formatDateRange(startIso: string, endIso?: string): string {
   const end = formatDate(endIso);
   return start === end ? start : `${start} – ${end}`;
 }
+
+const hourFormatter = new Intl.DateTimeFormat('id-ID', {
+  hour: 'numeric',
+  hourCycle: 'h23',
+  timeZone: 'Asia/Jakarta',
+});
+
+/** Sapaan sesuai jam WIB: pagi / siang / sore / malam. */
+export function greeting(now: Date = new Date()): string {
+  const h = Number(hourFormatter.format(now));
+  if (h >= 4 && h < 11) return 'Selamat pagi';
+  if (h >= 11 && h < 15) return 'Selamat siang';
+  if (h >= 15 && h < 18) return 'Selamat sore';
+  return 'Selamat malam';
+}
+
+/** "Sab, 17 Okt" — ringkas untuk blok tanggal di daftar. */
+export function formatDayMonth(iso: string): { day: string; month: string; weekday: string } {
+  const d = new Date(iso);
+  const part = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat('id-ID', { ...opts, timeZone: 'Asia/Jakarta' }).format(d);
+  return { day: part({ day: 'numeric' }), month: part({ month: 'short' }), weekday: part({ weekday: 'long' }) };
+}

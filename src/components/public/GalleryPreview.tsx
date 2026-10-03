@@ -14,7 +14,7 @@ export const GalleryPreview = async () => {
       id="galeri"
       title="Galeri kegiatan"
       description="Dokumentasi perkemahan, upacara, dan kegiatan bakti."
-      surface="subtle"
+      surface="base"
       action={{ label: 'Semua album', href: '/galeri' }}
     >
       {albums.length === 0 ? (

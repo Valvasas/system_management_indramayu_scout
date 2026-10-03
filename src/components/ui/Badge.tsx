@@ -7,7 +7,6 @@ import {
   FileType,
   LucideIcon,
   PlayCircle,
-  Tag,
   XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,7 +15,7 @@ import type { AgendaStatus } from '@/types';
 export type BadgeTone = 'brand' | 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
 const tones: Record<BadgeTone, string> = {
-  brand: 'bg-status-success-surface text-status-success-text border-status-success-border',
+  brand: 'bg-tag-surface text-tag-text border-tag-border',
   info: 'bg-status-info-surface text-status-info-text border-status-info-border',
   success: 'bg-status-success-surface text-status-success-text border-status-success-border',
   warning: 'bg-status-warning-surface text-status-warning-text border-status-warning-border',
@@ -96,7 +95,7 @@ export const CategoryBadge: React.FC<{ children: React.ReactNode; className?: st
   children,
   className,
 }) => (
-  <Badge tone="brand" icon={Tag} className={className}>
+  <Badge tone="brand" className={className}>
     {children}
   </Badge>
 );

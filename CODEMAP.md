@@ -1,7 +1,8 @@
 # CODEMAP.md — Indeks Codebase
 
 > Indeks satu-baris-per-file. Cari barisnya, baca **hanya** file itu.
-> Diverifikasi 19 Sep 2026 setelah blok P2–P4 (`tsc`, `next lint`, `next build` lulus; 30 halaman ter-generate).
+> Diverifikasi 3 Okt 2026 setelah redesain UI "Scout Earth Tones" (`tsc`, `next lint`, `next build` lulus; 34 halaman ter-generate).
+> **Rute publik kini di `src/app/(public)/`, dasbor di `src/app/(dashboard)/`.** Path di tabel Rute relatif terhadap `(public)/`.
 > Baca `AGENTS.md` lebih dulu. **`[P#-#]`** = task di `TASKS.md` yang masih menyentuh file itu.
 
 ## Peta Cepat
@@ -46,8 +47,9 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 | Rute | File | Catatan |
 |---|---|---|
-| layout | `app/layout.tsx` | Inter + DM Sans, `metadataBase`, template judul, JSON-LD `Organization`. Tanpa provider klien |
-| `/` | `app/page.tsx` | 8 section, latar bergantian subtle↔base |
+| layout | `app/layout.tsx` | Inter (isi) + Plus Jakarta Sans (heading), `metadataBase`, JSON-LD. Hanya html/body — kerangka ada di layout grup |
+| layout publik | `app/(public)/layout.tsx` | Header + `<main>` + Footer |
+| `/` | `(public)/page.tsx` | 4 section: Hero, QuickAccess (golongan), NewsPreview, DocumentCenter. Section lama (Stats/Agenda/Gallery/Achievement/About/Map) tidak dipakai lagi di beranda |
 | `/tentang` | `tentang/page.tsx` | Server Component, konten nyata (sejarah, visi-misi, Dasa Darma) |
 | `/struktur-organisasi` | `struktur-organisasi/page.tsx` | Pengurus per departemen + 31 Kwarran (grid 2 kolom di ponsel) |
 | `/berita` | `berita/page.tsx` + `loading.tsx` | Server Component; filter kategori lewat `?kategori=` |
@@ -60,8 +62,9 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `/dokumen` | `dokumen/page.tsx` + `DocumentSearch.tsx` + `loading.tsx` | Filter `?kategori=`, cari `?cari=`; unduhan divalidasi allowlist |
 | `/kontak` | `kontak/page.tsx` + `ContactForm.tsx` + `actions.ts` | Server Action: validasi, honeypot, time-trap, rate limit 3/10 mnt |
 | `/kebijakan-privasi`, `/aksesibilitas` | `.../page.tsx` | Hanya klaim yang terbukti + bagian "yang belum berlaku" |
-| `/masuk` | `masuk/page.tsx` | Halaman status jujur, `robots: noindex` |
-| 404 / error | `not-found.tsx`, `error.tsx` | |
+| `/masuk` | `masuk/page.tsx` | Status jujur (login belum aktif) + tautan pratinjau 3 dasbor, `noindex` |
+| `/dashboard/peserta`, `/pegawai`, `/admin` | `(dashboard)/dashboard/<peran>/page.tsx` | **Pratinjau desain, data fiktif, BELUM ada autentikasi.** `noindex`, `force-dynamic`. `/dashboard` → redirect `/masuk` |
+| 404 / error | `not-found.tsx` (memasang Header/Footer sendiri), `error.tsx` | |
 | SEO | `sitemap.ts`, `robots.ts` | Semua rute statis + slug dinamis |
 
 ## `src/components/`
@@ -75,12 +78,17 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `ui/FilterChips.tsx` | `FilterChips` | Klien; menulis state filter ke query param |
 | `ui/EmptyState.tsx` | `EmptyState` | Ikon + penjelasan + aksi lanjut |
 | `ui/MediaFrame.tsx` | `MediaFrame` | **Server-only.** `next/image` bila aset ada, pita empty state bila belum |
-| `ui/Section.tsx` | `Section`, `PageHeader` | Ritme vertikal + latar bergantian; satu h1 per halaman |
+| `ui/Section.tsx` | `Section`, `PageHeader` | `surface`: `canvas` (gray-50, default) / `base` (pita putih); satu h1 per halaman |
 | `ui/Skeleton.tsx` | `Skeleton`, `CardListSkeleton`, `PageLoading` | Dipakai `loading.tsx` |
 | `ui/SkipToContent.tsx` | `SkipToContent` | Target `#main-content` |
-| `public/Header.tsx` | `Header` | Drawer ponsel: focus trap, Escape, scroll lock, `aria-current` |
-| `public/Footer.tsx` | `Footer` | Dua landmark `nav` ber-label; tanpa tautan mati |
-| `public/Hero.tsx`, `StatsSection.tsx`, `AboutPreview.tsx`, `AgendaPreview.tsx`, `NewsPreview.tsx`, `GalleryPreview.tsx`, `AchievementPreview.tsx`, `MapSection.tsx` | named export | Section beranda; semua membaca repository |
+| `public/Header.tsx` | `Header` | 4 menu (Profil, Berita, Dokumen, Kontak) + CTA "Masuk Portal"; drawer ponsel memuat grup "Lainnya" |
+| `public/Footer.tsx` | `Footer` | Latar #1F2937, alamat, kontak, media sosial dari `site.social` |
+| `public/QuickAccess.tsx`, `GolonganIcon.tsx` | named export | Kartu Siaga/Penggalang/Penegak/Pembina → `/tentang#golongan-*` |
+| `public/DocumentTable.tsx`, `DocumentCenter.tsx` | named export | Tabel dokumen (daftar bertumpuk < md); dipakai beranda & `/dokumen` |
+| `dashboard/DashboardShell.tsx` | `DashboardShell` | Klien. Sidebar desktop + drawer ponsel; prop `portal` (bukan `role`, bentrok jsx-a11y) |
+| `dashboard/DashboardUI.tsx` | `DashboardIntro`, `Panel`, `PriorityCard`, `ProgressBar`, `DateBlock`, `PreviewNotice` | Primitive dasbor |
+| `dashboard/StatusBadges.tsx`, `dashboard/nav.ts` | badge status, menu per peran | |
+| `public/Hero.tsx` (12 kolom: teks + slot foto), `StatsSection.tsx`, `AboutPreview.tsx`, `AgendaPreview.tsx`, `NewsPreview.tsx`, `GalleryPreview.tsx`, `AchievementPreview.tsx`, `MapSection.tsx` | named export | Section beranda; semua membaca repository |
 | `public/MapCanvas.tsx`, `public/LeafletMap.tsx` | `MapCanvas`, default | Leaflet + OpenStreetMap, dimuat `next/dynamic` `ssr:false` |
 
 **Semua ekspor komponen adalah *named export*** kecuali `LeafletMap` (default, syarat `next/dynamic`).
@@ -89,13 +97,15 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 | File | Isi |
 |---|---|
-| `lib/repositories/` | `news.ts`, `agenda.ts`, `gallery.ts`, `achievements.ts`, `documents.ts`, `organization.ts`, `stats.ts` + `index.ts` (barrel). **Satu-satunya tempat yang boleh mengimpor `lib/data/mock-data`** |
+| `lib/repositories/` | `news.ts`, `agenda.ts`, `gallery.ts`, `achievements.ts`, `documents.ts`, `organization.ts`, `stats.ts`, `dashboard.ts` + `index.ts` (barrel). **Satu-satunya tempat yang boleh mengimpor `lib/data/mock-data`** |
 | `lib/data/mock-data.ts` | Sumber data sementara. Diganti Prisma di P5-3 tanpa mengubah pemanggil |
-| `lib/site.ts` | `site` (nama, URL, kontak, alamat) + `absoluteUrl()` |
-| `lib/format.ts` | `formatDate`, `formatTime`, `formatDateRange` (id-ID, Asia/Jakarta) |
+| `lib/site.ts` | `site` (nama, URL, kontak, alamat, jam kantor, `social` — VERIFIKASI akun) + `absoluteUrl()` |
+| `lib/golongan.ts` | Data 4 golongan + `golonganAnchor()` |
+| `lib/data/dashboard-mock.ts`, `types/dashboard.ts` | Data fiktif & tipe dasbor |
+| `lib/format.ts` | `formatDate`, `formatTime`, `formatDateRange`, `greeting`, `formatDayMonth` (id-ID, Asia/Jakarta) |
 | `lib/media.ts` | `assetExists()` — **server-only**, mengecek berkas di `public/` |
 | `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
-| `styles/tokens.css` | Token 3 tingkat + trio status + scrim + ritme section |
+| `styles/tokens.css` | Palet Scout Earth Tones: brand cokelat #6B4E31, pasir #D4A373 (`tag-*`), merah aksen #DC2626 (`action-accent`), canvas #F9FAFB, teks #1F2937. Radius `rounded-lg` = 8px |
 | `styles/globals.css` | `@import tokens.css`, `@tailwind`, base, reduced-motion, timpaan kontrol Leaflet, utility `.civic-container` `.civic-section` `.civic-prose` `.stretched-link` `.card-subtle` |
 | `types/index.ts` | `NewsStatus`, `AgendaStatus`, `AchievementLevel` + entitas domain |
 
