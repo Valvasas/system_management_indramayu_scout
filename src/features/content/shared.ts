@@ -1,10 +1,10 @@
-import { eq, type AnyColumn } from 'drizzle-orm';
-import type { PgTable } from 'drizzle-orm/pg-core';
+import { eq } from 'drizzle-orm';
+import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { getDb } from '@/db';
 import { slugify } from '@/lib/domain';
 
 /** Slug unik di tabel tertentu: "judul", "judul-2", "judul-3", … */
-export async function uniqueSlug(table: PgTable, slugColumn: AnyColumn, idColumn: AnyColumn, title: string, excludeId?: string | null) {
+export async function uniqueSlug(table: PgTable, slugColumn: PgColumn, idColumn: PgColumn, title: string, excludeId?: string | null) {
   const db = await getDb();
   const base = slugify(title) || 'konten';
   for (let i = 1; i < 500; i++) {

@@ -125,6 +125,10 @@ export async function updateMemberAction(id: string, _prev: FormState, formData:
       ...(verifier ? {} : { status: 'PENDING' as const, reviewNote: null }),
     })
     .where(eq(schema.members.id, id));
+  // Akun portal peserta mengikuti gudep anggotanya (menentukan pengumuman yang ia terima).
+  if (current.portalUserId && input.gudepId !== current.m.gudepId) {
+    await db.update(schema.users).set({ gudepId: input.gudepId }).where(eq(schema.users.id, current.portalUserId));
+  }
 
   await audit(user, {
     action: 'member.update',

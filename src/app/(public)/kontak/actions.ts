@@ -1,6 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import { getDb, schema } from '@/db';
 
 export type ContactState = {
   status: 'idle' | 'success' | 'error';
@@ -56,25 +57,23 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
     return { status: 'error', message: 'Periksa kembali isian Anda.', errors };
   }
 
-  const webhook = process.env.CONTACT_WEBHOOK_URL;
-  if (!webhook) {
-    // Jujur: jangan pura-pura terkirim bila belum ada tujuan pengiriman.
-    return {
-      status: 'error',
-      message: 'Layanan pengiriman pesan belum aktif. Silakan hubungi sekretariat lewat pos-el atau telepon di samping.',
-    };
+  // Pesan tersimpan di database dan dibaca pengurus di Portal → Pesan masuk.
+  try {
+    const db = await getDb();
+    await db.insert(schema.contactMessages).values({ name, email, organization: organization || null, message });
+  } catch {
+    return { status: 'error', message: 'Pesan gagal disimpan. Silakan coba lagi nanti atau hubungi sekretariat lewat telepon.' };
   }
 
-  try {
-    const res = await fetch(webhook, {
+  // Opsional: teruskan juga ke webhook (mis. grup WhatsApp/Telegram sekretariat).
+  const webhook = process.env.CONTACT_WEBHOOK_URL;
+  if (webhook) {
+    fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, organization, message, receivedAt: new Date().toISOString() }),
       cache: 'no-store',
-    });
-    if (!res.ok) throw new Error(String(res.status));
-  } catch {
-    return { status: 'error', message: 'Pesan gagal dikirim. Silakan coba lagi nanti.' };
+    }).catch(() => undefined);
   }
 
   return { status: 'success', message: 'Pesan Anda telah diterima sekretariat Kwarcab.' };
