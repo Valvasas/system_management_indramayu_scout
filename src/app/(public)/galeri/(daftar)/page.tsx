@@ -54,7 +54,7 @@ export default async function GaleriPage() {
                   </div>
                 </MediaFrame>
                 <CardContent className="flex flex-1 flex-col">
-                  <h2 className="font-display text-lg font-bold leading-snug text-text-primary">
+                  <h2 className="font-display text-lg font-semibold leading-snug text-text-primary">
                     <Link
                       href={`/galeri/${album.slug}`}
                       className="stretched-link rounded-md hover:text-text-accent"

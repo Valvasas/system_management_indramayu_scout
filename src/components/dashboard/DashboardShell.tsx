@@ -119,7 +119,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
 
   // Menu bilah bawah ponsel: tiga tujuan pertama (Ringkasan + dua tugas utama peran) + Akun.
   const flat = nav.flatMap((g) => g.items);
-  const quick: NavItem[] = [...flat.slice(0, 3), { href: '/dashboard/akun', label: 'Akun', icon: 'user' }];
+  const quick: NavItem[] = [...flat.slice(0, 3), { href: '/dashboard/akun', label: 'Akun', icon: 'settings' }];
   const hiddenBadges = flat.slice(3).reduce((n, i) => n + (i.badge ?? 0), 0);
 
   const linkClass = (active: boolean) =>

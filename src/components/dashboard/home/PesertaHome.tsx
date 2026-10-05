@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, BadgeCheck, CalendarCheck2, CalendarPlus, Clock, MapPin, Megaphone } from 'lucide-react';
-import { Panel } from '@/components/dashboard/ui';
+import { Panel, PortalWelcome } from '@/components/dashboard/ui';
 import { announcementsFor } from '@/features/announcements/queries';
 import { getOwnMember, upcomingEventsFor } from '@/features/portal/peserta';
 import type { SessionUser } from '@/lib/auth/session';
@@ -19,16 +19,11 @@ export async function PesertaHome({ user, notice }: { user: SessionUser; notice?
 
   return (
     <>
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
-          {greeting()}, {user.name.split(' ')[0]}
-        </h1>
-        {own && (
-          <p className="mt-1 text-text-secondary">
-            {golonganLabel(own.m.golongan)} · {own.gudep.name}
-          </p>
-        )}
-      </header>
+      <PortalWelcome
+        title={`${greeting()}, ${user.name.split(' ')[0]}`}
+        subtitle={own ? `${golonganLabel(own.m.golongan)} · ${own.gudep.name}` : undefined}
+        scene="camp"
+      />
       {notice}
 
       {open.length > 0 && (
@@ -40,7 +35,7 @@ export async function PesertaHome({ user, notice }: { user: SessionUser; notice?
             <CalendarPlus className="h-6 w-6" aria-hidden="true" />
           </span>
           <div className="flex-1">
-            <h2 id="buka-title" className="font-display text-lg font-bold text-text-primary">
+            <h2 id="buka-title" className="font-display text-lg font-semibold text-text-primary">
               {open.length} kegiatan membuka pendaftaran
             </h2>
             <p className="text-text-secondary">Terdekat: {open[0].title}, {formatDate(open[0].dateStart.toISOString())}.</p>

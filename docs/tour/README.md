@@ -1,93 +1,69 @@
 # Tur Rumah Pramuka Indramayu
 
-Dibuat 5 Oktober 2026 dari build produksi lokal (`next build` + `next start`) dengan **data demo fiktif** (`npm run db:seed -- --demo`). Tidak ada data nyata. Foto di album demo adalah ilustrasi buatan, bukan dokumentasi kegiatan.
+Dibuat ulang 5 Oktober 2026 (design system "Hutan & Lapangan") dari build produksi lokal (`next build` + `next start`) dengan **data demo fiktif** (`npm run db:seed -- --demo`). Tidak ada data nyata.
 
-**Video:** [`tur-rumah-pramuka.mp4`](./tur-rumah-pramuka.mp4) (±5 menit 45 detik, 1280×720, caption berbahasa Indonesia).
+**Video:** [`tur-rumah-pramuka.mp4`](./tur-rumah-pramuka.mp4) (±5 menit 30 detik, 1280×720, caption berbahasa Indonesia; segmen ponsel di tengah bingkai).
 
-Urutan video: situs publik → ponsel → portal pengurus (login, anggota, verifikasi, CMS, galeri, pengumuman, log) → portal peserta.
+Urutan video: situs publik (desktop) → ponsel (publik + portal) → portal pengurus → kontributor gudep → portal peserta.
 
 ## Yang dibuktikan oleh tur ini
 
-Skrip tur berisi *assertion*, jadi bagian ini bukan sekadar tampilan:
+Skrip tur berisi *assertion* status HTTP di setiap halaman:
 
-- Berita dan album yang dibuat lewat CMS **langsung tayang** di situs publik tanpa build ulang (detail, daftar, dan `/galeri` statis).
-- Slug yang tidak ada mengembalikan **404 sungguhan**, bukan soft 404.
-- Pesan dari formulir kontak publik sampai ke "Pesan masuk" di portal.
-- Pengurus memverifikasi anggota → peserta berstatus Aktif dapat mendaftar kegiatan → muncul di Ringkasan.
-- Peserta yang membuka `/dashboard/konten` ditolak di server.
+- Semua halaman publik baru (`/golongan`, `/bergabung`, `/wilayah`, `/cari`) dan detailnya menjawab 200; halaman asing 404 sungguhan.
+- Peserta yang membuka menu staf (`/dashboard/akses`) ditolak di server (404).
+- Alur yang **mengubah data** (lupa sandi → kode akses, mutasi, review berita, CSV pendaftar) diuji terpisah lewat `npm run e2e`, bukan di tur ini.
 
 ## Keterbatasan rekaman
 
 - Petak peta OpenStreetMap diblokir proxy lingkungan rekaman, jadi peta tampil tanpa petak.
-- Folder `public/images/` kosong, sehingga banyak slot foto menampilkan keterangan "belum diunggah". Itu kondisi nyata, bukan kesalahan rekaman.
-- Pada tangkapan layar portal, sidebar `fixed` dipanjangkan sementara agar tampil utuh di gambar penuh.
+- Folder `public/images/` kosong, jadi slot foto menampilkan keterangan "belum diunggah". Itu kondisi nyata.
+- Logo `brand/mark.svg` masih placeholder, belum lambang resmi Kwarcab.
+- Pada tangkapan ponsel (DPR 2) jarak huruf "t" kadang tampak renggang. Kemungkinan artefak render Chromium headless; periksa di perangkat nyata sebelum disimpulkan sebagai bug font.
 
 ## Situs publik (desktop 1280 px)
 
 - [`01-beranda.png`](./screenshots/publik/01-beranda.png)
-- [`02-tentang.png`](./screenshots/publik/02-tentang.png)
-- [`03-struktur-organisasi.png`](./screenshots/publik/03-struktur-organisasi.png)
-- [`04-berita-filter.png`](./screenshots/publik/04-berita-filter.png)
-- [`05-berita-detail.png`](./screenshots/publik/05-berita-detail.png)
-- [`06-agenda.png`](./screenshots/publik/06-agenda.png)
-- [`07-agenda-detail.png`](./screenshots/publik/07-agenda-detail.png)
-- [`08-galeri.png`](./screenshots/publik/08-galeri.png)
-- [`09-prestasi.png`](./screenshots/publik/09-prestasi.png)
-- [`10-dokumen.png`](./screenshots/publik/10-dokumen.png)
-- [`11-dokumen-cari.png`](./screenshots/publik/11-dokumen-cari.png)
-- [`12-kontak.png`](./screenshots/publik/12-kontak.png)
-- [`13-kontak-terkirim.png`](./screenshots/publik/13-kontak-terkirim.png)
-- [`14-kebijakan-privasi.png`](./screenshots/publik/14-kebijakan-privasi.png)
-- [`15-aksesibilitas.png`](./screenshots/publik/15-aksesibilitas.png)
-- [`16-halaman-404.png`](./screenshots/publik/16-halaman-404.png)
+- [`02-golongan.png`](./screenshots/publik/02-golongan.png)
+- [`03-golongan-penggalang.png`](./screenshots/publik/03-golongan-penggalang.png)
+- [`04-bergabung.png`](./screenshots/publik/04-bergabung.png)
+- [`05-wilayah.png`](./screenshots/publik/05-wilayah.png)
+- [`06-cari-kwarran.png`](./screenshots/publik/06-cari-kwarran.png)
+- [`07-wilayah-detail.png`](./screenshots/publik/07-wilayah-detail.png)
+- [`08-cari.png`](./screenshots/publik/08-cari.png)
+- [`09-berita.png`](./screenshots/publik/09-berita.png)
+- [`10-berita-detail.png`](./screenshots/publik/10-berita-detail.png)
+- [`11-agenda.png`](./screenshots/publik/11-agenda.png)
+- [`12-galeri.png`](./screenshots/publik/12-galeri.png)
+- [`13-tentang.png`](./screenshots/publik/13-tentang.png)
+- [`14-kontak.png`](./screenshots/publik/14-kontak.png)
+- [`15-masuk.png`](./screenshots/publik/15-masuk.png)
+- [`16-lupa-sandi.png`](./screenshots/publik/16-lupa-sandi.png)
+- [`17-404.png`](./screenshots/publik/17-404.png)
 
-## Situs publik (ponsel 390 px)
+## Ponsel (390 px)
 
 - [`01-beranda.png`](./screenshots/mobile/01-beranda.png)
-- [`02-menu-drawer.png`](./screenshots/mobile/02-menu-drawer.png)
-- [`03-berita.png`](./screenshots/mobile/03-berita.png)
-- [`04-prestasi.png`](./screenshots/mobile/04-prestasi.png)
-- [`05-dokumen.png`](./screenshots/mobile/05-dokumen.png)
-- [`06-kontak.png`](./screenshots/mobile/06-kontak.png)
-- [`07-masuk.png`](./screenshots/mobile/07-masuk.png)
+- [`02-menu.png`](./screenshots/mobile/02-menu.png)
+- [`03-golongan.png`](./screenshots/mobile/03-golongan.png)
+- [`04-bergabung.png`](./screenshots/mobile/04-bergabung.png)
+- [`05-agenda.png`](./screenshots/mobile/05-agenda.png)
+- [`06-portal-ponsel.png`](./screenshots/mobile/06-portal-ponsel.png)
+- [`07-portal-menu.png`](./screenshots/mobile/07-portal-menu.png)
 
-## Portal pengurus
+## Portal pengurus & kontributor
 
-- [`01-masuk.png`](./screenshots/portal-pengurus/01-masuk.png)
-- [`02-masuk-galat.png`](./screenshots/portal-pengurus/02-masuk-galat.png)
-- [`03-ringkasan.png`](./screenshots/portal-pengurus/03-ringkasan.png)
-- [`04-anggota.png`](./screenshots/portal-pengurus/04-anggota.png)
-- [`05-anggota-detail.png`](./screenshots/portal-pengurus/05-anggota-detail.png)
-- [`05b-verifikasi-menunggu.png`](./screenshots/portal-pengurus/05b-verifikasi-menunggu.png)
-- [`05c-verifikasi-aktif.png`](./screenshots/portal-pengurus/05c-verifikasi-aktif.png)
-- [`06-anggota-baru.png`](./screenshots/portal-pengurus/06-anggota-baru.png)
-- [`07-anggota-impor.png`](./screenshots/portal-pengurus/07-anggota-impor.png)
-- [`08-gudep.png`](./screenshots/portal-pengurus/08-gudep.png)
-- [`09-kwarran.png`](./screenshots/portal-pengurus/09-kwarran.png)
-- [`10-konten-hub.png`](./screenshots/portal-pengurus/10-konten-hub.png)
-- [`11-cms-berita-daftar.png`](./screenshots/portal-pengurus/11-cms-berita-daftar.png)
-- [`12-cms-berita-form.png`](./screenshots/portal-pengurus/12-cms-berita-form.png)
-- [`13-cms-berita-tersimpan.png`](./screenshots/portal-pengurus/13-cms-berita-tersimpan.png)
-- [`14-berita-tayang-publik.png`](./screenshots/portal-pengurus/14-berita-tayang-publik.png)
-- [`15-cms-album-form.png`](./screenshots/portal-pengurus/15-cms-album-form.png)
-- [`16-cms-album-foto.png`](./screenshots/portal-pengurus/16-cms-album-foto.png)
-- [`17-galeri-publik.png`](./screenshots/portal-pengurus/17-galeri-publik.png)
-- [`18-galeri-lightbox.png`](./screenshots/portal-pengurus/18-galeri-lightbox.png)
-- [`19-cms-agenda-form.png`](./screenshots/portal-pengurus/19-cms-agenda-form.png)
-- [`20-cms-dokumen.png`](./screenshots/portal-pengurus/20-cms-dokumen.png)
-- [`21-cms-pengurus.png`](./screenshots/portal-pengurus/21-cms-pengurus.png)
-- [`22-cms-prestasi.png`](./screenshots/portal-pengurus/22-cms-prestasi.png)
-- [`23-pengumuman.png`](./screenshots/portal-pengurus/23-pengumuman.png)
-- [`24-pesan-masuk.png`](./screenshots/portal-pengurus/24-pesan-masuk.png)
-- [`25-log-aktivitas.png`](./screenshots/portal-pengurus/25-log-aktivitas.png)
-- [`26-pengguna.png`](./screenshots/portal-pengurus/26-pengguna.png)
+- [`01-ringkasan.png`](./screenshots/portal-pengurus/01-ringkasan.png)
+- [`02-akses.png`](./screenshots/portal-pengurus/02-akses.png)
+- [`03-mutasi.png`](./screenshots/portal-pengurus/03-mutasi.png)
+- [`04-pendaftaran.png`](./screenshots/portal-pengurus/04-pendaftaran.png)
+- [`05-konten-berita.png`](./screenshots/portal-pengurus/05-konten-berita.png)
+- [`06-anggota.png`](./screenshots/portal-pengurus/06-anggota.png)
+- [`07-kontribusi.png`](./screenshots/portal-pengurus/07-kontribusi.png)
 
 ## Portal peserta
 
 - [`01-ringkasan.png`](./screenshots/portal-peserta/01-ringkasan.png)
 - [`02-kegiatan.png`](./screenshots/portal-peserta/02-kegiatan.png)
-- [`03-kegiatan-terdaftar.png`](./screenshots/portal-peserta/03-kegiatan-terdaftar.png)
-- [`04-profil.png`](./screenshots/portal-peserta/04-profil.png)
-- [`05-ringkasan-setelah-daftar.png`](./screenshots/portal-peserta/05-ringkasan-setelah-daftar.png)
-- [`06-akses-ditolak.png`](./screenshots/portal-peserta/06-akses-ditolak.png)
-
+- [`03-profil.png`](./screenshots/portal-peserta/03-profil.png)
+- [`04-akses-ditolak.png`](./screenshots/portal-peserta/04-akses-ditolak.png)

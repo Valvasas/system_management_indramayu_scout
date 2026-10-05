@@ -161,9 +161,10 @@
     padding: 0.25rem 0.5rem !important;
   }
 
+  /* Tautan di dalam kalimat wajib bergaris bawah (WCAG 1.4.1): CSS Leaflet menghapusnya. */
   .leaflet-control-attribution a {
     color: var(--accent-text) !important;
-    text-decoration: underline;
+    text-decoration: underline !important;
   }
 
   .leaflet-bar a {

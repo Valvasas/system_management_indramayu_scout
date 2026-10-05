@@ -130,7 +130,7 @@ export default async function PrestasiPage({
                         {item.level}
                       </Badge>
                     </div>
-                    <h2 className="font-display text-lg font-bold leading-snug text-text-primary">
+                    <h2 className="font-display text-lg font-semibold leading-snug text-text-primary">
                       {item.title}
                     </h2>
                     <p className="text-sm text-text-secondary">

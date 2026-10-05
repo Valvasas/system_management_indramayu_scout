@@ -89,7 +89,7 @@ export default function AksesibilitasPage() {
 
       <div className="max-w-3xl space-y-10">
         <section aria-labelledby="sudah-title">
-          <h2 id="sudah-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="sudah-title" className="font-display text-2xl font-semibold text-text-primary">
             Yang sudah berlaku
           </h2>
           <ul className="mt-4 space-y-4">
@@ -109,7 +109,7 @@ export default function AksesibilitasPage() {
         </section>
 
         <section aria-labelledby="belum-title">
-          <h2 id="belum-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="belum-title" className="font-display text-2xl font-semibold text-text-primary">
             Keterbatasan yang diketahui
           </h2>
           <ul className="mt-4 space-y-4">
@@ -126,7 +126,7 @@ export default function AksesibilitasPage() {
         </section>
 
         <section aria-labelledby="pintasan-title">
-          <h2 id="pintasan-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="pintasan-title" className="font-display text-2xl font-semibold text-text-primary">
             Pintasan papan ketik standar
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -153,7 +153,7 @@ export default function AksesibilitasPage() {
           aria-labelledby="umpan-title"
           className="rounded-lg border border-border-subtle bg-surface-subtle p-6"
         >
-          <h2 id="umpan-title" className="font-display text-xl font-bold text-text-primary">
+          <h2 id="umpan-title" className="font-display text-xl font-semibold text-text-primary">
             Umpan balik aksesibilitas
           </h2>
           <p className="mt-2 text-text-secondary">

@@ -36,7 +36,7 @@ export default function KontakPage() {
           <Card>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="font-display text-lg font-bold text-text-primary">
+                <h3 className="font-display text-lg font-semibold text-text-primary">
                   Sekretariat kwarcab
                 </h3>
                 <div className="mt-3 flex gap-3 text-sm">
@@ -129,7 +129,7 @@ export default function KontakPage() {
         <section aria-labelledby="form-title">
           <Card>
             <CardContent>
-              <h2 id="form-title" className="font-display text-lg font-bold text-text-primary">
+              <h2 id="form-title" className="font-display text-lg font-semibold text-text-primary">
                 Kirim pesan atau aspirasi
               </h2>
               <p className="mt-1 text-sm text-text-secondary">

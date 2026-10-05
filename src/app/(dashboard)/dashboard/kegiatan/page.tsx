@@ -47,7 +47,7 @@ export default async function KegiatanPage({ searchParams = {} }: { searchParams
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-display text-lg font-bold text-text-primary">{e.title}</h2>
+                      <h2 className="font-display text-lg font-semibold text-text-primary">{e.title}</h2>
                       {e.registered && (
                         <Badge tone="success" icon={BadgeCheck}>
                           Terdaftar

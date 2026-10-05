@@ -4,7 +4,7 @@ import { count, desc, eq, isNull } from 'drizzle-orm';
 import { AlertTriangle, ArrowRight, CheckCircle2, Clock, FileEdit, Inbox, MapPinOff, Megaphone, Upload, UserPlus, type LucideIcon } from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { ButtonLink } from '@/components/ui/Button';
-import { Panel } from '@/components/dashboard/ui';
+import { PortalWelcome, Panel } from '@/components/dashboard/ui';
 import { announcementsFor } from '@/features/announcements/queries';
 import { gudepLocationCoverage } from '@/features/gudep/queries';
 import { golonganCounts, memberStatusCounts } from '@/features/members/queries';
@@ -52,14 +52,11 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
 
   return (
     <>
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">
-            {greeting()}, {user.name.split(' ')[0]}
-          </h1>
-          <p className="mt-1 text-text-secondary">Berikut yang perlu Anda perhatikan hari ini.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PortalWelcome
+        title={`${greeting()}, ${user.name.split(' ')[0]}`}
+        subtitle="Berikut yang perlu Anda perhatikan hari ini."
+        actions={
+          <>
           {can(user, 'members.create') && (
             <ButtonLink href="/dashboard/anggota/baru">
               <UserPlus className="h-4 w-4" aria-hidden="true" />
@@ -78,12 +75,13 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
               Tulis berita
             </ButtonLink>
           )}
-        </div>
-      </header>
+          </>
+        }
+      />
       {notice}
 
       <section aria-labelledby="tugas-title">
-        <h2 id="tugas-title" className="font-display text-lg font-bold text-text-primary">
+        <h2 id="tugas-title" className="font-display text-lg font-semibold text-text-primary">
           Perlu tindakan
         </h2>
         {tasks.length === 0 ? (
@@ -94,12 +92,12 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
         ) : (
           <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {tasks.map((t) => (
-              <li key={t.label} className="group relative flex gap-4 rounded-lg border border-border-subtle bg-surface-base p-5 shadow-sm transition-shadow hover:shadow-md">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-tag-surface text-tag-text">
+              <li key={t.label} className="group relative flex gap-4 rounded-2xl border border-border-subtle bg-surface-base p-5 shadow-sm transition-shadow hover:shadow-md">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-meadow text-text-accent">
                   <t.icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-2xl font-bold text-text-primary">{t.count.toLocaleString('id-ID')}</p>
+                  <p className="font-display text-2xl font-semibold text-text-primary">{t.count.toLocaleString('id-ID')}</p>
                   <Link href={t.href} className="stretched-link font-medium text-text-primary group-hover:text-text-accent">
                     {t.label}
                   </Link>

@@ -137,7 +137,7 @@ export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 id="lightbox-title" className="font-display text-lg font-bold text-text-primary">
+                <h2 id="lightbox-title" className="font-display text-lg font-semibold text-text-primary">
                   {photo.caption}
                 </h2>
                 <p className="text-xs text-text-secondary">

@@ -15,7 +15,12 @@ interface Params {
 }
 
 export const revalidate = 3600;
-export const dynamicParams = false;
+/**
+ * `true` walau daftarnya tetap: di Next 14, rute `dynamicParams = false` menjawab 404 untuk SEMUA
+ * path-nya begitu `revalidatePublicSite()` menandai layout basi (terbukti setelah berita diterbitkan).
+ * Id asing tetap 404 lewat `notFound()`.
+ */
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   return (await getKwarranSlugs()).map((slug) => ({ slug }));

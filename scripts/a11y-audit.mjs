@@ -17,13 +17,18 @@ const axeSource = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8'
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const PASSWORD = process.env.DEMO_PASSWORD ?? 'demo-pramuka-2026';
 
-const PUBLIC = ['/', '/tentang', '/struktur-organisasi', '/berita', '/agenda', '/galeri', '/prestasi', '/dokumen', '/kontak', '/kebijakan-privasi', '/aksesibilitas', '/masuk'];
+const PUBLIC = [
+  '/', '/tentang', '/struktur-organisasi', '/golongan', '/golongan/penggalang', '/bergabung', '/wilayah', '/wilayah/indramayu',
+  '/berita', '/berita/pelatihan-kmd', '/agenda', '/agenda/perkemahan-bakti-penggalang', '/galeri', '/galeri/hari-pramuka', '/prestasi',
+  '/dokumen', '/kontak', '/cari?q=kemah', '/kebijakan-privasi', '/aksesibilitas', '/masuk', '/masuk/lupa-sandi', '/masuk/kode', '/halaman-tidak-ada',
+];
 const ADMIN = [
   '/dashboard', '/dashboard/konten', '/dashboard/konten/berita', '/dashboard/konten/berita/baru', '/dashboard/konten/agenda', '/dashboard/konten/agenda/baru',
   '/dashboard/konten/galeri', '/dashboard/konten/galeri/baru', '/dashboard/konten/dokumen', '/dashboard/konten/dokumen/baru', '/dashboard/konten/pengurus',
   '/dashboard/konten/pengurus/baru', '/dashboard/konten/prestasi', '/dashboard/konten/prestasi/baru', '/dashboard/anggota', '/dashboard/anggota/baru',
   '/dashboard/anggota/impor', '/dashboard/gudep', '/dashboard/gudep/baru', '/dashboard/kwarran', '/dashboard/pengguna', '/dashboard/pengumuman',
-  '/dashboard/pesan', '/dashboard/log', '/dashboard/pengaturan', '/dashboard/akun',
+  '/dashboard/pesan', '/dashboard/log', '/dashboard/pengaturan', '/dashboard/akun', '/dashboard/mutasi', '/dashboard/pendaftaran',
+  '/dashboard/akses', '/dashboard/kontribusi', '/dashboard/kontribusi/baru',
 ];
 const PESERTA = ['/dashboard', '/dashboard/kegiatan', '/dashboard/profil', '/dashboard/akun'];
 
@@ -36,6 +41,15 @@ async function login(page, user) {
 
 async function scan(page, path, width, findings) {
   await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 60_000 });
+  // Picu animasi muncul-saat-gulir lalu kembali ke atas, supaya axe memeriksa keadaan akhir yang terlihat pengguna.
+  await page.evaluate(async () => {
+    for (let y = 0; y < document.body.scrollHeight; y += 600) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    window.scrollTo(0, 0);
+    await new Promise((r) => setTimeout(r, 800));
+  });
   await page.evaluate(axeSource);
   const violations = await page.evaluate(async () => {
     const r = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });

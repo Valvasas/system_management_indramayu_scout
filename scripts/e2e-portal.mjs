@@ -192,6 +192,16 @@ await step('editor menerbitkan; berita langsung tayang publik', async () => {
   await ctx.close();
 });
 
+await step('setelah terbit: halaman statis lain tetap 200, slug asing tetap 404', async () => {
+  // Regresi: revalidatePublicSite() + dynamicParams=false membuat seluruh /golongan/* & /wilayah/* jadi 404.
+  const { ctx, page } = await session(browser);
+  for (const [p, want] of [['/golongan/siaga', 200], ['/wilayah/anjatan', 200], ['/golongan/bukan-golongan', 404], ['/wilayah/bukan-kwarran', 404], ['/berita/bukan-berita', 404]]) {
+    const r = await page.goto(`${BASE}${p}`);
+    assert(r.status() === want, `${p} seharusnya ${want}, dapat ${r.status()}`);
+  }
+  await ctx.close();
+});
+
 /* ---------- 4. Pendaftar kegiatan ---------- */
 await step('pengurus melihat pendaftar & mengunduh CSV', async () => {
   const { ctx, page } = await session(browser);

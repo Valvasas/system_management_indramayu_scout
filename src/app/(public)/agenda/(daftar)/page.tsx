@@ -72,7 +72,7 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
                     <AgendaStatusBadge status={agenda.status} />
-                    <h2 className="mt-3 font-display text-xl font-bold leading-snug text-text-primary">
+                    <h2 className="mt-3 font-display text-xl font-semibold leading-snug text-text-primary">
                       <Link
                         href={`/agenda/${agenda.slug}`}
                         className="stretched-link rounded-md hover:text-text-accent"

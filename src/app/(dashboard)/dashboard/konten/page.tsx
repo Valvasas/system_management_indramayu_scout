@@ -28,12 +28,12 @@ export default async function KontenPage() {
           <li key={href}>
             <Link
               href={href}
-              className="flex h-full min-h-touch flex-col gap-3 rounded-lg border border-border-subtle bg-surface-base p-5 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-subtle"
+              className="flex h-full min-h-touch flex-col gap-3 rounded-2xl border border-border-subtle bg-surface-base p-5 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-subtle"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-tag-surface text-tag-text">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-meadow text-text-accent">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
-              <span className="font-display text-lg font-bold text-text-primary">{title}</span>
+              <span className="font-display text-lg font-semibold text-text-primary">{title}</span>
               <span className="text-text-secondary">{description}</span>
               <span className="mt-auto text-sm font-medium text-text-secondary">{count}</span>
             </Link>

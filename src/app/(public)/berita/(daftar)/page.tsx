@@ -77,7 +77,7 @@ export default async function BeritaPage({
                 />
                 <CardContent className="flex flex-1 flex-col">
                   <CategoryBadge className="self-start">{item.category}</CategoryBadge>
-                  <h2 className="mt-3 font-display text-lg font-bold leading-snug text-text-primary">
+                  <h2 className="mt-3 font-display text-lg font-semibold leading-snug text-text-primary">
                     <Link
                       href={`/berita/${item.slug}`}
                       className="stretched-link rounded-md hover:text-text-accent"

@@ -16,8 +16,12 @@ interface Params {
 /** Angka agregat anggota ikut diperbarui tiap jam (verifikasi anggota tidak memicu revalidasi konten). */
 export const revalidate = 3600;
 
-/** Lima golongan tetap: dibuat statis; id lain → 404. */
-export const dynamicParams = false;
+/**
+ * `true` walau daftarnya tetap: di Next 14, rute `dynamicParams = false` menjawab 404 untuk SEMUA
+ * path-nya begitu `revalidatePublicSite()` menandai layout basi (terbukti setelah berita diterbitkan).
+ * Id asing tetap 404 lewat `notFound()`.
+ */
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return golongan.map((g) => ({ id: g.id }));
