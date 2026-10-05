@@ -11,6 +11,8 @@ export const site = {
   // Domain publik. Override lewat NEXT_PUBLIC_SITE_URL saat pratinjau/staging.
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pramukaindramayu.or.id').replace(/\/$/, ''),
   logo: '/brand/logo.svg',
+  /** Tanda persegi untuk header, footer, dan portal (logo horizontal terlalu kecil di kotak 40px). */
+  mark: '/brand/mark.svg',
   contact: {
     email: 'info@pramukaindramayu.or.id',
     accessibilityEmail: 'aksesibilitas@pramukaindramayu.or.id',
@@ -25,6 +27,8 @@ export const site = {
       country: 'ID',
     },
     officeHours: 'Senin – Jumat, 08.00 – 16.00 WIB',
+    // Titik perkiraan sekretariat (kawasan Simpang Lima Indramayu). VERIFIKASI sebelum rilis.
+    coords: { lat: -6.3266, lng: 108.3245 },
   },
   // VERIFIKASI sebelum rilis: ganti dengan akun resmi Kwarcab. Entri tanpa URL tidak dirender.
   social: [

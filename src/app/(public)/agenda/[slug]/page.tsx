@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, CalendarDays, MapPin, Phone, Users } from 'lucide-react';
-import { AgendaStatusBadge, agendaStatusLabel } from '@/components/ui/Badge';
+import { ArrowLeft, CalendarDays, CalendarPlus, Clock, MapPin, Navigation, Phone, Users } from 'lucide-react';
+import { AgendaStatusBadge } from '@/components/ui/Badge';
+import { PageHero } from '@/components/ui/Section';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
+import { paragraphs } from '@/lib/reading';
 import { ButtonLink } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
 import { getAgendaBySlug, getAgendaSlugs } from '@/lib/repositories';
-import { formatDate, formatDateRange } from '@/lib/format';
+import { formatDateRange, formatDayMonth, formatTime } from '@/lib/format';
 import { absoluteUrl } from '@/lib/site';
 
 interface Params {
@@ -63,97 +65,104 @@ export default async function AgendaDetailPage({ params }: Params) {
     url: absoluteUrl(`/agenda/${agenda.slug}`),
   };
 
+  const day = formatDayMonth(agenda.dateStart);
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${agenda.location}, Indramayu`)}`;
+
   return (
-    <div className="civic-container py-12">
-      <nav aria-label="Remah roti" className="mb-6">
-        <Link
-          href="/agenda"
-          className="inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-medium text-text-accent hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Kembali ke daftar agenda
-        </Link>
-      </nav>
-
-      <article className="max-w-3xl">
+    <div>
+      <PageHero
+        eyebrow="Agenda kegiatan"
+        title={agenda.title}
+        scene="camp"
+        top={<Breadcrumbs items={[{ label: 'Agenda', href: '/agenda' }, { label: agenda.title }]} />}
+      >
         <AgendaStatusBadge status={agenda.status} />
-        <h1 className="mt-4 font-display text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-text-primary">
-          {agenda.title}
-        </h1>
+      </PageHero>
 
-        <Card className="mt-8">
-          <CardContent>
-            <h2 className="sr-only">Rincian pelaksanaan</h2>
-            <dl className="grid gap-5 sm:grid-cols-2">
-              <div className="flex gap-3">
-                <dt className="shrink-0">
-                  <CalendarDays className="h-5 w-5 text-text-muted" aria-hidden="true" />
-                  <span className="sr-only">Jadwal</span>
-                </dt>
-                <dd>
-                  <span className="block text-xs text-text-secondary">Jadwal pelaksanaan</span>
-                  <strong className="text-text-primary">
-                    <time dateTime={agenda.dateStart}>
-                      {formatDateRange(agenda.dateStart, agenda.dateEnd)}
-                    </time>
-                  </strong>
-                </dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="shrink-0">
-                  <MapPin className="h-5 w-5 text-text-muted" aria-hidden="true" />
-                  <span className="sr-only">Lokasi</span>
-                </dt>
-                <dd>
-                  <span className="block text-xs text-text-secondary">Lokasi kegiatan</span>
-                  <strong className="text-text-primary">{agenda.location}</strong>
-                </dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="shrink-0">
-                  <Users className="h-5 w-5 text-text-muted" aria-hidden="true" />
-                  <span className="sr-only">Penyelenggara</span>
-                </dt>
-                <dd>
-                  <span className="block text-xs text-text-secondary">Penyelenggara</span>
-                  <strong className="text-text-primary">{agenda.organizer}</strong>
-                </dd>
-              </div>
-              <div className="flex gap-3">
-                <dt className="shrink-0">
-                  <Phone className="h-5 w-5 text-text-muted" aria-hidden="true" />
-                  <span className="sr-only">Narahubung</span>
-                </dt>
-                <dd>
-                  <span className="block text-xs text-text-secondary">Narahubung</span>
-                  <strong className="text-text-primary">{agenda.contactPerson}</strong>
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-
-        <section className="mt-8">
-          <h2 className="font-display text-xl font-bold text-text-primary">Deskripsi kegiatan</h2>
-          <p className="mt-3 civic-prose">{agenda.description}</p>
-          <p className="mt-3 text-sm text-text-muted">
-            Status terkini: {agendaStatusLabel(agenda.status)} · diperbarui{' '}
-            {formatDate(agenda.dateStart)}.
-          </p>
-        </section>
-
-        <section className="mt-8 flex flex-col gap-4 rounded-lg border border-border-subtle bg-surface-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-semibold text-text-primary">Petunjuk pelaksanaan & teknis</h2>
-            <p className="text-sm text-text-secondary">
-              Edaran dan panduan resmi panitia tersedia di pusat dokumen.
-            </p>
+      <div className="civic-container grid gap-10 pb-16 pt-6 sm:pb-24 lg:grid-cols-[1fr_22rem]">
+        <article aria-labelledby="deskripsi-title" className="min-w-0">
+          <h2 id="deskripsi-title" className="font-display text-display-md font-semibold text-text-primary">
+            Tentang kegiatan
+          </h2>
+          <div className="mt-5 max-w-prose space-y-5 text-[1.05rem] leading-[1.8] text-text-secondary">
+            {paragraphs(agenda.description).map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
           </div>
-          <ButtonLink href="/dokumen" variant="outline" className="shrink-0">
-            Buka pusat dokumen
-          </ButtonLink>
-        </section>
-      </article>
+
+          <section aria-labelledby="juknis-title" className="mt-10 flex flex-col gap-4 rounded-2xl bg-surface-sand p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="juknis-title" className="font-semibold text-text-primary">Petunjuk pelaksanaan & teknis</h2>
+              <p className="text-sm text-text-secondary">Edaran dan panduan resmi panitia tersedia di Pusat Dokumen.</p>
+            </div>
+            <ButtonLink href="/dokumen" variant="outline" className="shrink-0">
+              Buka pusat dokumen
+            </ButtonLink>
+          </section>
+
+          <Link href="/agenda" className="mt-8 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Semua agenda
+          </Link>
+        </article>
+
+        <aside aria-labelledby="tiket-title" className="lg:sticky lg:top-28 lg:self-start">
+          <div className="overflow-hidden rounded-3xl border border-border-subtle bg-surface-base shadow-md">
+            <div className="flex items-center gap-4 bg-surface-forest p-5 text-text-inverse">
+              <div className="flex w-16 shrink-0 flex-col items-center rounded-xl bg-surface-base py-1.5 text-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-text-warm">{day.month}</span>
+                <span className="font-display text-3xl font-semibold leading-none text-text-primary">{day.day}</span>
+              </div>
+              <div>
+                <h2 id="tiket-title" className="font-display text-lg font-semibold">
+                  Rincian pelaksanaan
+                </h2>
+                <p className="text-sm capitalize text-text-inverse-muted">{day.weekday}</p>
+              </div>
+            </div>
+            <dl className="divide-y divide-border-subtle px-5">
+              {[
+                { icon: CalendarDays, label: 'Jadwal', value: <time dateTime={agenda.dateStart}>{formatDateRange(agenda.dateStart, agenda.dateEnd)}</time> },
+                { icon: Clock, label: 'Waktu', value: formatTime(agenda.dateStart) },
+                { icon: MapPin, label: 'Lokasi', value: agenda.location },
+                { icon: Users, label: 'Penyelenggara', value: agenda.organizer },
+                ...(agenda.contactPerson ? [{ icon: Phone, label: 'Narahubung', value: agenda.contactPerson }] : []),
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex gap-3 py-3.5">
+                  <dt className="mt-0.5 shrink-0">
+                    <Icon className="h-5 w-5 text-text-accent" aria-hidden="true" />
+                    <span className="sr-only">{label}</span>
+                  </dt>
+                  <dd>
+                    <span className="block text-xs text-text-secondary" aria-hidden="true">
+                      {label}
+                    </span>
+                    <span className="font-semibold text-text-primary">{value}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="grid gap-2 p-5 pt-2">
+              <ButtonLink href={`/agenda/${agenda.slug}/kalender.ics`} variant="primary">
+                <CalendarPlus className="h-4 w-4" aria-hidden="true" />
+                Simpan ke kalender
+              </ButtonLink>
+              <ButtonLink href={mapsHref} variant="outline" target="_blank">
+                <Navigation className="h-4 w-4" aria-hidden="true" />
+                Petunjuk arah
+                <span className="sr-only">(Google Maps, tab baru)</span>
+              </ButtonLink>
+            </div>
+          </div>
+          <p className="mt-4 px-1 text-sm text-text-secondary">
+            Peserta yang datanya sudah terverifikasi dapat mendaftar lewat{' '}
+            <Link href="/masuk" className="font-semibold text-text-accent underline underline-offset-2">
+              portal
+            </Link>
+            .
+          </p>
+        </aside>
+      </div>
 
       <script
         type="application/ld+json"

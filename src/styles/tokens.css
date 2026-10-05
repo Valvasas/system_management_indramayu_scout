@@ -1,163 +1,237 @@
-/* Design token Rumah Pramuka Indramayu — palet "Scout Earth Tones".
+/* Design token Rumah Pramuka Indramayu — palet "Hutan & Lapangan" (Oktober 2026).
    Urutan: primitive -> semantic -> alias. Komponen HANYA memakai token semantic.
-   Rasio kontras tiap pasangan diukur di docs/design/color-contrast.md (WCAG 2.2 AA). */
+   Rasio kontras tiap pasangan diukur di docs/design/color-contrast.md (WCAG 2.2 AA).
+
+   Cerita warna:
+     forest  = hutan pinus, warna utama & aksi        ember = api unggun, aksen hangat (hemat!)
+     moss    = lumut & rumput lapangan                sky   = langit pagi, informasi
+     bark    = kayu & tali tambang (warisan cokelat)  sand  = kanvas tenda, latar halaman
+     stone   = netral hangat (bukan abu-abu dingin)                                       */
 
 :root {
-  /* ---------- Primitive: Brown (brand) ----------
-     brown-600 #6B4E31 = warna brand "Dark Scout Brown". */
-  --brown-50: #F8F4EF;
-  --brown-100: #EFE6DA;
-  --brown-200: #E0CDB5;
-  --brown-300: #C9AB88;
-  --brown-400: #A6835F;
-  --brown-500: #8A6744;
-  --brown-600: #6B4E31;
-  --brown-700: #5A4129;
-  --brown-800: #463220;
-  --brown-900: #2F2216;
+  /* ---------- Primitive: Forest (brand utama) ---------- */
+  --forest-50: #EDF5EF;
+  --forest-100: #D5E8DB;
+  --forest-200: #AFD0BA;
+  --forest-300: #7FB292;
+  --forest-400: #4F906C;
+  --forest-500: #2F7350;
+  --forest-600: #1F5C3E;
+  --forest-700: #184A32;
+  --forest-800: #123927;
+  --forest-900: #0E2A1E;
 
-  /* ---------- Primitive: Sand (sekunder) ----------
-     sand-400 #D4A373 = "Light Sand". */
-  --sand-50: #FBF6F0;
-  --sand-100: #F5EADC;
-  --sand-200: #ECD7BE;
+  /* ---------- Primitive: Moss (rumput & lumut) ---------- */
+  --moss-100: #EEF0D9;
+  --moss-200: #DCE2B3;
+  --moss-400: #A8B465;
+  --moss-500: #8A9A47;
+  --moss-700: #55611F;
+
+  /* ---------- Primitive: Bark (cokelat kayu, warisan Pramuka) ---------- */
+  --bark-50: #F7F2EC;
+  --bark-100: #EDE3D6;
+  --bark-200: #DBC7AE;
+  --bark-400: #A57F58;
+  --bark-600: #6B4E31;
+  --bark-700: #573F27;
+  --bark-800: #3F2D1C;
+
+  /* ---------- Primitive: Sand (kanvas tenda) ---------- */
+  --sand-50: #FAF7F0;
+  --sand-100: #F4EAD8;
+  --sand-200: #E9DBC2;
+  --sand-300: #DCC59E;
   --sand-400: #D4A373;
 
-  /* ---------- Primitive: Neutral (Tailwind gray) ---------- */
-  --neutral-50: #F9FAFB;
-  --neutral-100: #F3F4F6;
-  --neutral-200: #E5E7EB;
-  --neutral-300: #D1D5DB;
-  --neutral-400: #9CA3AF;
-  --neutral-500: #6B7280;
-  --neutral-600: #4B5563;
-  --neutral-700: #374151;
-  --neutral-800: #1F2937;
-  --neutral-900: #111827;
+  /* ---------- Primitive: Sky (langit pagi) ---------- */
+  --sky-100: #E2EEF3;
+  --sky-200: #C3DCE7;
+  --sky-400: #7FB2C9;
+  --sky-800: #21536A;
+
+  /* ---------- Primitive: Ember (api unggun) ---------- */
+  --ember-100: #FCE9DA;
+  --ember-200: #F8CFAE;
+  --ember-400: #F08A4B;
+  --ember-600: #C2541B;
+  --ember-700: #A2441A;
+  --ember-800: #7D3212;
+
+  /* ---------- Primitive: Stone (netral hangat) ----------
+     Nama --neutral-* dipertahankan sebagai alias agar kode lama tetap konsisten. */
+  --stone-50: #FAF9F6;
+  --stone-100: #F2EEE4;
+  --stone-200: #E4DED2;
+  --stone-300: #CFC9BE;
+  --stone-400: #A39B8E;
+  --stone-500: #6E675D;
+  --stone-600: #55504A;
+  --stone-700: #3D3934;
+  --stone-800: #262420;
+  --stone-900: #171512;
+
+  --neutral-50: var(--stone-50);
+  --neutral-100: var(--stone-100);
+  --neutral-200: var(--stone-200);
+  --neutral-300: var(--stone-300);
+  --neutral-400: var(--stone-400);
+  --neutral-500: var(--stone-500);
+  --neutral-600: var(--stone-600);
+  --neutral-700: var(--stone-700);
+  --neutral-800: var(--stone-800);
+  --neutral-900: var(--stone-900);
 
   /* ---------- Primitive: Status ---------- */
-  --green-50: #F0FDF4;
-  --green-200: #BBF7D0;
-  --green-800: #166534;
-
-  --amber-50: #FFFBEB;
-  --amber-200: #FDE68A;
-  --amber-800: #92400E;
-
-  --red-50: #FEF2F2;
-  --red-200: #FECACA;
-  --red-600: #DC2626;
-  --red-700: #B91C1C;
-  --red-800: #991B1B;
-
-  --blue-50: #EFF6FF;
-  --blue-200: #BFDBFE;
-  --blue-800: #1E40AF;
+  --green-50: #EFF7F1;
+  --green-200: #BFDFC8;
+  --green-800: #1D5B33;
+  --amber-50: #FEF8E7;
+  --amber-200: #F6DE9C;
+  --amber-800: #7A4A0B;
+  --red-50: #FDF1EF;
+  --red-200: #F5C6BE;
+  --red-600: #C8372D;
+  --red-700: #A92B22;
+  --red-800: #85211A;
+  --blue-50: var(--sky-100);
+  --blue-200: var(--sky-200);
+  --blue-800: var(--sky-800);
 
   /* ---------- Semantic: Surface ----------
-     canvas = latar halaman (gray-50, bukan putih murni).
-     base/raised = kartu, header, input (putih). */
-  --surface-canvas: var(--neutral-50);
+     canvas  = kanvas tenda (krem hangat), base/raised = kertas putih.
+     forest  = blok gelap berhutan (footer, pita ajakan). meadow/sand/sky = pita lembut bergantian. */
+  --surface-canvas: var(--sand-50);
   --surface-base: #FFFFFF;
   --surface-raised: #FFFFFF;
-  --surface-subtle: var(--neutral-100);
-  --surface-sunken: var(--neutral-200);
-  --surface-inverse: var(--neutral-800);
-  --surface-brand-tint: var(--brown-50);
-  /* Scrim modal/drawer: alpha sudah menyatu di token agar tidak bergantung
-     pada modifier opacity Tailwind (tidak bekerja untuk nilai var()). */
-  --surface-scrim: rgb(17 24 39 / 0.45);
+  --surface-subtle: var(--stone-100);
+  --surface-sunken: var(--stone-200);
+  --surface-inverse: var(--forest-900);
+  --surface-forest: var(--forest-800);
+  --surface-meadow: var(--forest-50);
+  --surface-sand: var(--sand-100);
+  --surface-sky: var(--sky-100);
+  --surface-ember: var(--ember-100);
+  --surface-brand-tint: var(--forest-50);
+  --surface-scrim: rgb(14 42 30 / 0.55);
 
   /* ---------- Semantic: Text ----------
-     Diukur di atas putih / gray-50:
-       primary   neutral-800 14.7:1 / 14.1:1
-       secondary neutral-600  7.6:1 /  7.3:1
-       muted     neutral-500  4.8:1 /  4.6:1  (jangan dipakai < 12px)
-       inverse   putih di atas surface-inverse 14.7:1 */
-  --text-primary: var(--neutral-800);
-  --text-secondary: var(--neutral-600);
-  --text-muted: var(--neutral-500);
+     Diukur di atas putih / kanvas:
+       primary   stone-800 15.5:1 / 14.5:1
+       secondary stone-600  8.0:1 /  7.5:1
+       muted     stone-500  5.6:1 /  5.2:1  (di stone-100 4.8:1)
+       inverse   putih di atas forest-900 15.3:1, inverse-muted 10.2:1 */
+  --text-primary: var(--stone-800);
+  --text-secondary: var(--stone-600);
+  --text-muted: var(--stone-500);
   --text-inverse: #FFFFFF;
-  --text-inverse-muted: var(--neutral-300);
+  --text-inverse-muted: #C9D6CD;
   --text-on-brand: #FFFFFF;
 
   /* ---------- Semantic: Action ----------
-     Putih di atas brown-600 = 7.6:1, hover brown-700 = 9.6:1. */
-  --action-primary: var(--brown-600);
-  --action-primary-hover: var(--brown-700);
-  --action-primary-active: var(--brown-800);
-  --action-secondary: var(--sand-100);
-  --action-secondary-hover: var(--sand-200);
-  --action-secondary-text: var(--brown-800);
-  /* Merah aksen (#DC2626): khusus peringatan penting & aksi kritis. Putih di atasnya 4.8:1. */
-  --action-accent: var(--red-600);
-  --action-accent-hover: var(--red-700);
+     Putih di atas forest-600 = 7.9:1, hover forest-700 = 10.2:1. */
+  --action-primary: var(--forest-600);
+  --action-primary-hover: var(--forest-700);
+  --action-primary-active: var(--forest-800);
+  --action-secondary: var(--forest-50);
+  --action-secondary-hover: var(--forest-100);
+  --action-secondary-text: var(--forest-800);
+  /* Ember: aksen hangat untuk sorotan & ajakan khusus. Putih di atas ember-700 = 6.2:1. */
+  --action-accent: var(--ember-700);
+  --action-accent-hover: var(--ember-800);
   --action-danger: var(--red-700);
   --action-danger-hover: var(--red-800);
 
-  /* Tautan & teks aksentuasi di atas latar terang: brown-600 = 7.6:1 */
-  --accent-text: var(--brown-600);
+  /* Tautan & teks aksentuasi: forest-700 = 10.2:1 di putih, 9.5:1 di kanvas. */
+  --accent-text: var(--forest-700);
+  /* Sorotan hangat (eyebrow, angka statistik): ember-700 = 6.2:1 di putih. */
+  --accent-warm: var(--ember-700);
 
-  /* ---------- Semantic: Tag (pill kategori, warna sekunder) ----------
-     brown-800 di atas sand-100 = 9.8:1 */
+  /* ---------- Semantic: Tag ---------- bark-800 di atas sand-100 = 11.0:1 */
   --tag-surface: var(--sand-100);
-  --tag-text: var(--brown-800);
-  --tag-border: var(--sand-400);
+  --tag-text: var(--bark-800);
+  --tag-border: var(--sand-300);
 
   /* ---------- Semantic: Border ---------- */
-  --border-subtle: var(--neutral-200);
-  --border-strong: var(--neutral-300);
-  --border-brand: var(--sand-400);
-  /* Di atas surface-inverse (footer): garis, kontrol, dan keadaan hover */
-  --border-inverse: var(--neutral-600);
-  --border-inverse-subtle: var(--neutral-700);
-  --border-inverse-hover: var(--neutral-400);
+  --border-subtle: var(--stone-200);
+  --border-strong: var(--stone-300);
+  --border-brand: var(--forest-200);
+  --border-inverse: #355C48;
+  --border-inverse-subtle: #22473A;
+  --border-inverse-hover: #7FB292;
 
   /* ---------- Semantic: Focus ---------- */
-  --focus-ring: var(--brown-600);
+  --focus-ring: var(--ember-600);
   --focus-ring-inverse: #FFFFFF;
 
   /* ---------- Semantic: Status ----------
-     Tiap status punya trio surface/text/border. Rasio text-di-atas-surface >= 6.5:1.
      Warna TIDAK PERNAH jadi satu-satunya pembeda: Badge selalu ikon + teks (WCAG 1.4.1). */
-  --status-info-surface: var(--blue-50);
-  --status-info-text: var(--blue-800);
-  --status-info-border: var(--blue-200);
-
+  --status-info-surface: var(--sky-100);
+  --status-info-text: var(--sky-800);
+  --status-info-border: var(--sky-200);
   --status-success-surface: var(--green-50);
   --status-success-text: var(--green-800);
   --status-success-border: var(--green-200);
-
   --status-warning-surface: var(--amber-50);
   --status-warning-text: var(--amber-800);
   --status-warning-border: var(--amber-200);
-
   --status-danger-surface: var(--red-50);
   --status-danger-text: var(--red-800);
   --status-danger-border: var(--red-200);
+  --status-neutral-surface: var(--stone-100);
+  --status-neutral-text: var(--stone-700);
+  --status-neutral-border: var(--stone-200);
 
-  --status-neutral-surface: var(--neutral-100);
-  --status-neutral-text: var(--neutral-700);
-  --status-neutral-border: var(--neutral-200);
+  /* ---------- Ilustrasi (dekoratif, tidak membawa informasi) ----------
+     Lapisan lanskap dari jauh ke dekat. Dipakai komponen di src/components/illustrations. */
+  --ill-sky: #DCEBEF;
+  --ill-sky-warm: #F6E7CF;
+  --ill-sun: #F4C77A;
+  --ill-cloud: #FFFFFF;
+  --ill-mountain-far: #B9CFC6;
+  --ill-mountain: #8DB09F;
+  --ill-forest-far: #5D8C72;
+  --ill-forest: #2F6B4B;
+  --ill-forest-near: #1C4D35;
+  --ill-forest-deep: #123927;
+  --ill-meadow: #A8B465;
+  --ill-meadow-light: #C9D18F;
+  --ill-ground: #8C6B45;
+  --ill-path: #E3CFA6;
+  --ill-tent: #E06A2A;
+  --ill-tent-shade: #A2441A;
+  --ill-tent-alt: #D4A373;
+  --ill-flag: #C8372D;
+  --ill-wood: #6B4E31;
+  --ill-fire: #F08A4B;
+  --ill-fire-core: #F4C77A;
+  --ill-water: #7FB2C9;
+  --ill-contour: rgb(31 92 62 / 0.09);
+  --ill-contour-inverse: rgb(255 255 255 / 0.07);
 
   /* ---------- Brand alias (dipakai tailwind.config) ---------- */
-  --brand-50: var(--brown-50);
-  --brand-100: var(--brown-100);
-  --brand-200: var(--brown-200);
-  --brand-300: var(--brown-300);
-  --brand-400: var(--brown-400);
-  --brand-500: var(--brown-500);
-  --brand-600: var(--brown-600);
-  --brand-700: var(--brown-700);
-  --brand-800: var(--brown-800);
-  --brand-900: var(--brown-900);
+  --brand-50: var(--forest-50);
+  --brand-100: var(--forest-100);
+  --brand-200: var(--forest-200);
+  --brand-300: var(--forest-300);
+  --brand-400: var(--forest-400);
+  --brand-500: var(--forest-500);
+  --brand-600: var(--forest-600);
+  --brand-700: var(--forest-700);
+  --brand-800: var(--forest-800);
+  --brand-900: var(--forest-900);
 
-  /* ---------- Elevation: halus & realistis ---------- */
-  --shadow-sm: 0 1px 2px 0 rgb(17 24 39 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(17 24 39 / 0.07), 0 2px 4px -2px rgb(17 24 39 / 0.05);
-  --shadow-dialog: 0 20px 25px -5px rgb(17 24 39 / 0.16), 0 8px 10px -6px rgb(17 24 39 / 0.1);
+  /* ---------- Elevation: bayangan hangat, bukan abu dingin ---------- */
+  --shadow-sm: 0 1px 2px 0 rgb(38 36 32 / 0.06);
+  --shadow-md: 0 6px 16px -4px rgb(38 36 32 / 0.10), 0 2px 4px -2px rgb(38 36 32 / 0.06);
+  --shadow-lg: 0 18px 40px -12px rgb(14 42 30 / 0.22);
+  --shadow-dialog: 0 24px 48px -12px rgb(14 42 30 / 0.28);
 
   /* ---------- Ritme vertikal section ---------- */
-  --section-y-primary: 6rem;   /* 96px  - section utama */
-  --section-y-secondary: 4rem; /* 64px  - section pendukung */
+  --section-y-primary: 7rem;
+  --section-y-secondary: 4.5rem;
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-reveal: 700ms;
 }

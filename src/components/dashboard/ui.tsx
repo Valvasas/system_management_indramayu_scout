@@ -16,6 +16,7 @@ import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import type { MemberStatus } from '@/db/schema';
 import { MEMBER_STATUS_LABELS } from '@/lib/domain';
 import { cn } from '@/lib/utils';
+import { SceneStrip, type SceneVariant } from '@/components/illustrations/Scenes';
 
 /* ---------------- Kepala halaman ---------------- */
 
@@ -37,10 +38,38 @@ export const PortalHeader: React.FC<{
     )}
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-text-primary sm:text-3xl">{title}</h1>
+        <h1 className="font-display text-display-md font-semibold text-text-primary">{title}</h1>
         {description && <div className="mt-1 max-w-prose text-base text-text-secondary">{description}</div>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  </header>
+);
+
+/* ---------------- Sapaan bergambar (beranda portal) ---------------- */
+
+const todayLabel = () =>
+  new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date());
+
+/** Kepala beranda portal: langit, kontur, dan pita lanskap. Satu h1. */
+export const PortalWelcome: React.FC<{ title: string; subtitle?: React.ReactNode; actions?: React.ReactNode; scene?: SceneVariant }> = ({
+  title,
+  subtitle,
+  actions,
+  scene = 'forest',
+}) => (
+  <header className="relative mb-8 overflow-hidden rounded-3xl bg-ill-sky">
+    <div className="topo absolute inset-0" aria-hidden="true" />
+    <div className="relative z-10 flex flex-col gap-5 p-6 pb-24 sm:p-8 sm:pb-28 lg:flex-row lg:items-end lg:justify-between lg:pb-32">
+      <div>
+        <p className="eyebrow">{todayLabel()}</p>
+        <h1 className="mt-2 font-display text-display-md font-semibold text-text-primary">{title}</h1>
+        {subtitle && <div className="mt-1.5 max-w-prose text-text-secondary">{subtitle}</div>}
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </div>
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-28">
+      <SceneStrip variant={scene} />
     </div>
   </header>
 );
@@ -59,12 +88,12 @@ export const Panel: React.FC<{
   <section
     id={id}
     aria-labelledby={title && id ? `${id}-title` : undefined}
-    className={cn('rounded-lg border border-border-subtle bg-surface-base shadow-sm', className)}
+    className={cn('rounded-2xl border border-border-subtle bg-surface-base shadow-sm', className)}
   >
     {title && (
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-subtle px-5 py-4 sm:px-6">
         <div>
-          <h2 id={id ? `${id}-title` : undefined} className="font-display text-lg font-bold text-text-primary">
+          <h2 id={id ? `${id}-title` : undefined} className="font-display text-xl font-semibold text-text-primary">
             {title}
           </h2>
           {description && <p className="mt-0.5 text-sm text-text-secondary">{description}</p>}

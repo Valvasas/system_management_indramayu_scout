@@ -134,7 +134,7 @@ export const FieldGroup: React.FC<{ title: string; description?: string; childre
 }) => (
   <fieldset className="space-y-4 rounded-lg border border-border-subtle bg-surface-base p-5 sm:p-6">
     {/* float: legend tampil sebagai judul biasa, bukan menumpang di garis border */}
-    <legend className="float-left w-full font-display text-base font-bold text-text-primary">{title}</legend>
+    <legend className="float-left w-full font-display text-base font-semibold text-text-primary">{title}</legend>
     <div className="clear-both space-y-4">
       {description && <p className="-mt-3 text-sm text-text-secondary">{description}</p>}
       {children}

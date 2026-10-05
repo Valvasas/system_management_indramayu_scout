@@ -4,6 +4,10 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { CategoryBadge } from '@/components/ui/Badge';
 import { MediaFrame } from '@/components/ui/MediaFrame';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
+import { ReadingProgress } from '@/components/public/ReadingProgress';
+import { Hills } from '@/components/illustrations/Scenes';
+import { paragraphs, readingMinutes } from '@/lib/reading';
 import { ShareLink } from './ShareLink';
 import { getNews, getNewsBySlug, getNewsSlugs } from '@/lib/repositories';
 import { formatDate } from '@/lib/format';
@@ -68,92 +72,114 @@ export default async function DetailBeritaPage({ params }: Params) {
     mainEntityOfPage: absoluteUrl(`/berita/${news.slug}`),
   };
 
+  const url = absoluteUrl(`/berita/${news.slug}`);
+  const body = paragraphs(news.content);
+
   return (
-    <div className="civic-container py-12">
-      <nav aria-label="Remah roti" className="mb-6">
-        <Link
-          href="/berita"
-          className="inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-medium text-text-accent hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Kembali ke daftar berita
-        </Link>
-      </nav>
+    <div>
+      <ReadingProgress targetId="isi-berita" />
+      <header className="relative overflow-hidden bg-surface-sky">
+        <div className="topo absolute inset-0" aria-hidden="true" />
+        <div className="civic-container relative pb-28 pt-6 sm:pb-36 sm:pt-10">
+          <Breadcrumbs items={[{ label: 'Berita', href: '/berita' }, { label: news.category }]} />
+          <div className="mx-auto mt-8 max-w-3xl text-center animate-rise">
+            <CategoryBadge>{news.category}</CategoryBadge>
+            <h1 className="mt-5 font-display text-display-lg font-semibold text-text-primary">{news.title}</h1>
+            <p className="mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-text-secondary">
+              <time dateTime={news.publishedAt}>{formatDate(news.publishedAt)}</time>
+              <span aria-hidden="true">·</span>
+              <span>Oleh {news.author}</span>
+              <span aria-hidden="true">·</span>
+              <span>{readingMinutes(news.content)} menit baca</span>
+            </p>
+          </div>
+        </div>
+        <Hills className="absolute inset-x-0 -bottom-px text-surface-canvas" phase={2.4} />
+      </header>
 
-      <article className="max-w-3xl">
-        <header>
-          <CategoryBadge>{news.category}</CategoryBadge>
-          <h1 className="mt-4 font-display text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-text-primary">
-            {news.title}
-          </h1>
-          <p className="mt-4 border-b border-border-subtle pb-6 text-sm text-text-secondary">
-            <time dateTime={news.publishedAt}>{formatDate(news.publishedAt)}</time>
-            {' · '}
-            Oleh {news.author}
-          </p>
-        </header>
-
+      <div className="civic-container -mt-20 pb-16 sm:-mt-28 sm:pb-24">
         <MediaFrame
           src={news.coverImage}
           alt={`Dokumentasi kegiatan: ${news.title}`}
           aspect="video"
-          sizes="(max-width: 768px) 100vw, 768px"
+          sizes="(max-width: 1024px) 100vw, 1024px"
           priority
-          className="mt-8 rounded-lg border border-border-subtle"
+          className="relative mx-auto max-w-5xl rounded-3xl shadow-lg"
           fallbackLabel="Foto dokumentasi kegiatan ini belum diunggah"
         />
 
-        <div className="mt-8 space-y-5 text-base leading-relaxed text-text-primary">
-          <p className="text-lg font-medium">{news.excerpt}</p>
-          <p>{news.content}</p>
+        <div className="mx-auto mt-12 grid max-w-5xl gap-12 lg:grid-cols-[1fr_15rem]">
+          <article id="isi-berita" aria-labelledby="judul-berita" className="min-w-0">
+            <h2 id="judul-berita" className="sr-only">
+              Isi berita
+            </h2>
+            <p className="font-display text-2xl leading-snug text-text-primary text-pretty">{news.excerpt}</p>
+            <div className="mt-8 space-y-6 text-[1.075rem] leading-[1.8] text-text-primary">
+              {body.map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </article>
+
+          <aside aria-label="Bagikan dan topik" className="lg:sticky lg:top-28 lg:self-start">
+            <div className="rounded-2xl border border-border-subtle bg-surface-base p-5">
+              <h2 className="text-sm font-bold text-text-primary">Bagikan berita ini</h2>
+              <div className="mt-3">
+                <ShareLink title={news.title} url={url} />
+              </div>
+              {news.tags.length > 0 && (
+                <>
+                  <h2 className="mt-6 text-sm font-bold text-text-primary">Topik</h2>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {news.tags.map((tag) => (
+                      <li key={tag}>
+                        <Link
+                          href={`/cari?q=${encodeURIComponent(tag)}`}
+                          className="inline-flex min-h-touch items-center rounded-pill bg-surface-meadow px-3 text-sm font-medium text-action-secondary-text hover:bg-action-secondary-hover"
+                        >
+                          #{tag}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+            <Link href="/berita" className="mt-4 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Semua berita
+            </Link>
+          </aside>
         </div>
 
-        {news.tags.length > 0 && (
-          <div className="mt-8 border-t border-border-subtle pt-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-              Topik terkait
+        {related.length > 0 && (
+          <section aria-labelledby="terkait-title" className="mx-auto mt-20 max-w-5xl">
+            <p className="eyebrow">Baca juga</p>
+            <h2 id="terkait-title" className="mt-2 font-display text-display-md font-semibold text-text-primary">
+              Cerita lainnya
             </h2>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {news.tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="rounded-pill border border-border-subtle bg-surface-subtle px-3 py-1 text-xs font-medium text-text-secondary"
-                >
-                  {tag}
+            <ul className="mt-8 grid gap-5 md:grid-cols-3">
+              {related.slice(0, 3).map((item) => (
+                <li key={item.id}>
+                  <article className="lift group relative h-full overflow-hidden rounded-2xl border border-border-subtle bg-surface-base">
+                    <MediaFrame src={item.coverImage} alt="" aspect="video" keepAspect sizes="(max-width: 768px) 100vw, 33vw" fallbackLabel="Foto menyusul" />
+                    <div className="p-5">
+                      <time className="text-xs text-text-secondary" dateTime={item.publishedAt}>
+                        {formatDate(item.publishedAt)}
+                      </time>
+                      <h3 className="mt-2 font-display text-lg font-semibold leading-snug text-text-primary">
+                        <Link href={`/berita/${item.slug}`} className="stretched-link rounded-md group-hover:text-text-accent">
+                          {item.title}
+                        </Link>
+                      </h3>
+                    </div>
+                  </article>
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         )}
-
-        <footer className="mt-8 flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface-subtle p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium text-text-primary">Bagikan warta ini</p>
-          <ShareLink title={news.title} />
-        </footer>
-      </article>
-
-      {related.length > 0 && (
-        <section aria-labelledby="terkait-title" className="mt-12 max-w-3xl">
-          <h2 id="terkait-title" className="font-display text-xl font-bold text-text-primary">
-            Warta lainnya
-          </h2>
-          <ul className="mt-4 divide-y divide-border-subtle border-t border-border-subtle">
-            {related.slice(0, 3).map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={`/berita/${item.slug}`}
-                  className="flex min-h-touch flex-col justify-center rounded-md py-4 hover:text-text-accent"
-                >
-                  <span className="font-medium">{item.title}</span>
-                  <time className="text-xs text-text-secondary" dateTime={item.publishedAt}>
-                    {formatDate(item.publishedAt)}
-                  </time>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      </div>
 
       <script
         type="application/ld+json"

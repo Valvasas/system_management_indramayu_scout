@@ -12,7 +12,7 @@ export default async function KontenPage() {
   const c = await contentCounts();
 
   const sections: { href: string; title: string; description: string; count: string; icon: LucideIcon }[] = [
-    { href: '/dashboard/konten/berita', title: 'Berita', description: 'Tulis, simpan sebagai draf, lalu tayangkan.', count: `${c.news} berita${c.draftNews ? ` · ${c.draftNews} draf` : ''}`, icon: Newspaper },
+    { href: '/dashboard/konten/berita', title: 'Berita', description: 'Tulis, simpan sebagai draf, lalu tayangkan.', count: `${c.news} berita${c.inReview ? ` · ${c.inReview} menunggu review` : ''}${c.draftNews ? ` · ${c.draftNews} draf` : ''}`, icon: Newspaper },
     { href: '/dashboard/konten/agenda', title: 'Agenda', description: 'Jadwal kegiatan dan pembukaan pendaftaran.', count: `${c.events} kegiatan`, icon: CalendarDays },
     { href: '/dashboard/konten/galeri', title: 'Galeri', description: 'Album dan foto dokumentasi.', count: `${c.albums} album`, icon: Images },
     { href: '/dashboard/konten/dokumen', title: 'Dokumen', description: 'Surat keputusan, formulir, dan panduan.', count: `${c.documents} dokumen`, icon: FileText },
@@ -28,12 +28,12 @@ export default async function KontenPage() {
           <li key={href}>
             <Link
               href={href}
-              className="flex h-full min-h-touch flex-col gap-3 rounded-lg border border-border-subtle bg-surface-base p-5 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-subtle"
+              className="flex h-full min-h-touch flex-col gap-3 rounded-2xl border border-border-subtle bg-surface-base p-5 shadow-sm transition-colors hover:border-border-strong hover:bg-surface-subtle"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-tag-surface text-tag-text">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-meadow text-text-accent">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
-              <span className="font-display text-lg font-bold text-text-primary">{title}</span>
+              <span className="font-display text-lg font-semibold text-text-primary">{title}</span>
               <span className="text-text-secondary">{description}</span>
               <span className="mt-auto text-sm font-medium text-text-secondary">{count}</span>
             </Link>

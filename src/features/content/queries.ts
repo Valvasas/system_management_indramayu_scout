@@ -30,7 +30,8 @@ export async function contentCounts() {
     .select({ draftNews: count() })
     .from(schema.news)
     .where(eq(schema.news.status, 'DRAFT'));
-  return { news, events, albums, documents, board, achievements, draftNews };
+  const [{ inReview }] = await db.select({ inReview: count() }).from(schema.news).where(eq(schema.news.status, 'REVIEW'));
+  return { news, events, albums, documents, board, achievements, draftNews, inReview };
 }
 
 export const listNewsAdmin = async () => {
@@ -105,4 +106,16 @@ export const getAchievementAdmin = async (id: string) => {
   const db = await getDb();
   const [row] = await db.select().from(schema.achievements).where(eq(schema.achievements.id, id)).limit(1);
   return row ?? null;
+};
+
+/** Berita milik kontributor sendiri, terbaru di atas. */
+export const listOwnNews = async (userId: string) => {
+  const db = await getDb();
+  return db.select().from(schema.news).where(eq(schema.news.createdById, userId)).orderBy(desc(schema.news.updatedAt));
+};
+
+export const countNewsInReview = async () => {
+  const db = await getDb();
+  const [r] = await db.select({ n: count() }).from(schema.news).where(eq(schema.news.status, 'REVIEW'));
+  return r.n;
 };

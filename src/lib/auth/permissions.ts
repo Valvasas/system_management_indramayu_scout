@@ -21,6 +21,8 @@ export const PERMISSIONS = [
   'users.manage',
   'users.create_peserta',
   'content.manage',
+  /** Menulis berita sebagai draf & mengirimnya untuk direview (tidak bisa menerbitkan). */
+  'content.contribute',
   'announcements.manage',
   'messages.read',
   'settings.manage',
@@ -41,12 +43,13 @@ const STAFF_MEMBER_BASE: Permission[] = [
   'gudep.update',
   'announcements.manage',
   'users.create_peserta',
+  'content.contribute',
 ];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   SUPER_ADMIN: PERMISSIONS.filter((p) => p !== 'self.portal'),
   ADMIN_KWARCAB: PERMISSIONS.filter((p) => p !== 'self.portal'),
-  ADMIN_WEBSITE: ['content.manage', 'announcements.manage', 'messages.read', 'settings.manage'],
+  ADMIN_WEBSITE: ['content.manage', 'content.contribute', 'announcements.manage', 'messages.read', 'settings.manage'],
   STAFF_KWARRAN: [...STAFF_MEMBER_BASE, 'members.verify', 'members.archive', 'gudep.create'],
   STAFF_GUDEP: STAFF_MEMBER_BASE,
   PESERTA: ['self.portal'],

@@ -77,17 +77,17 @@ export const UserForm: React.FC<{
           {isNew ? 'Selesai' : 'Batal'}
         </ButtonLink>
       </div>
-      {isNew && <p className="text-sm text-text-secondary">Kata sandi sementara dibuat otomatis dan ditampilkan sekali setelah akun dibuat.</p>}
+      {isNew && <p className="text-sm text-text-secondary">Kode aktivasi sekali pakai dibuat otomatis dan tampil sekali setelah akun dibuat. Pemilik akun membuat kata sandinya sendiri.</p>}
     </ActionForm>
   );
 };
 
 export const ResetPasswordForm: React.FC<{ action: (state: FormState, formData: FormData) => Promise<FormState> }> = ({ action }) => (
   <ActionForm action={action}>
-    <p className="text-sm text-text-secondary">Buat kata sandi sementara baru. Pemilik wajib menggantinya saat masuk, dan semua sesinya diakhiri.</p>
+    <p className="text-sm text-text-secondary">Terbitkan kode reset sekali pakai (berlaku 24 jam). Pemilik membuat kata sandi barunya sendiri; Anda tidak pernah melihat kata sandinya.</p>
     <SubmitButton variant="outline">
       <KeyRound className="h-4 w-4" aria-hidden="true" />
-      Reset kata sandi
+      Buat kode reset
     </SubmitButton>
   </ActionForm>
 );

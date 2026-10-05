@@ -25,15 +25,17 @@
 
 ## 2. Kondisi Proyek per 5 Oktober 2026 — BACA INI
 
-**Sudah Fase 2.** Ada autentikasi, RBAC, basis data (Drizzle), manajemen anggota/gudep/kwarran, CMS konten, dan portal peserta. Gerbang kualitas yang terbukti lulus: `npm run typecheck`, `npm run lint`, `npm test` (40 tes), `npm run build` (48 halaman), `npm run a11y` (84 pemindaian axe, nol pelanggaran). Yang perlu kamu ketahui:
+**Sudah Fase 2+, design system "Hutan & Lapangan".** Ada autentikasi (termasuk kode akses tanpa email), RBAC, basis data (Drizzle), anggota/gudep/kwarran + mutasi, CMS dengan alur review, pendaftar kegiatan, portal peserta, dan situs publik bergambar. Gerbang kualitas yang terbukti lulus di build produksi: `npm run typecheck`, `npm run lint`, `npm test` (54 tes), `npm run build` (94 halaman), `npm run a11y` (118 pemindaian, nol pelanggaran), `npm run e2e` (12/12). Yang perlu kamu ketahui:
 
 1. **Build butuh basis data.** Halaman detail memanggil DB di `generateStaticParams`. Lokal/CI: `npm run db:seed -- --demo` lalu `ALLOW_PGLITE=1 npm run build` (PGlite tertanam). Produksi: isi `DATABASE_URL`. Akun demo: sandi `demo-pramuka-2026` (`admin`, `kwarcab`, `humas`, `kwarran.indramayu`, `gudep.smp1`, `peserta.dimas`). Data demo **fiktif**.
 2. **`AI_CONTEXT.MD` masih melebih-lebihkan.** Pakai sebagai *niat desain*; kebenaran ada di kode + `CODEMAP.md`. Dokumen rancangan sumber: `docs/product/rancangan-v5.md` (niat, bukan status).
 3. **`generate_pages.js` / `create_components.js` USANG.** Jangan dijalankan: menimpa `src/app` dengan template lama.
 4. **Menulis konten publik wajib memanggil `revalidatePublicSite()`** (`features/content/shared.ts`). Tanpanya halaman statis (`/galeri`, `/struktur-organisasi`, beranda) menampilkan versi lama.
-5. **Halaman `[slug]` memakai `dynamicParams = true` dan halaman daftarnya berada di route group `(daftar)`.** Jangan pindahkan `loading.tsx` ke folder induk: itu membungkus detail dalam Suspense dan slug asing berubah jadi soft 404 (status 200).
+5. **Halaman `[slug]` memakai `dynamicParams = true` dan halaman daftarnya berada di route group `(daftar)`.** Jangan pindahkan `loading.tsx` ke folder induk: itu membungkus detail dalam Suspense dan slug asing berubah jadi soft 404 (status 200). **Semua** rute dinamis publik (termasuk `/golongan/[id]`, `/wilayah/[slug]` yang daftarnya tetap) wajib `dynamicParams = true` + `notFound()`: di Next 14, `dynamicParams = false` membuat seluruh path rute itu 404 setelah `revalidatePublicSite()` dipanggil (diuji di `npm run e2e`).
 6. **Perbarui `/kebijakan-privasi` setiap skema data atau kontrol akses berubah.** Tiap klaim harus bisa ditunjuk implementasinya; yang belum ada tetap di "Yang belum berlaku".
-7. **Kendala yang diketahui:** `npm audit` melaporkan celah di jalur Next 14 (perbaikan = migrasi mayor, butuh keputusan [P1-6]); rate limit in-memory (satu instance); belum ada enkripsi kolom, retensi otomatis, atau persetujuan wali terverifikasi; ikon/logo masih placeholder; folder `public/images/` kosong.
+7. **Desain:** baca `docs/design/design-system.md` sebelum mengubah UI. Ilustrasi hanya dari `components/illustrations`; palet `ill-*` khusus SVG; teks tidak boleh di atas hutan/gunung (hanya langit atau pil putih).
+8. **Pembina tidak pernah tahu sandi anggota.** Akun baru & reset memakai kode akses sekali pakai (`features/auth/access-codes.ts`). Jangan kembalikan pola "sandi sementara".
+9. **Kendala yang diketahui:** `npm audit` melaporkan celah di jalur Next 14 (perbaikan = migrasi mayor, butuh keputusan [P1-6]); rate limit in-memory (satu instance); belum ada enkripsi kolom, retensi otomatis, atau persetujuan wali terverifikasi; ikon/logo masih placeholder; folder `public/images/` kosong.
 
 ---
 
@@ -45,7 +47,10 @@ Cari barisnya, baca kolom kanan, **berhenti**. Jangan baca yang lain kecuali ter
 |---|---|---|
 | Orientasi umum | `AGENTS.md` + `CODEMAP.md` | 6k |
 | Mengerjakan perbaikan terjadwal | `TASKS.md` bagian yang relevan | 2–4k |
-| Ubah warna / spacing / shadow | `src/styles/tokens.css` + `tailwind.config.ts` | 3k |
+| Ubah warna / spacing / shadow | `docs/design/design-system.md` + `src/styles/tokens.css` + `tailwind.config.ts` | 5k |
+| Ilustrasi / suasana halaman | `src/components/illustrations/Scenes.tsx` (+ `geometry.ts`) | 4k |
+| Akses akun (lupa sandi, kode, aktivasi) | `src/features/auth/access-codes.ts` + `access-actions.ts` + `src/lib/auth/access-code.ts` | 4k |
+| Mutasi anggota | `src/features/members/transfers.ts` + `transfer-actions.ts` | 3k |
 | Ubah/buat komponen UI primitive | `CODEMAP.md` §UI + file komponennya + `src/lib/utils.ts` | 4k |
 | Ubah satu halaman | `CODEMAP.md` §Rute → `src/app/<rute>/page.tsx` saja | 2–5k |
 | Tambah halaman baru | `src/app/layout.tsx` + satu `page.tsx` terdekat sebagai contoh | 4k |
@@ -92,7 +97,9 @@ Aturan ini berasal dari standar desain internal proyek (`AI_CONTEXT.MD` §3, `PE
 - Nol emoji sebagai elemen UI. Selalu ikon SVG dari `lucide-react`.
 - Nol nilai hardcode warna/spacing/shadow/radius. Selalu token CSS variable → kelas Tailwind.
 - Satu tombol `primary` per konteks visual. Sisanya `secondary`/`ghost`.
-- Nol gradien dekoratif, nol glassmorphism, nol `rounded-2xl/3xl` sebagai default.
+- Nol gradien dekoratif, nol glassmorphism. Radius mengikuti skala di design system (input `lg`, kartu `xl/2xl`, media `3xl`, tombol `pill`).
+- Kekayaan visual lewat ilustrasi SVG dari `components/illustrations` (aria-hidden, tanpa manusia/wajah), bukan foto stok atau efek.
+- Judul `font-display` (Fraunces) memakai `font-semibold`; gunakan `cn()` (bukan `twMerge` mentah) agar `text-display-*` tidak hilang.
 - Jangan bungkus setiap blok dengan card. Whitespace lebih dulu.
 
 **Aksesibilitas (target WCAG 2.2 AA)**
@@ -136,6 +143,7 @@ npm run db:seed -- --demo            # data FIKTIF + akun demo
 npm run lint && npm run typecheck && npm test
 ALLOW_PGLITE=1 npm run build         # gerbang utama (setelah seed)
 npm run start                        # lalu: npm run a11y   (axe-core, 1280 & 390px)
+npm run e2e                          # alur portal end-to-end (MENGUBAH data: jalankan pada data demo segar)
 npm run db:generate                  # buat migrasi dari src/db/schema.ts
 
 docker compose up -d                 # PostgreSQL + PostGIS (opsional)

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { CheckCircle2, CircleDashed } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -76,15 +77,19 @@ const knownLimitations = [
 
 export default function AksesibilitasPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kebijakan"
+        scene="meadow"
+        top={<Breadcrumbs items={[{ label: 'Aksesibilitas' }]} />}
         title="Pernyataan aksesibilitas"
         description="Standar acuan: Web Content Accessibility Guidelines (WCAG) 2.2 Level AA. Halaman ini hanya memuat hal yang benar-benar sudah berlaku di situs, beserta keterbatasan yang masih ada."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-10">
         <section aria-labelledby="sudah-title">
-          <h2 id="sudah-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="sudah-title" className="font-display text-2xl font-semibold text-text-primary">
             Yang sudah berlaku
           </h2>
           <ul className="mt-4 space-y-4">
@@ -104,7 +109,7 @@ export default function AksesibilitasPage() {
         </section>
 
         <section aria-labelledby="belum-title">
-          <h2 id="belum-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="belum-title" className="font-display text-2xl font-semibold text-text-primary">
             Keterbatasan yang diketahui
           </h2>
           <ul className="mt-4 space-y-4">
@@ -121,7 +126,7 @@ export default function AksesibilitasPage() {
         </section>
 
         <section aria-labelledby="pintasan-title">
-          <h2 id="pintasan-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="pintasan-title" className="font-display text-2xl font-semibold text-text-primary">
             Pintasan papan ketik standar
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -148,7 +153,7 @@ export default function AksesibilitasPage() {
           aria-labelledby="umpan-title"
           className="rounded-lg border border-border-subtle bg-surface-subtle p-6"
         >
-          <h2 id="umpan-title" className="font-display text-xl font-bold text-text-primary">
+          <h2 id="umpan-title" className="font-display text-xl font-semibold text-text-primary">
             Umpan balik aksesibilitas
           </h2>
           <p className="mt-2 text-text-secondary">
@@ -169,5 +174,6 @@ export default function AksesibilitasPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import Link from 'next/link';
 import { CircleDashed, ShieldCheck } from 'lucide-react';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -22,13 +23,22 @@ const memberData = [
   'Kontak (tergolong sensitif): nomor telepon dan alamat.',
   'Data wali (tergolong sensitif): nama dan nomor telepon wali, serta tanggal persetujuan wali untuk anggota di bawah 18 tahun.',
   'Status verifikasi, catatan pembinaan, dan tanggal bergabung.',
+  'Riwayat gugus depan: setiap mutasi antar-gudep (gudep asal dan tujuan, alasan, serta siapa yang mengajukan dan memutuskan).',
+  'Pendaftaran kegiatan yang diikuti lewat portal.',
 ];
 
 const accessRules = [
   'Pengurus hanya melihat data di cakupannya: staf gudep untuk gudepnya, staf kwarran untuk wilayahnya, pengurus kwarcab untuk seluruh kabupaten.',
   'Peserta hanya melihat data dirinya sendiri, dan tidak melihat alamat, telepon, maupun data wali.',
   'Pengecekan izin dilakukan di server pada setiap halaman dan aksi, bukan sekadar menyembunyikan tombol.',
-  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, mengelola akun, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP.',
+  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP.',
+  'Daftar pendaftar kegiatan yang dapat dibuka pengurus hanya memuat nama, KTA, golongan, dan gugus depan, tanpa kontak maupun data wali.',
+];
+
+const accessData = [
+  'Lupa kata sandi tidak memakai email. Permintaan (nama pengguna, keterangan opsional, dan waktunya) diteruskan ke pembina atau pengurus yang berwenang atas akun tersebut.',
+  'Pengurus menyerahkan kode akses sekali pakai. Kode hanya disimpan dalam bentuk hash, berlaku 24 jam untuk reset dan 7 hari untuk aktivasi akun baru, lalu hangus setelah dipakai.',
+  'Pemilik akun membuat kata sandinya sendiri. Pembina dan pengurus tidak pernah melihat atau menentukan kata sandi anggota.',
 ];
 
 const notYetInEffect = [
@@ -42,11 +52,15 @@ const notYetInEffect = [
 
 export default function KebijakanPrivasiPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kebijakan"
+        scene="lake"
+        top={<Breadcrumbs items={[{ label: 'Kebijakan Privasi' }]} />}
         title="Kebijakan privasi"
         description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 5 Oktober 2026."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-10">
         <section aria-labelledby="ringkas-title" className="rounded-lg border border-status-success-border bg-status-success-surface p-5">
@@ -62,7 +76,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="dasar-title">
-          <h2 id="dasar-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="dasar-title" className="font-display text-2xl font-semibold text-text-primary">
             1. Dasar hukum dan ruang lingkup
           </h2>
           <p className="mt-3 civic-prose">
@@ -73,7 +87,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="publik-title">
-          <h2 id="publik-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="publik-title" className="font-display text-2xl font-semibold text-text-primary">
             2. Data dari pengunjung situs publik
           </h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
@@ -98,7 +112,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="portal-title">
-          <h2 id="portal-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="portal-title" className="font-display text-2xl font-semibold text-text-primary">
             3. Data di portal: akun dan keanggotaan
           </h2>
           <p className="mt-3 civic-prose">
@@ -110,13 +124,19 @@ export default function KebijakanPrivasiPage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <h3 className="mt-6 font-display text-lg font-bold text-text-primary">Siapa yang dapat mengakses</h3>
+          <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Siapa yang dapat mengakses</h3>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
             {accessRules.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <h3 className="mt-6 font-display text-lg font-bold text-text-primary">Cookie</h3>
+          <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Akses akun tanpa email</h3>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
+            {accessData.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Cookie</h3>
           <p className="mt-2 civic-prose">
             Hanya satu cookie, yaitu cookie sesi masuk portal. Cookie ini bersifat httpOnly, hanya dikirim lewat koneksi aman, dan
             kedaluwarsa dalam 12 jam. Ia tidak dipakai untuk pelacakan.
@@ -124,7 +144,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="anak-title">
-          <h2 id="anak-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="anak-title" className="font-display text-2xl font-semibold text-text-primary">
             4. Perlindungan anggota anak
           </h2>
           <p className="mt-3 civic-prose">
@@ -136,7 +156,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="hak-title">
-          <h2 id="hak-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="hak-title" className="font-display text-2xl font-semibold text-text-primary">
             5. Hak Anda dan cara menggunakannya
           </h2>
           <p className="mt-3 civic-prose">
@@ -155,7 +175,7 @@ export default function KebijakanPrivasiPage() {
         </section>
 
         <section aria-labelledby="belum-title" className="rounded-lg border border-border-subtle bg-surface-subtle p-6">
-          <h2 id="belum-title" className="flex items-center gap-2 font-display text-xl font-bold text-text-primary">
+          <h2 id="belum-title" className="flex items-center gap-2 font-display text-xl font-semibold text-text-primary">
             <CircleDashed className="h-5 w-5 shrink-0 text-text-muted" aria-hidden="true" />
             Yang belum berlaku
           </h2>
@@ -176,5 +196,6 @@ export default function KebijakanPrivasiPage() {
         </p>
       </div>
     </div>
+    </>
   );
 }

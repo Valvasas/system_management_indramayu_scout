@@ -10,6 +10,9 @@ import { InfoList, MemberStatusBadge, Notice, Panel, PortalHeader } from '@/comp
 import { ButtonLink } from '@/components/ui/Button';
 import { archiveMemberAction, createPortalAccountAction, restoreMemberAction, verifyMemberAction } from '@/features/members/actions';
 import { getMember } from '@/features/members/queries';
+import { cancelTransferAction, requestTransferAction } from '@/features/members/transfer-actions';
+import { transferTargetOptions, transfersForMember } from '@/features/members/transfers';
+import { TransferRequestForm } from '@/components/dashboard/members/TransferForms';
 import { resetPesertaPasswordAction } from '@/features/users/actions';
 import { can, requirePermission } from '@/lib/auth/session';
 import { GENDER_LABELS, ageOn, golonganLabel } from '@/lib/domain';
@@ -24,6 +27,9 @@ const SAVED: Record<string, string> = {
   kembali: 'Data dikembalikan ke pengisi beserta catatan Anda.',
   arsip: 'Anggota diarsipkan.',
   pulih: 'Anggota dipulihkan dan menunggu verifikasi ulang.',
+  mutasi: 'Mutasi diterapkan. Anggota sudah berpindah ke gudep tujuan.',
+  'mutasi-diajukan': 'Pengajuan mutasi terkirim. Menunggu persetujuan pengurus wilayah tujuan.',
+  'mutasi-batal': 'Pengajuan mutasi dibatalkan.',
 };
 
 export default async function DetailAnggotaPage({ params, searchParams }: { params: { id: string }; searchParams?: { tersimpan?: string } }) {
@@ -34,7 +40,7 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
   const sensitive = can(user, 'members.view_sensitive');
   const db = await getDb();
 
-  const [history, registrations] = await Promise.all([
+  const [history, registrations, transfers, targets] = await Promise.all([
     db
       .select()
       .from(schema.auditLogs)
@@ -48,7 +54,10 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
       .where(eq(schema.eventRegistrations.memberId, m.id))
       .orderBy(desc(schema.events.dateStart))
       .limit(10),
+    transfersForMember(m.id),
+    can(user, 'members.update') ? transferTargetOptions(m.gudepId) : Promise.resolve([]),
   ]);
+  const openTransfer = transfers.find((t) => t.t.status === 'REQUESTED');
 
   // Melihat data sensitif anggota lintas wilayah tercatat (kebijakan audit).
   if (sensitive && (user.role === 'ADMIN_KWARCAB' || user.role === 'SUPER_ADMIN')) {
@@ -200,6 +209,55 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
               )}
             </Panel>
           )}
+
+          <Panel title="Gudep & mutasi">
+            <p className="text-sm text-text-secondary">
+              Saat ini: <span className="font-semibold text-text-primary">{gudep.name}</span>
+            </p>
+            {openTransfer ? (
+              <div className="mt-4 rounded-2xl border border-status-info-border bg-status-info-surface p-4 text-sm text-status-info-text">
+                <p className="font-semibold">Mutasi menunggu persetujuan</p>
+                <p className="mt-1">
+                  Ke {openTransfer.toName} · diajukan {openTransfer.t.requestedByName}
+                </p>
+                <div className="mt-3">
+                  <ActionButton action={cancelTransferAction.bind(null, openTransfer.t.id)} variant="outline" confirm="Batalkan pengajuan mutasi ini?">
+                    Batalkan pengajuan
+                  </ActionButton>
+                </div>
+              </div>
+            ) : (
+              can(user, 'members.update') &&
+              !archived && (
+                <details className="group mt-4">
+                  <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-2 rounded-pill border border-border-strong px-4 text-sm font-semibold text-text-primary hover:bg-surface-subtle [&::-webkit-details-marker]:hidden">
+                    Ajukan mutasi ke gudep lain
+                  </summary>
+                  <div className="mt-4">
+                    <TransferRequestForm
+                      action={requestTransferAction.bind(null, m.id)}
+                      options={targets.map((g) => ({ value: g.id, label: `${g.name} — ${g.kwarranName}` }))}
+                    />
+                  </div>
+                </details>
+              )
+            )}
+            {transfers.length > 0 && (
+              <ol className="mt-5 space-y-3 border-t border-border-subtle pt-4 text-sm">
+                {transfers.map(({ t, fromName, toName }) => (
+                  <li key={t.id}>
+                    <p className="text-text-primary">
+                      {fromName} → {toName}
+                    </p>
+                    <p className="text-text-secondary">
+                      {{ REQUESTED: 'Menunggu', APPROVED: 'Disetujui', REJECTED: 'Ditolak', CANCELLED: 'Dibatalkan' }[t.status]} ·{' '}
+                      {formatDate((t.decidedAt ?? t.createdAt).toISOString())}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Panel>
 
           <Panel title="Kegiatan diikuti">
             {registrations.length === 0 ? (

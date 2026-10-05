@@ -24,7 +24,7 @@ export default function Error({
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-status-warning-surface text-status-warning-text">
         <AlertTriangle className="h-8 w-8" aria-hidden="true" />
       </span>
-      <h1 className="mt-6 font-display text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">
+      <h1 className="mt-6 font-display text-2xl sm:text-3xl font-semibold tracking-tight text-text-primary">
         Halaman gagal dimuat
       </h1>
       <p className="mt-4 max-w-prose text-text-secondary">

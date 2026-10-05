@@ -50,11 +50,11 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
       {searchParams.tersimpan && <Notice>Data gudep tersimpan.</Notice>}
 
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <div className="h-96 overflow-hidden rounded-lg border border-border-subtle bg-surface-base shadow-sm lg:col-span-2">
+        <div className="h-96 overflow-hidden rounded-2xl border border-border-subtle bg-surface-base shadow-sm lg:col-span-2">
           <GudepMapCanvas points={points} label={`Peta sebaran ${points.length} gudep`} />
         </div>
         <Panel title="Kelengkapan lokasi">
-          <p className="font-display text-3xl font-bold text-text-primary">
+          <p className="font-display text-3xl font-semibold text-text-primary">
             {coverage.located}
             <span className="text-lg font-medium text-text-secondary"> / {coverage.total}</span>
           </p>

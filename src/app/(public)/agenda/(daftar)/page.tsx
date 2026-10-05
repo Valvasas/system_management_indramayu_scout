@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import Link from 'next/link';
 import { CalendarDays, CalendarX2, MapPin, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { AgendaStatusBadge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getAgenda, isAgendaStatus } from '@/lib/repositories';
 import { formatDateRange } from '@/lib/format';
 
@@ -32,11 +33,15 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
   const agendas = await getAgenda({ status });
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kegiatan"
+        scene="camp"
+        top={<Breadcrumbs items={[{ label: 'Agenda' }]} />}
         title="Agenda kegiatan"
         description="Jadwal resmi kegiatan, perlombaan, pelatihan, dan upacara kepramukaan Kwartir Cabang Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="mb-8">
         <FilterChips
@@ -67,7 +72,7 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
                 <CardContent className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0">
                     <AgendaStatusBadge status={agenda.status} />
-                    <h2 className="mt-3 font-display text-xl font-bold leading-snug text-text-primary">
+                    <h2 className="mt-3 font-display text-xl font-semibold leading-snug text-text-primary">
                       <Link
                         href={`/agenda/${agenda.slug}`}
                         className="stretched-link rounded-md hover:text-text-accent"
@@ -109,5 +114,6 @@ export default async function AgendaPage({ searchParams }: { searchParams?: { st
         </ul>
       )}
     </div>
+    </>
   );
 }

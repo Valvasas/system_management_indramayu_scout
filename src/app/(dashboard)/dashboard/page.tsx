@@ -6,8 +6,13 @@ import { requireUser } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: 'Ringkasan' };
 
-export default async function RingkasanPage({ searchParams }: { searchParams?: { sandi?: string } }) {
+export default async function RingkasanPage({ searchParams }: { searchParams?: { sandi?: string; sambutan?: string } }) {
   const user = await requireUser();
-  const notice = searchParams?.sandi === 'diganti' ? <Notice>Kata sandi berhasil diganti.</Notice> : undefined;
+  const notice =
+    searchParams?.sandi === 'diganti' ? (
+      <Notice>Kata sandi berhasil diganti.</Notice>
+    ) : searchParams?.sambutan ? (
+      <Notice>Selamat datang! Kata sandi baru Anda tersimpan. Hanya Anda yang mengetahuinya.</Notice>
+    ) : undefined;
   return user.role === 'PESERTA' ? <PesertaHome user={user} notice={notice} /> : <StaffHome user={user} notice={notice} />;
 }

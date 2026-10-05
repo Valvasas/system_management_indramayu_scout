@@ -15,8 +15,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <Tag
         ref={ref}
         className={cn(
-          'bg-surface-base rounded-lg border border-border-subtle overflow-hidden',
-          hoverable && 'transition-shadow hover:shadow-md',
+          'bg-surface-base rounded-xl border border-border-subtle overflow-hidden',
+          hoverable && 'lift',
           className,
         )}
         {...props}

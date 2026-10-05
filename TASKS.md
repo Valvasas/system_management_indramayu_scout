@@ -7,7 +7,7 @@
 
 ---
 
-## Status Eksekusi (diperbarui 19 Sep 2026)
+## Status Eksekusi (diperbarui 5 Okt 2026)
 
 **Checkpoint P0 tercapai:** `tsc --noEmit` exit 0 · `next build` exit 0 · 15/15 halaman ter-generate.
 
@@ -80,7 +80,24 @@
 | P6-3 CI/CD | SEBAGIAN | `.github/workflows/ci.yml` (lint → typecheck → test → seed → build → axe). Seluruh langkahnya dibuktikan lokal, **belum pernah jalan di GitHub Actions**. Belum: Lighthouse CI, branch protection, Sentry, uptime, backup |
 | P6-4 dokumentasi | SEBAGIAN | `AGENTS.md`, `CODEMAP.md`, `TASKS.md` disinkronkan; `docs/product/rancangan-v5.md` dipindah dari file bernama sisa prompt. **Belum:** menyisir `AI_CONTEXT.MD` |
 
-**Antrean berikutnya (urut saran):** (1) tahap *review* di alur berita draf → review → terbit (rancangan V5 §12; enum sekarang `DRAFT/PUBLISHED/ARCHIVED`) · (2) foto & aset nyata + lambang resmi Kwarcab · (3) e2e Playwright untuk alur kritis + jalankan CI di GitHub · (4) P1-2 validasi env Zod · (5) P1-6 keputusan migrasi Next 16 · (6) rate limit bersama (Redis/DB) sebelum >1 instance · (7) persetujuan wali terverifikasi, enkripsi kolom, retensi — lalu perbarui halaman privasi · (8) keputusan tertulis soal multibahasa (V5 minta ID/EN/SU; P2-8 memilih ID saja).
+**Sesi 5 Okt 2026 (lanjutan) — design system "Hutan & Lapangan" + fitur portal. `tsc` · `next lint` · `vitest` 54/54 · `next build` 94 halaman · `npm run a11y` 118 pemindaian nol pelanggaran · `npm run e2e` 12/12:**
+
+| Task | Status | Catatan |
+|---|---|---|
+| Design system dirombak | SELESAI | Palet hutan/lumut/kulit kayu/pasir/langit/bara (`tokens.css`), Fraunces + Plus Jakarta Sans, skala radius & `text-display-*` fluid, gerak `Reveal` (aman tanpa JS & reduced-motion). Dokumen: `docs/design/design-system.md`; rasio kontras terukur: `color-contrast.md` |
+| Ilustrasi | SELESAI | `components/illustrations`: lanskap hero, 6 varian `SceneStrip`, `TreeLine`/`Hills` sebagai pemisah section, seni per golongan, `EmptyCamp`, pola `.topo`. SVG deterministik, `aria-hidden`, tanpa manusia |
+| Halaman publik baru | SELESAI | `/golongan` (+detail 5 golongan), `/bergabung` (alur langkah + pencari kwarran), `/wilayah` (+31 detail), `/cari`, ekspor `.ics` agenda, `/masuk/lupa-sandi`, `/masuk/kode`, 404 baru. Beranda dibangun ulang (9 section, pintasan "Saya ingin…") |
+| Akses akun tanpa email (V5 §10) | SELESAI | Kode akses sekali pakai (hash SHA-256, 24 jam reset / 7 hari aktivasi, rate limit). **Pola "sandi sementara" yang dilihat pembina dihapus** (melanggar V5). Antrean `/dashboard/akses` |
+| Mutasi anggota | SELESAI | Ajukan dari detail anggota → setujui/tolak oleh cakupan tujuan → riwayat gudep tercatat |
+| Review berita (V5 §12) | SELESAI | Status `REVIEW`, izin `content.contribute` untuk staf gudep/kwarran, editor kembalikan dengan catatan / terbitkan |
+| Pendaftar kegiatan | SELESAI | `/dashboard/pendaftaran` + CSV (tanpa kontak/data wali) |
+| UX portal | SELESAI | Sidebar hutan, bilah bawah ponsel + bottom sheet, lencana antrean, `PortalWelcome`, sambutan setelah aktivasi |
+| Bug 404 setelah terbit | SELESAI | Ditemukan saat membuat tur: `/golongan/*` & `/wilayah/*` (`dynamicParams = false`) menjadi 404 begitu konten apa pun diterbitkan (`revalidatePath('/', 'layout')`). Diperbaiki ke `dynamicParams = true` + `notFound()`; langkah regresi ditambah di e2e; 59 URL sitemap dicek 200 setelah revalidasi |
+| P6-2 e2e | SEBAGIAN | `npm run e2e` (Playwright, 12 langkah) + langkah CI. **Belum:** tes komponen, cakupan 70% |
+
+**Antrean berikutnya (urut saran):** (1) foto & aset nyata + lambang resmi Kwarcab (`mark.svg` masih placeholder) · (2) jalankan CI di GitHub · (3) notifikasi dalam portal (pengumuman/hasil review/mutasi) · (4) presensi kegiatan & SKU/SKK digital · (5) P1-2 validasi env Zod · (6) P1-6 keputusan migrasi Next 16 · (7) rate limit bersama (Redis/DB) sebelum >1 instance · (8) MFA untuk pengurus, persetujuan wali terverifikasi, enkripsi kolom, retensi — lalu perbarui halaman privasi · (9) keputusan tertulis multibahasa (V5: ID/EN/SU).
+
+**Antrean lama (sesi pagi, sebagian sudah selesai di atas):** (1) tahap *review* di alur berita draf → review → terbit (rancangan V5 §12; enum sekarang `DRAFT/PUBLISHED/ARCHIVED`) · (2) foto & aset nyata + lambang resmi Kwarcab · (3) e2e Playwright untuk alur kritis + jalankan CI di GitHub · (4) P1-2 validasi env Zod · (5) P1-6 keputusan migrasi Next 16 · (6) rate limit bersama (Redis/DB) sebelum >1 instance · (7) persetujuan wali terverifikasi, enkripsi kolom, retensi — lalu perbarui halaman privasi · (8) keputusan tertulis soal multibahasa (V5 minta ID/EN/SU; P2-8 memilih ID saja).
 
 **Belum dikerjakan (daftar lama, sebagian sudah usang — lihat koreksi di atas):** P0-1 (ratakan folder induk — mungkin sudah tak relevan di repo ini), P1-2 (validasi env Zod), P1-6 (keputusan migrasi Next 16), P5-1, P6-1 (Prettier/Husky).
 

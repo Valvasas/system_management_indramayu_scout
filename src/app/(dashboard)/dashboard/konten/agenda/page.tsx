@@ -7,6 +7,7 @@ import { ActionButton } from '@/components/dashboard/ConfirmButton';
 import { Notice, Panel, PortalHeader, PublishBadge, TableWrap, td, th } from '@/components/dashboard/ui';
 import { deleteEventAction } from '@/features/content/events';
 import { listEventsAdmin } from '@/features/content/queries';
+import { registrationTotals } from '@/features/portal/registrations';
 import { requirePermission } from '@/lib/auth/session';
 import { formatDate, formatTime } from '@/lib/format';
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = { title: 'Agenda' };
 
 export default async function AgendaAdminPage({ searchParams = {} }: { searchParams?: { tersimpan?: string; dihapus?: string } }) {
   await requirePermission('content.manage');
-  const rows = await listEventsAdmin();
+  const [rows, totals] = await Promise.all([listEventsAdmin(), registrationTotals()]);
 
   return (
     <>
@@ -65,7 +66,10 @@ export default async function AgendaAdminPage({ searchParams = {} }: { searchPar
                       <PublishBadge published={e.published} draftLabel="Draf" />
                       {e.cancelled && <p className="mt-1 text-sm font-medium text-status-danger-text">Dibatalkan</p>}
                     </td>
-                    <td className={td}>{e.registrationOpen ? 'Dibuka' : 'Tidak ada'}</td>
+                    <td className={td}>
+                      {e.registrationOpen ? 'Dibuka' : 'Ditutup'}
+                      <span className="block text-sm text-text-secondary">{totals.get(e.id) ?? 0} pendaftar</span>
+                    </td>
                     <td className={td}>
                       <ActionButton action={deleteEventAction.bind(null, e.id)} variant="ghost" confirm={`Hapus agenda "${e.title}"?`} label={`Hapus agenda ${e.title}`}>
                         <Trash2 className="h-4 w-4" aria-hidden="true" />

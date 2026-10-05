@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Card, CardContent } from '@/components/ui/Card';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getKwarran, getOrganizationByDepartment } from '@/lib/repositories';
 
 export const metadata: Metadata = {
@@ -15,14 +16,18 @@ export default async function StrukturOrganisasiPage() {
   const kwarrans = await getKwarran();
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Profil"
+        scene="forest"
+        top={<Breadcrumbs items={[{ label: 'Tentang', href: '/tentang' }, { label: 'Struktur Organisasi' }]} />}
         title="Struktur organisasi"
         description="Susunan pengurus Kwartir Cabang masa bakti 2026–2031 dan sebaran kwartir ranting di seluruh kecamatan."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <section aria-labelledby="pengurus-title" className="mb-12">
-        <h2 id="pengurus-title" className="font-display text-2xl font-bold text-text-primary">
+        <h2 id="pengurus-title" className="font-display text-2xl font-semibold text-text-primary">
           Susunan pengurus kwarcab
         </h2>
         <ul className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -30,7 +35,7 @@ export default async function StrukturOrganisasiPage() {
             <li key={department}>
               <Card className="h-full">
                 <CardContent>
-                  <h3 className="font-display text-lg font-bold text-text-accent">{department}</h3>
+                  <h3 className="font-display text-lg font-semibold text-text-accent">{department}</h3>
                   <ul className="mt-3 space-y-3">
                     {members.map((member) => (
                       <li key={member.id}>
@@ -47,7 +52,7 @@ export default async function StrukturOrganisasiPage() {
       </section>
 
       <section aria-labelledby="kwarran-title">
-        <h2 id="kwarran-title" className="font-display text-2xl font-bold text-text-primary">
+        <h2 id="kwarran-title" className="font-display text-2xl font-semibold text-text-primary">
           {kwarrans.length} kwartir ranting
         </h2>
         <p className="mt-2 max-w-prose text-text-secondary">
@@ -69,5 +74,6 @@ export default async function StrukturOrganisasiPage() {
         </ul>
       </section>
     </div>
+    </>
   );
 }

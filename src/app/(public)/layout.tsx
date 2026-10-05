@@ -4,7 +4,7 @@ import { Footer } from '@/components/public/Footer';
 /** Kerangka situs publik: navbar, konten, footer. Dasbor memakai shell sendiri. */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div id="atas" className="flex min-h-screen flex-col">
       <Header />
       <main id="main-content" className="flex-grow">
         {children}

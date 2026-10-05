@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { SkipToContent } from '@/components/ui/SkipToContent';
 import { site, absoluteUrl } from '@/lib/site';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
+// UI & teks isi: Plus Jakarta Sans. Judul: Fraunces (sumbu SOFT memberi lengkung hangat ala papan nama perkemahan).
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap', axes: ['SOFT', 'opsz'] });
 
 /** Warna bilah alamat peramban seluler; sama dengan --brown-600 dan manifest.json. */
 export const viewport: Viewport = { themeColor: '#6B4E31' };
@@ -61,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={site.lang} className={`${inter.variable} ${jakarta.variable}`}>
+    <html lang={site.lang} className={`${jakarta.variable} ${fraunces.variable}`}>
       <body className="antialiased font-sans text-text-primary bg-surface-canvas min-h-screen">
         <SkipToContent />
         {/* Kerangka (header/footer publik atau shell dasbor) ada di layout route group. */}

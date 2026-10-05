@@ -14,7 +14,8 @@
     "db:seed:demo": "tsx scripts/seed.ts --demo",
     "test": "vitest run",
     "test:watch": "vitest",
-    "a11y": "node scripts/a11y-audit.mjs"
+    "a11y": "node scripts/a11y-audit.mjs",
+    "e2e": "node scripts/e2e-portal.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

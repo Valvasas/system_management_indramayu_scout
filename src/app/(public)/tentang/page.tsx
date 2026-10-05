@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ButtonLink } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { GolonganIcon } from '@/components/public/GolonganIcon';
 import { golongan, golonganAnchor } from '@/lib/golongan';
 
@@ -34,15 +35,19 @@ const dasaDarma = [
 
 export default function TentangPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Profil"
+        scene="mountain"
+        top={<Breadcrumbs items={[{ label: 'Tentang' }]} />}
         title="Tentang Kwarcab Indramayu"
         description="Kwartir Cabang Gerakan Pramuka Indramayu mengoordinasikan pendidikan kepramukaan di seluruh kecamatan Kabupaten Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-12">
         <section aria-labelledby="sejarah-title">
-          <h2 id="sejarah-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="sejarah-title" className="font-display text-2xl font-semibold text-text-primary">
             Sejarah singkat
           </h2>
           <div className="mt-3 space-y-4 civic-prose">
@@ -60,7 +65,7 @@ export default function TentangPage() {
         </section>
 
         <section aria-labelledby="visi-title">
-          <h2 id="visi-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="visi-title" className="font-display text-2xl font-semibold text-text-primary">
             Visi & misi
           </h2>
           <Card className="mt-4">
@@ -85,7 +90,7 @@ export default function TentangPage() {
         </section>
 
         <section aria-labelledby="nilai-title">
-          <h2 id="nilai-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="nilai-title" className="font-display text-2xl font-semibold text-text-primary">
             Nilai yang dipegang
           </h2>
           <div className="mt-4 grid gap-6 md:grid-cols-2">
@@ -113,7 +118,7 @@ export default function TentangPage() {
         </section>
 
         <section aria-labelledby="golongan-title">
-          <h2 id="golongan-title" className="font-display text-2xl font-bold text-text-primary">
+          <h2 id="golongan-title" className="font-display text-2xl font-semibold text-text-primary">
             Golongan &amp; pembina
           </h2>
           <ul className="mt-4 space-y-3">
@@ -125,7 +130,7 @@ export default function TentangPage() {
               >
                 <GolonganIcon id={g.id} />
                 <div>
-                  <h3 className="font-display text-lg font-bold text-text-primary">
+                  <h3 className="font-display text-lg font-semibold text-text-primary">
                     {g.name} <span className="text-base font-normal text-text-secondary">· {g.age}</span>
                   </h3>
                   <p className="mt-1 text-text-secondary">{g.summary}</p>
@@ -139,7 +144,7 @@ export default function TentangPage() {
           aria-labelledby="lanjut-title"
           className="rounded-lg border border-border-subtle bg-surface-subtle p-6"
         >
-          <h2 id="lanjut-title" className="font-display text-xl font-bold text-text-primary">
+          <h2 id="lanjut-title" className="font-display text-xl font-semibold text-text-primary">
             Ingin mengenal pengurusnya?
           </h2>
           <p className="mt-2 text-text-secondary">
@@ -152,5 +157,6 @@ export default function TentangPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

@@ -49,7 +49,7 @@ export const ImportFlow: React.FC = () => {
       )}
 
       {state.step === 'upload' && (
-        <form action={action} className="space-y-4 rounded-lg border border-border-subtle bg-surface-base p-5 sm:p-6">
+        <form action={action} className="space-y-4 rounded-2xl border border-border-subtle bg-surface-base p-5 sm:p-6">
           <div>
             <label htmlFor="file" className="block font-medium text-text-primary">
               Berkas CSV
@@ -78,20 +78,20 @@ export const ImportFlow: React.FC = () => {
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-status-success-border bg-status-success-surface p-4 text-status-success-text">
-              <p className="font-display text-2xl font-bold">{state.validCount}</p>
+              <p className="font-display text-2xl font-semibold">{state.validCount}</p>
               <p className="text-sm font-medium">baris siap disimpan</p>
             </div>
             <div className="rounded-lg border border-status-danger-border bg-status-danger-surface p-4 text-status-danger-text">
-              <p className="font-display text-2xl font-bold">{state.invalidCount}</p>
+              <p className="font-display text-2xl font-semibold">{state.invalidCount}</p>
               <p className="text-sm font-medium">baris berisi kesalahan (dilewati)</p>
             </div>
             <div className="rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text">
-              <p className="font-display text-2xl font-bold">{state.duplicateCount}</p>
+              <p className="font-display text-2xl font-semibold">{state.duplicateCount}</p>
               <p className="text-sm font-medium">kemungkinan data ganda (dilewati)</p>
             </div>
           </div>
 
-          <div className="max-h-[28rem] overflow-auto rounded-lg border border-border-subtle bg-surface-base" role="region" aria-label="Pratinjau baris impor" tabIndex={0}>
+          <div className="max-h-[28rem] overflow-auto rounded-2xl border border-border-subtle bg-surface-base" role="region" aria-label="Pratinjau baris impor" tabIndex={0}>
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-surface-canvas">
                 <tr className="border-b border-border-subtle text-text-secondary">
