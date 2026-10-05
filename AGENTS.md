@@ -23,15 +23,17 @@
 
 ---
 
-## 2. Kondisi Proyek per 19 September 2026 — BACA INI
+## 2. Kondisi Proyek per 5 Oktober 2026 — BACA INI
 
-**Blok P0 selesai:** `pnpm typecheck` dan `next build` lulus, 15 halaman ter-generate. Source sudah dipulihkan dari GitHub ke `src/`. Yang masih perlu kamu ketahui:
+**Sudah Fase 2.** Ada autentikasi, RBAC, basis data (Drizzle), manajemen anggota/gudep/kwarran, CMS konten, dan portal peserta. Gerbang kualitas yang terbukti lulus: `npm run typecheck`, `npm run lint`, `npm test` (40 tes), `npm run build` (48 halaman), `npm run a11y` (84 pemindaian axe, nol pelanggaran). Yang perlu kamu ketahui:
 
-1. **`AI_CONTEXT.MD` masih melebih-lebihkan.** Ia bilang drawer mobile ada (tidak ada di `Header.tsx`), i18n 3 bahasa penuh (hanya kamus nav/hero/filter/footer), dan halaman bebas emoji (tidak). Pakai sebagai *niat desain*; kebenaran ada di kode + `CODEMAP.md`.
-2. **`generate_pages.js` / `create_components.js` USANG.** Jangan dijalankan: menimpa `src/app` dengan template lama yang import-nya rusak dan membuat komponen datar duplikat. Pernah terjadi sekali.
-3. **Git belum terpasang** di mesin ini, jadi belum ada riwayat/`git init`. `.gitignore` sudah ada. Sebelum edit besar, salin dulu file yang diubah.
-4. **Fungsi `t()` mengembalikan key-nya sendiri bila terjemahan tidak ada** (bukan string kosong). Jangan tulis `t("x") || "fallback"`; fallback tidak pernah aktif. Pakai key yang ada di `src/lib/i18n/translations.ts`.
-5. **Kualitas UI masih di tahap P2/P3:** emoji, warna literal `green-*`, tanpa drawer mobile, `<img>` mentah. Itu pekerjaan berikutnya, jangan dianggap sudah beres.
+1. **Build butuh basis data.** Halaman detail memanggil DB di `generateStaticParams`. Lokal/CI: `npm run db:seed -- --demo` lalu `ALLOW_PGLITE=1 npm run build` (PGlite tertanam). Produksi: isi `DATABASE_URL`. Akun demo: sandi `demo-pramuka-2026` (`admin`, `kwarcab`, `humas`, `kwarran.indramayu`, `gudep.smp1`, `peserta.dimas`). Data demo **fiktif**.
+2. **`AI_CONTEXT.MD` masih melebih-lebihkan.** Pakai sebagai *niat desain*; kebenaran ada di kode + `CODEMAP.md`. Dokumen rancangan sumber: `docs/product/rancangan-v5.md` (niat, bukan status).
+3. **`generate_pages.js` / `create_components.js` USANG.** Jangan dijalankan: menimpa `src/app` dengan template lama.
+4. **Menulis konten publik wajib memanggil `revalidatePublicSite()`** (`features/content/shared.ts`). Tanpanya halaman statis (`/galeri`, `/struktur-organisasi`, beranda) menampilkan versi lama.
+5. **Halaman `[slug]` memakai `dynamicParams = true` dan halaman daftarnya berada di route group `(daftar)`.** Jangan pindahkan `loading.tsx` ke folder induk: itu membungkus detail dalam Suspense dan slug asing berubah jadi soft 404 (status 200).
+6. **Perbarui `/kebijakan-privasi` setiap skema data atau kontrol akses berubah.** Tiap klaim harus bisa ditunjuk implementasinya; yang belum ada tetap di "Yang belum berlaku".
+7. **Kendala yang diketahui:** `npm audit` melaporkan celah di jalur Next 14 (perbaikan = migrasi mayor, butuh keputusan [P1-6]); rate limit in-memory (satu instance); belum ada enkripsi kolom, retensi otomatis, atau persetujuan wali terverifikasi; ikon/logo masih placeholder; folder `public/images/` kosong.
 
 ---
 
@@ -47,8 +49,12 @@ Cari barisnya, baca kolom kanan, **berhenti**. Jangan baca yang lain kecuali ter
 | Ubah/buat komponen UI primitive | `CODEMAP.md` §UI + file komponennya + `src/lib/utils.ts` | 4k |
 | Ubah satu halaman | `CODEMAP.md` §Rute → `src/app/<rute>/page.tsx` saja | 2–5k |
 | Tambah halaman baru | `src/app/layout.tsx` + satu `page.tsx` terdekat sebagai contoh | 4k |
-| Ubah navigasi | `src/components/public/Header.tsx` + `Footer.tsx` | 3k |
-| Ubah data / mock | `src/lib/data/mock-data.ts` + `src/types/index.ts` | 5k |
+| Ubah navigasi publik | `src/components/public/Header.tsx` + `Footer.tsx` | 3k |
+| Ubah menu portal | `src/components/dashboard/nav.ts` — **setiap `href` harus punya `page.tsx`** | 2k |
+| Ubah/tambah CMS konten | `src/features/content/<bagian>.ts` + `queries.ts` + `components/dashboard/content/ContentForms.tsx` + `app/(dashboard)/dashboard/konten/<bagian>/` | 6k |
+| Izin / peran / akses data | `src/lib/auth/permissions.ts` + `scope.ts` + `docs/security/authorization-model.md` | 4k |
+| Ubah skema DB | `src/db/schema.ts` → `npm run db:generate` | 3k |
+| Ubah data publik | `src/lib/repositories/*` (baca) + `src/features/content/*` (tulis) | 4k |
 | Task keamanan | `next.config.mjs` + `docker-compose.yml` + `.env.example` + `TASKS.md` §P1 | 4k |
 | Task aksesibilitas | `TASKS.md` §P3 + komponen sasaran | 4k |
 | Performa / SEO | `next.config.mjs` + `src/app/layout.tsx` + `TASKS.md` §P4 | 4k |
@@ -117,7 +123,7 @@ Aturan ini berasal dari standar desain internal proyek (`AI_CONTEXT.MD` §3, `PE
 2. **Rutekan.** Bagian 3 → tentukan file mana saja yang perlu dibaca.
 3. **Grep sebelum Read.** Bagian 4.
 4. **Ubah seminimal mungkin.** Ikuti gaya sekitarnya.
-5. **Verifikasi:** `pnpm typecheck` → `pnpm lint` → `pnpm build`. Laporkan apa adanya kalau gagal.
+5. **Verifikasi:** `typecheck` → `lint` → `test` → `build`; untuk UI juga `npm run a11y`. Laporkan apa adanya kalau gagal.
 6. **Perbarui `CODEMAP.md`** bila kamu menambah/menghapus/memindahkan file. Ini yang menjaga panduan ini tetap murah dipakai.
 
 ---
@@ -125,15 +131,15 @@ Aturan ini berasal dari standar desain internal proyek (`AI_CONTEXT.MD` §3, `PE
 ## 7. Perintah
 
 ```bash
-pnpm dev          # http://localhost:3000
-pnpm build        # build produksi — gerbang utama
-pnpm lint
-pnpm typecheck    # tsc --noEmit   (tambahkan ke package.json bila belum ada — TASKS.md P6-1)
+npm run dev                          # http://localhost:3000 (PGlite otomatis bila DATABASE_URL kosong)
+npm run db:seed -- --demo            # data FIKTIF + akun demo
+npm run lint && npm run typecheck && npm test
+ALLOW_PGLITE=1 npm run build         # gerbang utama (setelah seed)
+npm run start                        # lalu: npm run a11y   (axe-core, 1280 & 390px)
+npm run db:generate                  # buat migrasi dari src/db/schema.ts
 
-docker compose up -d     # PostgreSQL + PostGIS
+docker compose up -d                 # PostgreSQL + PostGIS (opsional)
 ```
-
----
 
 ## 8. Konteks Domain (hemat waktumu)
 

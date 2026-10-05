@@ -1,18 +1,21 @@
 # CODEMAP.md — Indeks Codebase
 
 > Indeks satu-baris-per-file. Cari barisnya, baca **hanya** file itu.
-> Diverifikasi 3 Okt 2026 setelah redesain UI "Scout Earth Tones" (`tsc`, `next lint`, `next build` lulus; 34 halaman ter-generate).
-> **Rute publik kini di `src/app/(public)/`, dasbor di `src/app/(dashboard)/`.** Path di tabel Rute relatif terhadap `(public)/`.
+> Diverifikasi 5 Okt 2026: `tsc`, `next lint`, `vitest` (40 tes), `next build` (48 halaman, DB tertanam) dan `npm run a11y` (84 pemindaian) lulus.
+> **Rute publik di `src/app/(public)/`, portal di `src/app/(dashboard)/`.** Path di tabel Rute relatif terhadap grup masing-masing.
 > Baca `AGENTS.md` lebih dulu. **`[P#-#]`** = task di `TASKS.md` yang masih menyentuh file itu.
 
 ## Peta Cepat
 
 ```
 Ubah tampilan     → src/styles/tokens.css, tailwind.config.ts
-Ubah komponen     → src/components/ui/ (primitive) · src/components/public/ (section)
-Ubah halaman      → src/app/<rute>/page.tsx
-Ubah data         → src/lib/repositories/* (JANGAN impor mock-data langsung)
-Ubah identitas    → src/lib/site.ts (nama, URL, kontak; dipakai metadata/sitemap/JSON-LD)
+Ubah komponen     → src/components/ui/ (primitive) · public/ (section publik) · dashboard/ (portal) · forms/ (formulir Server Action)
+Ubah halaman      → src/app/<grup>/<rute>/page.tsx
+Ubah data publik  → src/lib/repositories/* (baca) · src/features/content/* (tulis lewat CMS)
+Ubah data anggota → src/features/members/* · gudep/* · kwarran/*
+Ubah izin         → src/lib/auth/permissions.ts (matriks) · scope.ts (cakupan) — penegakan di SERVER
+Ubah skema DB     → src/db/schema.ts → npm run db:generate → drizzle/
+Ubah identitas    → src/lib/site.ts
 Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.json
 ```
 
@@ -20,16 +23,27 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 | File | Isi | Catatan |
 |---|---|---|
-| `package.json` | Next 14.2.35, React 18, Tailwind 3.4. Script: dev/build/start/lint/typecheck | Dependensi runtime tinggal: next, react, react-dom, clsx, tailwind-merge, lucide-react, leaflet |
-| `tsconfig.json` | strict, alias `@/*` → `src/*` | Bersih |
-| `next.config.mjs` | CSP **enforce**, HSTS, X-Frame-Options, Permissions-Policy, COOP; optimizer gambar aktif (`remotePatterns: []` = hanya aset sendiri) | [P1-1, P1-7, P4-1] selesai |
-| `tailwind.config.ts` | Warna → CSS var (surface/text/action/border/focus/status/brand/neutral), fontFamily, spacing `touch` (44px), radius, shadow | Kelas warna literal dilarang ESLint |
-| `.eslintrc.json` | `next/core-web-vitals` + `jsx-a11y/recommended` + aturan kustom | Larang warna literal Tailwind, emoji, `<img>`, impor `mock-data` di luar repository |
+| `package.json` | Next 14.2.35, React 18, Tailwind 3.4, Drizzle, zod, bcryptjs, sharp, leaflet. Script: dev/build/start/lint/typecheck/test/a11y/db:* | Dev: vitest, playwright, axe-core |
+| `tsconfig.json` | strict, alias `@/*` → `src/*` | |
+| `next.config.mjs` | CSP enforce, HSTS, X-Frame-Options, Permissions-Policy, COOP; `remotePatterns: []` | [P1-6] audit dependensi Next 14 |
+| `tailwind.config.ts` | Warna → CSS var (surface/text/action/border(+inverse)/focus/status/brand/tag/neutral), spacing `touch` 44px | Kelas warna literal dilarang ESLint (termasuk `neutral-*`) |
+| `.eslintrc.json` | `next/core-web-vitals` + `jsx-a11y` + aturan kustom | Larang warna literal, emoji, `<img>`, impor `mock-data` di luar repository |
+| `vitest.config.ts` | Alias `@`, `tests/unit/**` | |
+| `.github/workflows/ci.yml` | lint → typecheck → test → seed demo → build (PGlite) → axe audit | Belum pernah dijalankan di GitHub; dibuktikan secara lokal |
+| `drizzle.config.ts`, `drizzle/` | Konfigurasi & migrasi SQL (`0000_init.sql`) | Migrasi PGlite otomatis; Postgres lewat `npm run db:migrate` |
+| `docker-compose.yml`, `docker/db-init/` | PostgreSQL 16 + PostGIS, user aplikasi non-superuser | Belum dites di mesin ini |
+| `.env.example` | Variabel yang dibaca kode | Jangan baca `.env.local`. Validasi Zod `src/lib/env.ts` belum ada [P1-2] |
 | `components.json` | Konfigurasi shadcn | Menunjuk `src/styles/globals.css` |
-| `docker-compose.yml` | PostgreSQL 16 + PostGIS | Password wajib dari `.env`, bind 127.0.0.1, healthcheck |
-| `.env.example` / `.env.local` | Env | Jangan baca `.env.local`. Validasi Zod belum ada [P1-2] |
-| `.gitignore` | node_modules, .next, .env* | Ada. **Git tidak terpasang di mesin ini**, belum ada `git init` [P0-2] |
-| `prisma/schema.prisma` | — | **Belum ada** [P5-3] |
+
+## Skrip (`scripts/`)
+
+| File | Fungsi |
+|---|---|
+| `seed.ts` | `npm run db:seed` (Kwarran + super admin dari env) · `-- --demo` data FIKTIF + 6 akun demo (sandi `demo-pramuka-2026`) |
+| `migrate.ts` | Migrasi ke `DATABASE_URL` |
+| `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal, 1280 & 390px. Butuh server jalan + data demo |
+| `make-icons.mjs` | Membuat ikon PWA PNG + menyelaraskan warna `logo.svg` |
+| `_archive/` | Tidak ada. `generate_pages.js` / `create_components.js` di root **usang**, jangan dijalankan |
 
 ## Dokumentasi
 
@@ -37,98 +51,86 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 |---|---|
 | `AGENTS.md` | Protokol agent — **titik masuk** |
 | `TASKS.md` | Rencana P0–P6 + "Status Eksekusi" |
-| `AI_CONTEXT.MD` | Niat desain & konvensi |
-| `docs/design/` | design-brief, visual-principles, motion-guidelines, accessibility-checklist, **color-contrast** (tabel rasio terukur) |
-| `docs/security/` | authorization-model, data-classification, consent/audit-log/backup/file-upload policy |
-| `docs/product/`, `operations/`, `architecture/`, `testing/` | Visi & MVP, deployment, arsitektur, strategi tes |
+| `AI_CONTEXT.MD` | Niat desain & konvensi (masih melebih-lebihkan; kebenaran = kode + CODEMAP) |
+| `docs/product/rancangan-v5.md` | Dokumen rancangan sumber V5 (niat produk, bukan status) |
+| `docs/design/`, `security/`, `product/`, `operations/`, `architecture/`, `testing/` | Brief desain, kontras terukur, model otorisasi, klasifikasi data, kebijakan consent/audit/backup/unggah, MVP, deployment |
+| `docs/tour/` | Video tur + tangkapan layar situs (dibuat 5 Okt 2026) |
 | `skills/frontend-craft/SKILL.md` | Panduan craft frontend. Baca sebelum ubah UI |
 
-## `src/app/` — Rute
+## `src/app/(public)/` — Rute publik
 
 | Rute | File | Catatan |
 |---|---|---|
-| layout | `app/layout.tsx` | Inter (isi) + Plus Jakarta Sans (heading), `metadataBase`, JSON-LD. Hanya html/body — kerangka ada di layout grup |
-| layout publik | `app/(public)/layout.tsx` | Header + `<main>` + Footer |
-| `/` | `(public)/page.tsx` | 4 section: Hero, QuickAccess (golongan), NewsPreview, DocumentCenter. Section lama (Stats/Agenda/Gallery/Achievement/About/Map) tidak dipakai lagi di beranda |
-| `/tentang` | `tentang/page.tsx` | Server Component, konten nyata (sejarah, visi-misi, Dasa Darma) |
-| `/struktur-organisasi` | `struktur-organisasi/page.tsx` | Pengurus per departemen + 31 Kwarran (grid 2 kolom di ponsel) |
-| `/berita` | `berita/page.tsx` + `loading.tsx` | Server Component; filter kategori lewat `?kategori=` |
-| `/berita/[slug]` | `berita/[slug]/page.tsx` + `ShareLink.tsx` | `generateStaticParams`, `dynamicParams=false`, JSON-LD `NewsArticle` |
-| `/agenda` | `agenda/page.tsx` + `loading.tsx` | Filter status lewat `?status=` |
-| `/agenda/[slug]` | `agenda/[slug]/page.tsx` | JSON-LD `Event` |
-| `/galeri` | `galeri/page.tsx` + `loading.tsx` | |
-| `/galeri/[slug]` | `galeri/[slug]/page.tsx` + `PhotoGallery.tsx` | Lightbox: focus trap, Escape, panah, fokus kembali |
-| `/prestasi` | `prestasi/page.tsx` + `loading.tsx` | Tabel (≥md, wrapper fokusabel) ↔ kartu (<md); filter `?tingkat=` |
-| `/dokumen` | `dokumen/page.tsx` + `DocumentSearch.tsx` + `loading.tsx` | Filter `?kategori=`, cari `?cari=`; unduhan divalidasi allowlist |
-| `/kontak` | `kontak/page.tsx` + `ContactForm.tsx` + `actions.ts` | Server Action: validasi, honeypot, time-trap, rate limit 3/10 mnt |
-| `/kebijakan-privasi`, `/aksesibilitas` | `.../page.tsx` | Hanya klaim yang terbukti + bagian "yang belum berlaku" |
-| `/masuk` | `masuk/page.tsx` | Status jujur (login belum aktif) + tautan pratinjau 3 dasbor, `noindex` |
-| `/dashboard/peserta`, `/pegawai`, `/admin` | `(dashboard)/dashboard/<peran>/page.tsx` | **Pratinjau desain, data fiktif, BELUM ada autentikasi.** `noindex`, `force-dynamic`. `/dashboard` → redirect `/masuk` |
-| 404 / error | `not-found.tsx` (memasang Header/Footer sendiri), `error.tsx` | |
-| SEO | `sitemap.ts`, `robots.ts` | Semua rute statis + slug dinamis |
+| `/` | `page.tsx` | Hero, QuickAccess (golongan), NewsPreview, DocumentCenter |
+| `/tentang`, `/struktur-organisasi` | `…/page.tsx` | Struktur: pengurus dari DB + 31 Kwarran |
+| `/berita`, `/agenda`, `/galeri` | `<rute>/(daftar)/page.tsx` + `loading.tsx` | **Grup `(daftar)`**: skeleton hanya untuk daftar, supaya slug asing tetap 404 sungguhan (bukan soft 404) |
+| `/berita/[slug]`, `/agenda/[slug]`, `/galeri/[slug]` | `…/[slug]/page.tsx` | `dynamicParams=true` (konten baru dari CMS dirender saat diminta); slug asing → `notFound()` → 404. Lightbox: `PhotoGallery.tsx` |
+| `/prestasi`, `/dokumen` | `…/page.tsx` | Filter lewat query param; unduhan divalidasi allowlist |
+| `/kontak` | `kontak/page.tsx` + `ContactForm.tsx` + `actions.ts` | Server Action → tabel `contact_messages`; honeypot, time-trap, rate limit 3/10 mnt; webhook opsional |
+| `/kebijakan-privasi`, `/aksesibilitas` | `…/page.tsx` | Hanya klaim yang terbukti + bagian "Yang belum berlaku". **Perbarui setiap skema data/akses berubah** |
+| `/masuk` | `masuk/page.tsx` | Login nyata (`features/auth/actions.ts`), `noindex` |
+
+## `src/app/(dashboard)/dashboard/` — Portal (login wajib, `noindex`, `force-dynamic`)
+
+| Rute | Izin | Catatan |
+|---|---|---|
+| `/dashboard` | semua | Ringkasan: `PesertaHome` / `StaffHome` |
+| `anggota`, `anggota/[id]`, `anggota/[id]/ubah`, `anggota/baru` | `members.*` | Cakupan per peran; deteksi duplikat; verifikasi; riwayat; data sensitif tercatat di audit |
+| `anggota/impor` (+ `templat`), `anggota/ekspor` | `members.import/export` | CSV; pratinjau sebelum simpan; ekspor tercatat |
+| `gudep`, `gudep/[id]`, `gudep/baru`, `gudep/[id]/ubah` | `gudep.*` | Peta sebaran + pemilih lokasi |
+| `kwarran`, `kwarran/[id]` | `kwarran.manage` | |
+| `pengguna`, `pengguna/[id]` | `users.manage` | Hanya peran yang boleh diberikan (`assignableRoles`) |
+| `pengumuman`, `pesan`, `log`, `pengaturan`, `akun` | per izin | Log = audit (`audit.view`) |
+| **`konten`** (hub) + `konten/{berita,agenda,galeri,dokumen,pengurus,prestasi}` | `content.manage` | **CMS.** Tiap bagian: `page.tsx` daftar + `[id]/page.tsx` editor (`baru` = buat). Galeri `[id]` memuat unggah foto & keterangan |
+| **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan; profil tanpa alamat/telepon/wali |
+| `/media/[...path]` (di `app/`) | publik | Menyajikan berkas unggahan dari `STORAGE_DIR` |
+| `middleware.ts` | — | Penyaring awal (cookie ada?). **Bukan** kontrol akses |
+
+`not-found.tsx`, `error.tsx`, `sitemap.ts`, `robots.ts` ada di `src/app/`.
 
 ## `src/components/`
 
-| File | Ekspor | Catatan |
-|---|---|---|
-| `ui/Button.tsx` | `Button`, `ButtonLink`, `buttonStyles` | 6 varian, 3 ukuran, semua ≥44px. `ButtonLink` menggantikan pola `<Link><Button/></Link>` |
-| `ui/Card.tsx` | `Card`, `CardHeader`, `CardContent`, `CardFooter` | Prop `as` (div/article/li/section) + `hoverable` |
-| `ui/Badge.tsx` | `Badge`, `AgendaStatusBadge`, `FileTypeBadge`, `CategoryBadge`, `agendaStatusLabel` | Selalu ikon + teks (WCAG 1.4.1) |
-| `ui/Field.tsx` | `Field`, `Input`, `Textarea`, `fieldAria` | Label wajib, slot galat, `aria-invalid`/`aria-describedby` |
-| `ui/FilterChips.tsx` | `FilterChips` | Klien; menulis state filter ke query param |
-| `ui/EmptyState.tsx` | `EmptyState` | Ikon + penjelasan + aksi lanjut |
-| `ui/MediaFrame.tsx` | `MediaFrame` | **Server-only.** `next/image` bila aset ada, pita empty state bila belum |
-| `ui/Section.tsx` | `Section`, `PageHeader` | `surface`: `canvas` (gray-50, default) / `base` (pita putih); satu h1 per halaman |
-| `ui/Skeleton.tsx` | `Skeleton`, `CardListSkeleton`, `PageLoading` | Dipakai `loading.tsx` |
-| `ui/SkipToContent.tsx` | `SkipToContent` | Target `#main-content` |
-| `public/Header.tsx` | `Header` | 4 menu (Profil, Berita, Dokumen, Kontak) + CTA "Masuk Portal"; drawer ponsel memuat grup "Lainnya" |
-| `public/Footer.tsx` | `Footer` | Latar #1F2937, alamat, kontak, media sosial dari `site.social` |
-| `public/QuickAccess.tsx`, `GolonganIcon.tsx` | named export | Kartu Siaga/Penggalang/Penegak/Pembina → `/tentang#golongan-*` |
-| `public/DocumentTable.tsx`, `DocumentCenter.tsx` | named export | Tabel dokumen (daftar bertumpuk < md); dipakai beranda & `/dokumen` |
-| `dashboard/DashboardShell.tsx` | `DashboardShell` | Klien. Sidebar desktop + drawer ponsel; prop `portal` (bukan `role`, bentrok jsx-a11y) |
-| `dashboard/DashboardUI.tsx` | `DashboardIntro`, `Panel`, `PriorityCard`, `ProgressBar`, `DateBlock`, `PreviewNotice` | Primitive dasbor |
-| `dashboard/StatusBadges.tsx`, `dashboard/nav.ts` | badge status, menu per peran | |
-| `public/Hero.tsx` (12 kolom: teks + slot foto), `StatsSection.tsx`, `AboutPreview.tsx`, `AgendaPreview.tsx`, `NewsPreview.tsx`, `GalleryPreview.tsx`, `AchievementPreview.tsx`, `MapSection.tsx` | named export | Section beranda; semua membaca repository |
-| `public/MapCanvas.tsx`, `public/LeafletMap.tsx` | `MapCanvas`, default | Leaflet + OpenStreetMap, dimuat `next/dynamic` `ssr:false` |
+| Folder / File | Catatan |
+|---|---|
+| `ui/` | `Button`(+`ButtonLink`), `Card`, `Badge`(+status), `Field`/`Input`/`Select`/`Textarea`, `FilterChips`, `EmptyState`, `MediaFrame` (server-only), `Section`/`PageHeader`, `Skeleton`, `SkipToContent` |
+| `public/` | `Header` (drawer ponsel), `Footer`, `Hero`, `QuickAccess`, `DocumentCenter`/`Table`, `NewsPreview`, `MapSection`+`LeafletMap`, `Breadcrumbs`, dst. |
+| `forms/` | `ActionForm` (+`SubmitButton`), `Fields` (`TextField`, `SelectField`, `FileField`, `CheckboxField`, `FieldGroup`) — pembungkus `useFormState` |
+| `dashboard/` | `DashboardShell`, `nav.ts` (menu per izin), `ui.tsx` (`PortalHeader`, `Panel`, `Notice`, `TableWrap`, `Pagination`, `PublishBadge`, …), `ConfirmButton` (`ActionButton`), `home/`, `members/`, `gudep/`, `users/` |
+| `dashboard/content/ContentForms.tsx` | Formulir CMS klien: Berita, Agenda, Album, Foto, Dokumen, Pengurus, Prestasi |
+| `maps/` | `GudepMap`, `GudepMapCanvas`, `LocationPicker` (Leaflet, `ssr:false`) |
 
-**Semua ekspor komponen adalah *named export*** kecuali `LeafletMap` (default, syarat `next/dynamic`).
+**Komponen = *named export*** kecuali `LeafletMap`. **`TableWrap` wajib `relative`** (elemen `sr-only` di dalam tabel bisa melebarkan halaman).
 
-## `src/lib/`, `src/styles/`, `src/types/`
+## `src/features/` — Logika per fitur (Server Action + query)
+
+`auth` (login/logout/ganti sandi) · `members` (+`validation.ts`, `import.ts`) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts`, `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
+
+## `src/lib/`, `src/db/`, `src/styles/`, `src/types/`
 
 | File | Isi |
 |---|---|
-| `lib/repositories/` | `news.ts`, `agenda.ts`, `gallery.ts`, `achievements.ts`, `documents.ts`, `organization.ts`, `stats.ts`, `dashboard.ts` + `index.ts` (barrel). **Satu-satunya tempat yang boleh mengimpor `lib/data/mock-data`** |
-| `lib/data/mock-data.ts` | Sumber data sementara. Diganti Prisma di P5-3 tanpa mengubah pemanggil |
-| `lib/site.ts` | `site` (nama, URL, kontak, alamat, jam kantor, `social` — VERIFIKASI akun) + `absoluteUrl()` |
-| `lib/golongan.ts` | Data 4 golongan + `golonganAnchor()` |
-| `lib/data/dashboard-mock.ts`, `types/dashboard.ts` | Data fiktif & tipe dasbor |
-| `lib/format.ts` | `formatDate`, `formatTime`, `formatDateRange`, `greeting`, `formatDayMonth` (id-ID, Asia/Jakarta) |
-| `lib/media.ts` | `assetExists()` — **server-only**, mengecek berkas di `public/` |
-| `lib/utils.ts` | `cn()` (clsx + tailwind-merge) |
-| `styles/tokens.css` | Palet Scout Earth Tones: brand cokelat #6B4E31, pasir #D4A373 (`tag-*`), merah aksen #DC2626 (`action-accent`), canvas #F9FAFB, teks #1F2937. Radius `rounded-lg` = 8px |
-| `styles/globals.css` | `@import tokens.css`, `@tailwind`, base, reduced-motion, timpaan kontrol Leaflet, utility `.civic-container` `.civic-section` `.civic-prose` `.stretched-link` `.card-subtle` |
-| `types/index.ts` | `NewsStatus`, `AgendaStatus`, `AchievementLevel` + entitas domain |
+| `db/index.ts`, `db/schema.ts` | Drizzle. `DATABASE_URL` → Postgres; kosong → PGlite di `.data/pglite` (ditolak di produksi kecuali `ALLOW_PGLITE=1`). Koneksi malas |
+| `lib/auth/` | `permissions.ts` (matriks 6 peran × 20 izin), `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`), `audit.ts`, `password.ts` |
+| `lib/security/request.ts` | `clientIp`, `createRateLimiter` (in-memory, satu instance) |
+| `lib/storage.ts` | Unggah: validasi magic-bytes, sharp→WebP (membuang EXIF/GPS), simpan ke `STORAGE_DIR` |
+| `lib/forms.ts`, `lib/csv.ts`, `lib/domain.ts` | Util formulir Zod · CSV aman injeksi · label & konstanta kepramukaan |
+| `lib/repositories/` | Baca konten **tayang** untuk situs publik. Satu-satunya yang boleh impor `lib/data/mock-data` |
+| `lib/site.ts`, `format.ts`, `media.ts`, `utils.ts`, `golongan.ts` | Identitas · tanggal id-ID/WIB · `assetExists` (server-only) · `cn()` · data golongan |
+| `styles/tokens.css` | Palet Scout Earth Tones: cokelat #6B4E31, pasir (`tag-*`), aksen #DC2626, token `border-inverse*` untuk footer |
+| `styles/globals.css` | Tailwind, base, reduced-motion, utilitas `.civic-*`, `.stretched-link` |
+
+## `tests/`
+
+`tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi & rate limit, validasi anggota (UU PDP), waktu WIB. Jalankan `npm test`.
 
 ## `public/`
 
-`manifest.json` (PWA, tema `#16A34A`) · `brand/logo.svg`
-Folder `images/` belum ada; `MediaFrame` otomatis menampilkan empty state sampai berkas diunggah.
-
-## Skema data (ringkas, hindari membuka `types/index.ts`)
-
-- News: `id slug title category excerpt content coverImage author publishedAt tags status(DRAFT|PUBLISHED|ARCHIVED)`
-- Agenda: `id slug title dateStart dateEnd location organizer description status(UPCOMING|ONGOING|COMPLETED|CANCELLED) contactPerson`
-- Album: `id slug title date location organizer description coverImage category photos[Photo]`
-- Achievement: `level(Kecamatan..Internasional) year recipient image`
-- OrganizationMember: `name role department period photoUrl bio`
-- Kwarran: `name code gudepCount activeMembers address leader`
-- Document: `title category type size date url description?` (+ `available`, `isExternal` dari repository)
+`manifest.json` (tema `#6B4E31`) · `brand/logo.svg`, `icon-192/512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`. Folder `images/` belum ada; `MediaFrame` menampilkan empty state sampai berkas diunggah.
 
 ## Alur data & token
 
-`mock-data.ts` → `lib/repositories/*` → halaman/komponen (async, Server Component).
+Baca publik: `DB` → `lib/repositories/*` → halaman (Server Component). Tulis: form → `features/*` Server Action (`requirePermission` → Zod → DB → `audit()` → `revalidatePublicSite()`).
 Token: `tokens.css` → `tailwind.config.ts` → kelas semantik (`bg-surface-subtle`, `text-text-secondary`).
-Warna literal Tailwind (`green-600`, `gray-200`, …) ditolak ESLint.
 
 ## Perbarui file ini
 
