@@ -46,7 +46,7 @@ export const Hero: React.FC = () => (
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
           className="rounded-lg"
-          fallbackLabel="Foto kegiatan resmi — unggah ke public/images/placeholder-hero.jpg"
+          fallbackLabel="Foto kegiatan Kwarcab akan ditampilkan di sini"
         />
       </div>
     </div>

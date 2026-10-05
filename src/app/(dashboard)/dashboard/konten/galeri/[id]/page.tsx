@@ -20,9 +20,9 @@ export default async function AlbumEditorPage({ params, searchParams = {} }: { p
     return (
       <>
         <PortalHeader title="Buat album" back={{ href: '/dashboard/konten/galeri', label: 'Daftar album' }} description="Foto diunggah setelah album tersimpan." />
-        <Panel>
+        <div className="max-w-3xl">
           <AlbumForm action={saveAlbumAction.bind(null, null)} categories={ALBUM_CATEGORIES} />
-        </Panel>
+        </div>
       </>
     );
   }
@@ -40,7 +40,8 @@ export default async function AlbumEditorPage({ params, searchParams = {} }: { p
       {searchParams.foto === 'sampul' && <Notice>Foto dijadikan sampul album.</Notice>}
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Panel title="Informasi album" className="lg:col-span-3">
+        {/* AlbumForm sudah berbentuk kartu (FieldGroup); membungkusnya dengan Panel menghasilkan judul ganda. */}
+        <div className="lg:col-span-3">
           <AlbumForm
             action={saveAlbumAction.bind(null, id)}
             categories={ALBUM_CATEGORIES}
@@ -54,7 +55,7 @@ export default async function AlbumEditorPage({ params, searchParams = {} }: { p
               published: album.published,
             }}
           />
-        </Panel>
+        </div>
         <Panel title="Tambah foto" className="self-start lg:col-span-2">
           <PhotoUploadForm action={uploadPhotosAction.bind(null, id)} />
         </Panel>

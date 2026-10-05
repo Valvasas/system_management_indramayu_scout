@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { NewsForm } from '@/components/dashboard/content/ContentForms';
-import { Panel, PortalHeader } from '@/components/dashboard/ui';
+import { PortalHeader } from '@/components/dashboard/ui';
 import { saveNewsAction } from '@/features/content/news';
 import { asId, getNewsAdmin } from '@/features/content/queries';
 import { requirePermission } from '@/lib/auth/session';
@@ -20,7 +20,7 @@ export default async function BeritaEditorPage({ params }: { params: { id: strin
   return (
     <>
       <PortalHeader title={row ? 'Ubah berita' : 'Tulis berita'} back={{ href: '/dashboard/konten/berita', label: 'Daftar berita' }} />
-      <Panel>
+      <div className="max-w-3xl">
         <NewsForm
           action={saveNewsAction.bind(null, id)}
           categories={NEWS_CATEGORIES}
@@ -41,7 +41,7 @@ export default async function BeritaEditorPage({ params }: { params: { id: strin
               : undefined
           }
         />
-      </Panel>
+      </div>
     </>
   );
 }

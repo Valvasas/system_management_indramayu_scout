@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { EventForm } from '@/components/dashboard/content/ContentForms';
-import { Panel, PortalHeader } from '@/components/dashboard/ui';
+import { PortalHeader } from '@/components/dashboard/ui';
 import { saveEventAction } from '@/features/content/events';
 import { asId, getEventAdmin } from '@/features/content/queries';
 import { toLocalDateTime } from '@/features/content/shared';
@@ -20,7 +20,7 @@ export default async function AgendaEditorPage({ params }: { params: { id: strin
   return (
     <>
       <PortalHeader title={row ? 'Ubah agenda' : 'Tambah agenda'} back={{ href: '/dashboard/konten/agenda', label: 'Daftar agenda' }} />
-      <Panel>
+      <div className="max-w-3xl">
         <EventForm
           action={saveEventAction.bind(null, id)}
           defaults={
@@ -40,7 +40,7 @@ export default async function AgendaEditorPage({ params }: { params: { id: strin
               : undefined
           }
         />
-      </Panel>
+      </div>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DocumentForm } from '@/components/dashboard/content/ContentForms';
-import { Panel, PortalHeader } from '@/components/dashboard/ui';
+import { PortalHeader } from '@/components/dashboard/ui';
 import { saveDocumentAction } from '@/features/content/documents';
 import { asId, getDocumentAdmin } from '@/features/content/queries';
 import { requirePermission } from '@/lib/auth/session';
@@ -20,7 +20,7 @@ export default async function DokumenEditorPage({ params }: { params: { id: stri
   return (
     <>
       <PortalHeader title={row ? 'Ubah dokumen' : 'Tambah dokumen'} back={{ href: '/dashboard/konten/dokumen', label: 'Daftar dokumen' }} />
-      <Panel>
+      <div className="max-w-3xl">
         <DocumentForm
           action={saveDocumentAction.bind(null, id)}
           categories={DOCUMENT_CATEGORIES}
@@ -37,7 +37,7 @@ export default async function DokumenEditorPage({ params }: { params: { id: stri
               : undefined
           }
         />
-      </Panel>
+      </div>
     </>
   );
 }

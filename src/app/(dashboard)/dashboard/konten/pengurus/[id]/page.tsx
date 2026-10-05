@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { BoardForm } from '@/components/dashboard/content/ContentForms';
-import { Panel, PortalHeader } from '@/components/dashboard/ui';
+import { PortalHeader } from '@/components/dashboard/ui';
 import { saveBoardMemberAction } from '@/features/content/organization';
 import { asId, getBoardAdmin } from '@/features/content/queries';
 import { requirePermission } from '@/lib/auth/session';
@@ -19,12 +19,12 @@ export default async function PengurusEditorPage({ params }: { params: { id: str
   return (
     <>
       <PortalHeader title={row ? 'Ubah pengurus' : 'Tambah pengurus'} back={{ href: '/dashboard/konten/pengurus', label: 'Daftar pengurus' }} />
-      <Panel>
+      <div className="max-w-3xl">
         <BoardForm
           action={saveBoardMemberAction.bind(null, id)}
           defaults={row ? { name: row.name, position: row.position, department: row.department, period: row.period, sortOrder: row.sortOrder } : undefined}
         />
-      </Panel>
+      </div>
     </>
   );
 }

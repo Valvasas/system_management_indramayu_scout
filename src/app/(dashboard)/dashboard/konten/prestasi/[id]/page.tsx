@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AchievementForm } from '@/components/dashboard/content/ContentForms';
-import { Panel, PortalHeader } from '@/components/dashboard/ui';
+import { PortalHeader } from '@/components/dashboard/ui';
 import { saveAchievementAction } from '@/features/content/organization';
 import { asId, getAchievementAdmin } from '@/features/content/queries';
 import { requirePermission } from '@/lib/auth/session';
@@ -20,7 +20,7 @@ export default async function PrestasiEditorPage({ params }: { params: { id: str
   return (
     <>
       <PortalHeader title={row ? 'Ubah prestasi' : 'Tambah prestasi'} back={{ href: '/dashboard/konten/prestasi', label: 'Daftar prestasi' }} />
-      <Panel>
+      <div className="max-w-3xl">
         <AchievementForm
           action={saveAchievementAction.bind(null, id)}
           levels={ACHIEVEMENT_LEVEL_OPTIONS}
@@ -30,7 +30,7 @@ export default async function PrestasiEditorPage({ params }: { params: { id: str
               : undefined
           }
         />
-      </Panel>
+      </div>
     </>
   );
 }
