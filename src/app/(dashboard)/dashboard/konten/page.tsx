@@ -35,7 +35,7 @@ export default async function KontenPage() {
               </span>
               <span className="font-display text-lg font-bold text-text-primary">{title}</span>
               <span className="text-text-secondary">{description}</span>
-              <span className="mt-auto text-sm font-medium text-text-muted">{count}</span>
+              <span className="mt-auto text-sm font-medium text-text-secondary">{count}</span>
             </Link>
           </li>
         ))}

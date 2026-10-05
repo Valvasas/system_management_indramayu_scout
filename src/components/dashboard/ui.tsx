@@ -179,9 +179,13 @@ export function withQuery(base: string, current: Record<string, string | undefin
 
 /* ---------------- Tabel ---------------- */
 
-/** Pembungkus tabel lebar: gulir horizontal di layar kecil, dapat difokus keyboard. */
+/**
+ * Pembungkus tabel lebar: gulir horizontal di layar kecil, dapat difokus keyboard.
+ * `relative` wajib: tanpanya elemen `sr-only` (position:absolute) di dalam tabel lolos dari
+ * overflow-x dan melebarkan seluruh halaman.
+ */
 export const TableWrap: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div role="region" aria-label={label} tabIndex={0} className="-mx-5 overflow-x-auto sm:-mx-6">
+  <div role="region" aria-label={label} tabIndex={0} className="relative -mx-5 overflow-x-auto sm:-mx-6">
     <div className="inline-block min-w-full px-5 align-middle sm:px-6">{children}</div>
   </div>
 );
