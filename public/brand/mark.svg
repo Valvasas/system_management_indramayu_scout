@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Tanda merek persegi (placeholder): tunas di dalam lingkaran hutan. Ganti dengan lambang resmi Kwarcab. -->
+  <rect width="64" height="64" rx="16" fill="#1F5C3E"/>
+  <path d="M8 50 Q20 44 32 47 T56 46 V64 H8 Z" fill="#184A32"/>
+  <g fill="#F4EAD8" transform="translate(9 7) scale(0.77)">
+    <path d="M20,10 C15,10 10,20 15,30 C20,40 30,45 25,50 C22,53 18,52 15,50 C20,55 30,55 35,45 C40,35 35,15 20,10 Z"/>
+    <path d="M40,10 C45,10 50,20 45,30 C40,40 30,45 35,50 C38,53 42,52 45,50 C40,55 30,55 25,45 C20,35 25,15 40,10 Z"/>
+  </g>
+</svg>

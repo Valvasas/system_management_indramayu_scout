@@ -34,8 +34,8 @@ const LeafletMap: React.FC<LeafletMapProps> = ({ lat, lng, label }) => {
 
       L.circleMarker([lat, lng], {
         radius: 10,
-        color: '#15803D',
-        fillColor: '#15803D',
+        color: '#FFFFFF',
+        fillColor: '#1F5C3E',
         fillOpacity: 0.85,
         weight: 3,
       })

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Clock, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ButtonLink } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { ContactForm } from './ContactForm';
 import { site } from '@/lib/site';
+import { MapCanvas } from '@/components/public/MapCanvas';
 
 export const metadata: Metadata = {
   title: 'Kontak & Layanan Aspirasi',
@@ -15,11 +17,15 @@ export const metadata: Metadata = {
 
 export default function KontakPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Layanan"
+        scene="meadow"
+        top={<Breadcrumbs items={[{ label: 'Kontak' }]} />}
         title="Kontak & layanan aspirasi"
         description="Sampaikan pertanyaan, usulan kegiatan, atau koordinasi kwartir ranting dan gugus depan kepada sekretariat kwarcab."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <section aria-labelledby="sekretariat-title" className="space-y-6">
@@ -100,24 +106,24 @@ export default function KontakPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent>
-              <h3 className="font-semibold text-text-primary">Peta lokasi</h3>
-              <p className="mt-1 text-sm text-text-secondary">
-                Peta interaktif sekretariat tersedia di beranda; untuk petunjuk arah gunakan
-                layanan peta pilihan Anda.
-              </p>
+          <div className="overflow-hidden rounded-3xl border border-border-subtle bg-surface-base">
+            <div className="h-72">
+              <MapCanvas lat={site.contact.coords.lat} lng={site.contact.coords.lng} label={`Sekretariat ${site.shortName}`} />
+            </div>
+            <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-text-secondary">Titik peta adalah perkiraan lokasi gedung sekretariat.</p>
               <ButtonLink
-                href="https://www.openstreetmap.org/search?query=Kwarcab%20Pramuka%20Indramayu"
+                href={`https://www.openstreetmap.org/directions?to=${site.contact.coords.lat}%2C${site.contact.coords.lng}`}
                 variant="outline"
                 size="sm"
                 target="_blank"
-                className="mt-4"
+                className="shrink-0"
               >
-                Buka petunjuk arah
+                Petunjuk arah
+                <span className="sr-only">(OpenStreetMap, tab baru)</span>
               </ButtonLink>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </section>
 
         <section aria-labelledby="form-title">
@@ -137,5 +143,6 @@ export default function KontakPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

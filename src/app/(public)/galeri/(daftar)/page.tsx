@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import Link from 'next/link';
 import { Images, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { CategoryBadge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MediaFrame } from '@/components/ui/MediaFrame';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getGalleryAlbums } from '@/lib/repositories';
 import { formatDate } from '@/lib/format';
 
@@ -20,11 +21,15 @@ export default async function GaleriPage() {
   const albums = await getGalleryAlbums();
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Dokumentasi"
+        scene="lake"
+        top={<Breadcrumbs items={[{ label: 'Galeri' }]} />}
         title="Galeri dokumentasi"
         description="Rekaman visual perkemahan, upacara, dan kegiatan bakti Pramuka di Kabupaten Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       {albums.length === 0 ? (
         <EmptyState
@@ -73,5 +78,6 @@ export default async function GaleriPage() {
         </ul>
       )}
     </div>
+    </>
   );
 }

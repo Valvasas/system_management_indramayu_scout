@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Card, CardContent } from '@/components/ui/Card';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getKwarran, getOrganizationByDepartment } from '@/lib/repositories';
 
 export const metadata: Metadata = {
@@ -15,11 +16,15 @@ export default async function StrukturOrganisasiPage() {
   const kwarrans = await getKwarran();
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Profil"
+        scene="forest"
+        top={<Breadcrumbs items={[{ label: 'Tentang', href: '/tentang' }, { label: 'Struktur Organisasi' }]} />}
         title="Struktur organisasi"
         description="Susunan pengurus Kwartir Cabang masa bakti 2026–2031 dan sebaran kwartir ranting di seluruh kecamatan."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <section aria-labelledby="pengurus-title" className="mb-12">
         <h2 id="pengurus-title" className="font-display text-2xl font-bold text-text-primary">
@@ -69,5 +74,6 @@ export default async function StrukturOrganisasiPage() {
         </ul>
       </section>
     </div>
+    </>
   );
 }

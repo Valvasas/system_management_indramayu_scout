@@ -11,9 +11,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // Plus Jakarta Sans untuk heading, Inter untuk teks isi.
-        display: ['var(--font-jakarta)', 'var(--font-inter)', 'ui-sans-serif', 'sans-serif'],
+        // Plus Jakarta Sans (karya desainer Indonesia) untuk UI & teks isi.
+        sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Fraunces: serif bervariabel yang hangat, untuk judul besar bernuansa jurnal alam.
+        display: ['var(--font-fraunces)', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         surface: {
@@ -25,6 +26,11 @@ const config: Config = {
           sunken: 'var(--surface-sunken)',
           inverse: 'var(--surface-inverse)',
           scrim: 'var(--surface-scrim)',
+          forest: 'var(--surface-forest)',
+          meadow: 'var(--surface-meadow)',
+          sand: 'var(--surface-sand)',
+          sky: 'var(--surface-sky)',
+          ember: 'var(--surface-ember)',
         },
         text: {
           primary: 'var(--text-primary)',
@@ -34,6 +40,7 @@ const config: Config = {
           'inverse-muted': 'var(--text-inverse-muted)',
           'on-brand': 'var(--text-on-brand)',
           accent: 'var(--accent-text)',
+          warm: 'var(--accent-warm)',
         },
         action: {
           primary: 'var(--action-primary)',
@@ -93,6 +100,31 @@ const config: Config = {
           800: 'var(--brand-800)',
           900: 'var(--brand-900)',
         },
+        // Palet ilustrasi: HANYA untuk fill/stroke SVG dekoratif.
+        ill: {
+          sky: 'var(--ill-sky)',
+          'sky-warm': 'var(--ill-sky-warm)',
+          sun: 'var(--ill-sun)',
+          cloud: 'var(--ill-cloud)',
+          'mountain-far': 'var(--ill-mountain-far)',
+          mountain: 'var(--ill-mountain)',
+          'forest-far': 'var(--ill-forest-far)',
+          forest: 'var(--ill-forest)',
+          'forest-near': 'var(--ill-forest-near)',
+          'forest-deep': 'var(--ill-forest-deep)',
+          meadow: 'var(--ill-meadow)',
+          'meadow-light': 'var(--ill-meadow-light)',
+          ground: 'var(--ill-ground)',
+          path: 'var(--ill-path)',
+          tent: 'var(--ill-tent)',
+          'tent-shade': 'var(--ill-tent-shade)',
+          'tent-alt': 'var(--ill-tent-alt)',
+          flag: 'var(--ill-flag)',
+          wood: 'var(--ill-wood)',
+          fire: 'var(--ill-fire)',
+          'fire-core': 'var(--ill-fire-core)',
+          water: 'var(--ill-water)',
+        },
         neutral: {
           50: 'var(--neutral-50)',
           100: 'var(--neutral-100)',
@@ -118,21 +150,45 @@ const config: Config = {
       minWidth: {
         touch: '2.75rem',
       },
-      // 8px (rounded-lg) adalah radius standar kartu, input, dan tombol.
+      // Radius organik: input 10px, kartu 16px, blok fitur 24px, media hero 32px, tombol pil.
       borderRadius: {
-        sm: '0.25rem',
-        md: '0.375rem',
-        lg: '0.5rem',
-        xl: '0.75rem',
+        sm: '0.375rem',
+        md: '0.5rem',
+        lg: '0.625rem',
+        xl: '1rem',
+        '2xl': '1.5rem',
+        '3xl': '2rem',
         pill: '999px',
       },
       boxShadow: {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
         dialog: 'var(--shadow-dialog)',
+      },
+      transitionTimingFunction: {
+        out: 'var(--ease-out)',
+      },
+      keyframes: {
+        'sway': { '0%,100%': { transform: 'rotate(-1.2deg)' }, '50%': { transform: 'rotate(1.2deg)' } },
+        'drift': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-40px)' } },
+        'flicker': { '0%,100%': { transform: 'scaleY(1)', opacity: '1' }, '50%': { transform: 'scaleY(0.9)', opacity: '0.85' } },
+        'rise': { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+      },
+      animation: {
+        sway: 'sway 7s ease-in-out infinite',
+        drift: 'drift 40s linear infinite alternate',
+        flicker: 'flicker 1.6s ease-in-out infinite',
+        rise: 'rise 0.8s var(--ease-out) both',
       },
       maxWidth: {
         prose: '65ch',
+      },
+      fontSize: {
+        // Skala display fluid: judul besar menyesuaikan lebar layar tanpa breakpoint.
+        'display-xl': ['clamp(2.5rem, 1.6rem + 4vw, 4.75rem)', { lineHeight: '1.02', letterSpacing: '-0.02em' }],
+        'display-lg': ['clamp(2.1rem, 1.5rem + 2.6vw, 3.5rem)', { lineHeight: '1.06', letterSpacing: '-0.015em' }],
+        'display-md': ['clamp(1.75rem, 1.35rem + 1.6vw, 2.5rem)', { lineHeight: '1.1', letterSpacing: '-0.01em' }],
       },
     },
   },

@@ -31,22 +31,18 @@ export async function getStatSummary(): Promise<StatSummary> {
   };
 }
 
-export interface StatTile {
-  label: string;
-  value: string;
-  note: string;
+export interface GolonganCount {
+  golongan: 'SIAGA' | 'PENGGALANG' | 'PENEGAK' | 'PANDEGA' | 'DEWASA';
+  count: number;
 }
 
-const number = (n: number) => new Intl.NumberFormat('id-ID').format(n);
-
-/** Angka beranda. Baris bernilai nol disembunyikan agar situs baru tidak tampak kosong. */
-export async function getHomeStats(): Promise<StatTile[]> {
-  const s = await getStatSummary();
-  const tiles: (StatTile & { raw: number })[] = [
-    { raw: s.totalKwarran, label: 'Kwartir Ranting', value: number(s.totalKwarran), note: 'Seluruh kecamatan' },
-    { raw: s.totalGudep, label: 'Gugus Depan', value: number(s.totalGudep), note: 'Pangkalan aktif terdata' },
-    { raw: s.totalMembers, label: 'Anggota aktif', value: number(s.totalMembers), note: 'Terverifikasi kwartir' },
-    { raw: s.totalActivities, label: `Kegiatan ${new Date().getFullYear()}`, value: number(s.totalActivities), note: 'Agenda resmi' },
-  ];
-  return tiles.filter((t) => t.raw > 0).map(({ raw: _raw, ...t }) => t);
+/** Jumlah anggota AKTIF per golongan (agregat publik, V5 §11). */
+export async function getActiveByGolongan(): Promise<GolonganCount[]> {
+  const db = await getDb();
+  const rows = await db
+    .select({ golongan: schema.members.golongan, n: count() })
+    .from(schema.members)
+    .where(eq(schema.members.status, 'ACTIVE'))
+    .groupBy(schema.members.golongan);
+  return rows.map((r) => ({ golongan: r.golongan, count: r.n }));
 }

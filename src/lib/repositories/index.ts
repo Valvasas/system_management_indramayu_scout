@@ -14,3 +14,4 @@ export * from './documents';
 export * from './organization';
 export * from './stats';
 export * from './settings';
+export * from './wilayah';

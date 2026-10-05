@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { CheckCircle2, CircleDashed } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -76,11 +77,15 @@ const knownLimitations = [
 
 export default function AksesibilitasPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kebijakan"
+        scene="meadow"
+        top={<Breadcrumbs items={[{ label: 'Aksesibilitas' }]} />}
         title="Pernyataan aksesibilitas"
         description="Standar acuan: Web Content Accessibility Guidelines (WCAG) 2.2 Level AA. Halaman ini hanya memuat hal yang benar-benar sudah berlaku di situs, beserta keterbatasan yang masih ada."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-10">
         <section aria-labelledby="sudah-title">
@@ -169,5 +174,6 @@ export default function AksesibilitasPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

@@ -3,31 +3,33 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger' | 'link';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'accent' | 'danger' | 'link' | 'inverse';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
+// Bentuk pil: ramah sentuh dan terasa santai, cocok untuk nuansa outdoor.
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-colors ' +
-  'disabled:opacity-60 disabled:pointer-events-none aria-disabled:opacity-60';
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-pill transition-[background-color,color,border-color,box-shadow,transform] duration-200 ' +
+  'active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none aria-disabled:opacity-60';
 
 const variants: Record<ButtonVariant, string> = {
-  // Kontras teks putih di atas action-primary (brown-600) = 7.6:1 -> lolos AA.
-  primary: 'bg-action-primary text-text-on-brand hover:bg-action-primary-hover active:bg-action-primary-active',
-  secondary:
-    'bg-action-secondary text-action-secondary-text border border-border-brand hover:bg-action-secondary-hover',
-  outline: 'bg-surface-base text-text-primary border border-border-strong hover:bg-surface-subtle',
+  // Putih di atas action-primary (forest-600) = 7.9:1.
+  primary: 'bg-action-primary text-text-on-brand shadow-sm hover:bg-action-primary-hover hover:shadow-md active:bg-action-primary-active',
+  secondary: 'bg-action-secondary text-action-secondary-text border border-border-brand hover:bg-action-secondary-hover',
+  outline: 'bg-surface-base text-text-primary border border-border-strong hover:border-text-primary hover:bg-surface-subtle',
   ghost: 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary',
-  // Merah aksen: hanya untuk aksi yang menyangkut peringatan penting.
-  accent: 'bg-action-accent text-text-on-brand hover:bg-action-accent-hover',
+  // Ember (api unggun): ajakan hangat yang menonjol. Putih di atas ember-700 = 6.2:1.
+  accent: 'bg-action-accent text-text-on-brand shadow-sm hover:bg-action-accent-hover hover:shadow-md',
   danger: 'bg-action-danger text-text-on-brand hover:bg-action-danger-hover',
-  link: 'text-text-accent underline underline-offset-4 hover:text-action-primary-hover px-0',
+  link: 'text-text-accent underline underline-offset-4 hover:text-action-primary-hover px-0 rounded-md',
+  // Di atas pita hutan gelap: latar putih, teks hijau tua.
+  inverse: 'bg-surface-base text-action-secondary-text hover:bg-action-secondary shadow-sm',
 };
 
 // Setiap ukuran tetap >= 44px tinggi (WCAG 2.2 - 2.5.8 & standar internal proyek).
 const sizes: Record<ButtonSize, string> = {
-  sm: 'min-h-touch px-3 text-sm',
-  md: 'min-h-touch px-4 text-sm sm:text-base',
-  lg: 'min-h-touch h-12 px-6 text-base',
+  sm: 'min-h-touch px-4 text-sm',
+  md: 'min-h-touch px-5 text-sm sm:text-base',
+  lg: 'min-h-touch h-12 px-7 text-base',
 };
 
 export function buttonStyles(

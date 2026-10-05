@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Award, Trophy } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getAchievementLevels, getAchievements, levelFromSlug, levelSlug } from '@/lib/repositories';
 
 export const metadata: Metadata = {
@@ -27,11 +28,15 @@ export default async function PrestasiPage({
   const achievements = await getAchievements({ level });
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kebanggaan bersama"
+        scene="mountain"
+        top={<Breadcrumbs items={[{ label: 'Prestasi' }]} />}
         title="Prestasi & penghargaan"
         description="Rekam jejak capaian, penghargaan kwartir, dan prestasi anggota Pramuka se-Kabupaten Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="mb-8">
         <FilterChips
@@ -141,5 +146,6 @@ export default async function PrestasiPage({
         </>
       )}
     </div>
+    </>
   );
 }

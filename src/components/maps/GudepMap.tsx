@@ -12,9 +12,14 @@ export interface GudepPoint {
   lng: number;
   kwarranName: string;
   activeMembers: number;
+  /** Tujuan tautan popup. Default: `${linkBase}/${id}` (portal). */
+  href?: string;
+  /** Teks keterangan popup. Default: nomor, kwarran, dan jumlah anggota aktif. */
+  meta?: string;
 }
 
-const BRAND = '#6B4E31';
+// forest-600, sama dengan --action-primary (Leaflet butuh nilai warna literal).
+const BRAND = '#1F5C3E';
 
 /**
  * Peta sebaran gudep. Penanda `circleMarker` (bukan ikon bawaan Leaflet yang dimuat dari CDN
@@ -40,12 +45,12 @@ const GudepMap: React.FC<{ points: GudepPoint[]; linkBase?: string; label: strin
       for (const p of points) {
         const popup = document.createElement('div');
         const title = document.createElement('a');
-        title.href = `${linkBase}/${p.id}`;
+        title.href = p.href ?? `${linkBase}/${p.id}`;
         title.textContent = p.name;
         title.style.fontWeight = '700';
         title.style.color = BRAND;
         const meta = document.createElement('div');
-        meta.textContent = `${p.number ? `No. ${p.number} · ` : ''}Kwarran ${p.kwarranName} · ${p.activeMembers} anggota aktif`;
+        meta.textContent = p.meta ?? `${p.number ? `No. ${p.number} · ` : ''}Kwarran ${p.kwarranName} · ${p.activeMembers} anggota aktif`;
         popup.append(title, meta);
 
         L.circleMarker([p.lat, p.lng], { radius: 8, color: '#FFFFFF', weight: 2, fillColor: BRAND, fillOpacity: 0.95 })

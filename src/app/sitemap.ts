@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { getAgenda, getGalleryAlbums, getNews } from '@/lib/repositories';
+import { getAgenda, getGalleryAlbums, getKwarranSlugs, getNews } from '@/lib/repositories';
+import { golongan } from '@/lib/golongan';
 import { absoluteUrl } from '@/lib/site';
 
 const staticRoutes: { path: string; priority: number; changeFrequency: 'daily' | 'weekly' | 'monthly' | 'yearly' }[] = [
@@ -12,16 +13,15 @@ const staticRoutes: { path: string; priority: number; changeFrequency: 'daily' |
   { path: '/prestasi', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/dokumen', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/kontak', priority: 0.7, changeFrequency: 'yearly' },
+  { path: '/bergabung', priority: 0.9, changeFrequency: 'monthly' },
+  { path: '/golongan', priority: 0.8, changeFrequency: 'yearly' },
+  { path: '/wilayah', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/kebijakan-privasi', priority: 0.3, changeFrequency: 'yearly' },
   { path: '/aksesibilitas', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [news, agendas, albums] = await Promise.all([
-    getNews(),
-    getAgenda(),
-    getGalleryAlbums(),
-  ]);
+  const [news, agendas, albums, kwarran] = await Promise.all([getNews(), getAgenda(), getGalleryAlbums(), getKwarranSlugs()]);
 
   const now = new Date();
 
@@ -31,6 +31,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: r.changeFrequency,
       priority: r.priority,
+    })),
+    ...golongan.map((g) => ({
+      url: absoluteUrl(`/golongan/${g.id}`),
+      lastModified: now,
+      changeFrequency: 'yearly' as const,
+      priority: 0.7,
+    })),
+    ...kwarran.map((slug) => ({
+      url: absoluteUrl(`/wilayah/${slug}`),
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.5,
     })),
     ...news.map((n) => ({
       url: absoluteUrl(`/berita/${n.slug}`),

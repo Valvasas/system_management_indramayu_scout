@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import Link from 'next/link';
 import { Newspaper } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -6,7 +7,7 @@ import { CategoryBadge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { MediaFrame } from '@/components/ui/MediaFrame';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { getNews, getNewsCategories } from '@/lib/repositories';
 import { formatDate } from '@/lib/format';
 
@@ -31,11 +32,15 @@ export default async function BeritaPage({
   const news = await getNews({ category: active === ALL ? undefined : active });
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kabar terbaru"
+        scene="meadow"
+        top={<Breadcrumbs items={[{ label: 'Berita' }]} />}
         title="Berita & warta pramuka"
         description="Kabar terbaru, pengumuman, dan liputan kegiatan Kwartir Cabang Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="mb-8">
         <FilterChips
@@ -93,5 +98,6 @@ export default async function BeritaPage({
         </ul>
       )}
     </div>
+    </>
   );
 }

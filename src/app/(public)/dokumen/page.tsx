@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { FileSearch } from 'lucide-react';
 import { DocumentTable } from '@/components/public/DocumentTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { DocumentSearch } from './DocumentSearch';
 import { getDocumentCategories, getDocuments } from '@/lib/repositories';
 
@@ -32,11 +33,15 @@ export default async function DokumenPage({
   });
 
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Layanan"
+        scene="forest"
+        top={<Breadcrumbs items={[{ label: 'Pusat Dokumen' }]} />}
         title="Pusat dokumen"
         description="Petunjuk penyelenggaraan (Jukran/Juklak), surat keputusan, formulir, dan template administrasi kepramukaan Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="mb-8 space-y-4">
         <DocumentSearch initialValue={search} />
@@ -64,5 +69,6 @@ export default async function DokumenPage({
         <DocumentTable documents={documents} caption="Daftar dokumen resmi" />
       )}
     </div>
+    </>
   );
 }

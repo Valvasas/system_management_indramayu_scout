@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ButtonLink } from '@/components/ui/Button';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { GolonganIcon } from '@/components/public/GolonganIcon';
 import { golongan, golonganAnchor } from '@/lib/golongan';
 
@@ -34,11 +35,15 @@ const dasaDarma = [
 
 export default function TentangPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Profil"
+        scene="mountain"
+        top={<Breadcrumbs items={[{ label: 'Tentang' }]} />}
         title="Tentang Kwarcab Indramayu"
         description="Kwartir Cabang Gerakan Pramuka Indramayu mengoordinasikan pendidikan kepramukaan di seluruh kecamatan Kabupaten Indramayu."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-12">
         <section aria-labelledby="sejarah-title">
@@ -152,5 +157,6 @@ export default function TentangPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

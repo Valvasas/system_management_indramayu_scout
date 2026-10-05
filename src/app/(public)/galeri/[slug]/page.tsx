@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
+import { PageHero } from '@/components/ui/Section';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import { CategoryBadge } from '@/components/ui/Badge';
+import { ArrowLeft, CalendarDays, Images, MapPin, Users } from 'lucide-react';
 import { PhotoGallery, type GalleryPhoto } from './PhotoGallery';
 import { getGalleryAlbumBySlug, getGalleryAlbumSlugs } from '@/lib/repositories';
 import { formatDate } from '@/lib/format';
@@ -50,30 +51,36 @@ export default async function DetailGaleriPage({ params }: Params) {
   const photos: GalleryPhoto[] = album.photos.map((p) => ({ ...p, available: assetExists(p.url) }));
 
   return (
-    <div className="civic-container py-12">
-      <nav aria-label="Remah roti" className="mb-6">
-        <Link
-          href="/galeri"
-          className="inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-medium text-text-accent hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Kembali ke galeri
-        </Link>
-      </nav>
+    <div>
+      <PageHero
+        eyebrow={album.category}
+        title={album.title}
+        description={album.description}
+        scene="lake"
+        top={<Breadcrumbs items={[{ label: 'Galeri', href: '/galeri' }, { label: album.title }]} />}
+      >
+        <ul className="flex flex-wrap gap-2 text-sm">
+          {[
+            { icon: CalendarDays, text: formatDate(album.date) },
+            { icon: MapPin, text: album.location },
+            { icon: Users, text: album.organizer },
+            { icon: Images, text: `${album.photos.length} foto` },
+          ].map(({ icon: Icon, text }) => (
+            <li key={text} className="inline-flex items-center gap-1.5 rounded-pill bg-surface-base px-3 py-1.5 font-medium text-text-secondary shadow-sm">
+              <Icon className="h-4 w-4 text-text-accent" aria-hidden="true" />
+              {text}
+            </li>
+          ))}
+        </ul>
+      </PageHero>
 
-      <header className="mb-8 max-w-3xl">
-        <CategoryBadge>{album.category}</CategoryBadge>
-        <h1 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight text-text-primary">
-          {album.title}
-        </h1>
-        <p className="mt-3 civic-prose">{album.description}</p>
-        <p className="mt-3 text-sm text-text-secondary">
-          <time dateTime={album.date}>{formatDate(album.date)}</time> · {album.location} ·
-          Penyelenggara {album.organizer} · {album.photos.length} foto
-        </p>
-      </header>
-
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
       <PhotoGallery photos={photos} albumTitle={album.title} />
+      <Link href="/galeri" className="mt-10 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+        Semua album
+      </Link>
+      </div>
     </div>
   );
 }

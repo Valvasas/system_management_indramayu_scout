@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { Breadcrumbs } from '@/components/public/Breadcrumbs';
 import Link from 'next/link';
 import { CircleDashed, ShieldCheck } from 'lucide-react';
-import { PageHeader } from '@/components/ui/Section';
+import { PageHero } from '@/components/ui/Section';
 import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -42,11 +43,15 @@ const notYetInEffect = [
 
 export default function KebijakanPrivasiPage() {
   return (
-    <div className="civic-container py-12">
-      <PageHeader
+    <>
+      <PageHero
+        eyebrow="Kebijakan"
+        scene="lake"
+        top={<Breadcrumbs items={[{ label: 'Kebijakan Privasi' }]} />}
         title="Kebijakan privasi"
         description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 5 Oktober 2026."
       />
+      <div className="civic-container pb-16 pt-6 sm:pb-24">
 
       <div className="max-w-3xl space-y-10">
         <section aria-labelledby="ringkas-title" className="rounded-lg border border-status-success-border bg-status-success-surface p-5">
@@ -176,5 +181,6 @@ export default function KebijakanPrivasiPage() {
         </p>
       </div>
     </div>
+    </>
   );
 }
