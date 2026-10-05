@@ -108,6 +108,10 @@
   --border-subtle: var(--neutral-200);
   --border-strong: var(--neutral-300);
   --border-brand: var(--sand-400);
+  /* Di atas surface-inverse (footer): garis, kontrol, dan keadaan hover */
+  --border-inverse: var(--neutral-600);
+  --border-inverse-subtle: var(--neutral-700);
+  --border-inverse-hover: var(--neutral-400);
 
   /* ---------- Semantic: Focus ---------- */
   --focus-ring: var(--brown-600);
