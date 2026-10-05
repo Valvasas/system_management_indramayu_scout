@@ -54,6 +54,8 @@ const initials = (name: string) =>
 
 export interface DashboardShellProps {
   user: { name: string; roleLabel: string; scopeLabel: string | null };
+  /** Nama portal di kepala sidebar: peserta tidak memakai "Portal Pengurus". */
+  portalLabel?: string;
   nav: NavGroup[];
   children: React.ReactNode;
 }
@@ -62,7 +64,7 @@ export interface DashboardShellProps {
  * Kerangka portal: sidebar tetap (desktop) / drawer (ponsel), bilah atas berisi
  * identitas & cakupan pengguna. Satu pola untuk semua peran.
  */
-export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, children }) => {
+export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, portalLabel = 'Portal Pengurus', children }) => {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -164,7 +166,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, child
       <Image src="/brand/logo.svg" alt="" width={36} height={36} className="h-9 w-9" />
       <span className="leading-tight">
         <span className="block font-display text-sm font-bold text-text-primary">Kwarcab Indramayu</span>
-        <span className="block text-xs text-text-secondary">Portal Pengurus</span>
+        <span className="block text-xs text-text-secondary">{portalLabel}</span>
       </span>
     </Link>
   );
