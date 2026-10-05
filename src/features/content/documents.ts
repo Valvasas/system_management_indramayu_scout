@@ -9,6 +9,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, isoDate, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { UploadError, deleteMedia, isFile, saveDocument } from '@/lib/storage';
+import { revalidatePublicSite } from './shared';
 
 const DocumentSchema = z.object({
   title: requiredText('Judul dokumen', 200),
@@ -56,6 +57,7 @@ export async function saveDocumentAction(id: string | null, _prev: FormState, fo
   }
   await audit(user, { action: 'content.save', summary: `Menyimpan dokumen "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'document', entityId: id! });
   revalidatePath('/dashboard/konten/dokumen');
+  revalidatePublicSite();
   redirect('/dashboard/konten/dokumen?tersimpan=1');
 }
 
@@ -68,5 +70,6 @@ export async function deleteDocumentAction(id: string): Promise<void> {
     await audit(user, { action: 'content.delete', summary: `Menghapus dokumen "${row.title}"`, entityType: 'document', entityId: id });
   }
   revalidatePath('/dashboard/konten/dokumen');
+  revalidatePublicSite();
   redirect('/dashboard/konten/dokumen?dihapus=1');
 }

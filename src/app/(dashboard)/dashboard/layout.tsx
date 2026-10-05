@@ -53,7 +53,11 @@ export default async function PortalLayout({ children }: { children: React.React
   const nav = buildNav(user.role === 'PESERTA', (p) => can(user, p), counts);
 
   return (
-    <DashboardShell user={{ name: user.name, roleLabel: ROLE_LABELS[user.role], scopeLabel: label }} nav={nav}>
+    <DashboardShell
+      user={{ name: user.name, roleLabel: ROLE_LABELS[user.role], scopeLabel: label }}
+      portalLabel={user.role === 'PESERTA' ? 'Portal Peserta' : 'Portal Pengurus'}
+      nav={nav}
+    >
       {children}
     </DashboardShell>
   );

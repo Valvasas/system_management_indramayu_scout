@@ -112,7 +112,7 @@ export const Footer: React.FC = () => {
                         href={s.url}
                         rel="noopener noreferrer"
                         target="_blank"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-neutral-600 text-text-inverse-muted transition-colors hover:border-neutral-400 hover:text-text-inverse"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border-inverse text-text-inverse-muted transition-colors hover:border-border-inverse-hover hover:text-text-inverse"
                       >
                         <Icon className="h-5 w-5" aria-hidden="true" />
                         <span className="sr-only">{s.label} (tab baru)</span>
@@ -125,7 +125,7 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-neutral-700 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-2 border-t border-border-inverse-subtle pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>
             &copy; {new Date().getFullYear()} {site.organization}
           </p>

@@ -56,6 +56,9 @@ const config: Config = {
           subtle: 'var(--border-subtle)',
           strong: 'var(--border-strong)',
           brand: 'var(--border-brand)',
+          inverse: 'var(--border-inverse)',
+          'inverse-subtle': 'var(--border-inverse-subtle)',
+          'inverse-hover': 'var(--border-inverse-hover)',
         },
         focus: {
           ring: 'var(--focus-ring)',

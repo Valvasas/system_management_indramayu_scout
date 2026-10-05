@@ -9,6 +9,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { ACHIEVEMENT_LEVEL_OPTIONS } from '@/lib/domain';
 import { checkbox, fail, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
+import { revalidatePublicSite } from './shared';
 
 /* ---------------- Pengurus (Struktur Organisasi) ---------------- */
 
@@ -34,6 +35,7 @@ export async function saveBoardMemberAction(id: string | null, _prev: FormState,
   }
   await audit(user, { action: 'content.save', summary: `Menyimpan pengurus ${parsed.data.name} (${parsed.data.position})`, entityType: 'board', entityId: id });
   revalidatePath('/dashboard/konten/pengurus');
+  revalidatePublicSite();
   redirect('/dashboard/konten/pengurus?tersimpan=1');
 }
 
@@ -43,6 +45,7 @@ export async function deleteBoardMemberAction(id: string): Promise<void> {
   const [row] = await db.delete(schema.boardMembers).where(eq(schema.boardMembers.id, id)).returning({ name: schema.boardMembers.name });
   if (row) await audit(user, { action: 'content.delete', summary: `Menghapus pengurus ${row.name}`, entityType: 'board', entityId: id });
   revalidatePath('/dashboard/konten/pengurus');
+  revalidatePublicSite();
   redirect('/dashboard/konten/pengurus?dihapus=1');
 }
 
@@ -71,6 +74,7 @@ export async function saveAchievementAction(id: string | null, _prev: FormState,
   }
   await audit(user, { action: 'content.save', summary: `Menyimpan prestasi "${parsed.data.title}"`, entityType: 'achievement', entityId: id });
   revalidatePath('/dashboard/konten/prestasi');
+  revalidatePublicSite();
   redirect('/dashboard/konten/prestasi?tersimpan=1');
 }
 
@@ -80,5 +84,6 @@ export async function deleteAchievementAction(id: string): Promise<void> {
   const [row] = await db.delete(schema.achievements).where(eq(schema.achievements.id, id)).returning({ title: schema.achievements.title });
   if (row) await audit(user, { action: 'content.delete', summary: `Menghapus prestasi "${row.title}"`, entityType: 'achievement', entityId: id });
   revalidatePath('/dashboard/konten/prestasi');
+  revalidatePublicSite();
   redirect('/dashboard/konten/prestasi?dihapus=1');
 }

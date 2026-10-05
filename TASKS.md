@@ -64,7 +64,25 @@
 | P6-1 lint & typecheck | SEBAGIAN | `.eslintrc.json`: `next/core-web-vitals` + `jsx-a11y/recommended` + aturan kustom (larang warna literal Tailwind, emoji, `<img>`, impor `mock-data`). `next lint` bersih. **Belum:** Prettier + Husky/lint-staged (butuh install paket) |
 | P6-4 dokumentasi | SEBAGIAN | `CODEMAP.md` disinkronkan penuh; `docs/design/color-contrast.md` ditulis. **Belum:** menyisir `AI_CONTEXT.MD` |
 
-**Belum dikerjakan:** P0-1 (ratakan folder induk), P0-2 (`git init` — Git tidak terpasang), P1-2 (validasi env Zod), P1-6 (keputusan migrasi Next 16), P5-1, P5-3, P5-4, P5-5, P6-2 (pengujian), P6-3 (CI/CD).
+**Sesi 5 Okt 2026 — audit ulang + perbaikan. `tsc` · `next lint` · `vitest` 40/40 · `next build` 48 halaman · `npm run a11y` 84 pemindaian nol pelanggaran:**
+
+> **Koreksi atas status lama.** Sejak Sesi 3 kode sudah berkembang ke Fase 2 (commit `f759f5b`…`fc4ea67`), tetapi dokumen ini tidak ikut diperbarui. Kenyataan yang menggantikan klaim "belum dikerjakan" di bawah: **P5-3** selesai dengan **Drizzle** (bukan Prisma) — `src/db/schema.ts` 17 tabel + `drizzle/0000_init.sql` + seed demo; **P5-4** RBAC selesai (`lib/auth/permissions.ts`, `scope.ts`, `requirePermission`, pencegahan eskalasi hak, audit log); **P1-5** `/masuk` kini login nyata dengan rate limit; **P5-5** modul per fitur ada di `src/features/`; deteksi duplikat anggota, pratinjau impor CSV, dan riwayat perubahan per anggota **sudah ada**. Git sudah terpasang.
+
+| Task | Status | Catatan |
+|---|---|---|
+| Menu portal mati | SELESAI | `nav.ts` menunjuk `/dashboard/konten`, `/kegiatan`, `/profil` yang tak punya halaman (404). Dibangun: **CMS** (hub + berita, agenda, galeri+unggah foto, dokumen, pengurus, prestasi) dan **portal peserta** (kegiatan: daftar/batal; profil tanpa alamat/telepon/wali). Action server sudah ada sebelumnya — yang kurang UI-nya |
+| Cache halaman publik basi | SELESAI | Temuan baru, baru terlihat setelah CMS hidup: berita/agenda/album baru → 404 di halaman detail sampai rebuild, dan `/galeri` + `/struktur-organisasi` (statis) tidak berubah. Perbaikan: `revalidatePublicSite()` di semua aksi tulis; `dynamicParams=true`; halaman daftar dipindah ke route group `(daftar)` agar `loading.tsx` tidak membungkus detail (kalau tidak: soft 404 status 200 — sempat terjadi, terdeteksi lewat `curl`, diperbaiki) |
+| P1-8 janji privasi (ulang) | SELESAI | `/kebijakan-privasi` bilang "belum ada basis data anggota" padahal ada. Ditulis ulang: data anggota, cakupan akses, log aktivitas, cookie sesi, foto anak; "Yang belum berlaku" kini jujur (persetujuan wali hanya tanggal manual, log belum dikunci di DB, tanpa enkripsi kolom, tanpa retensi otomatis, backup belum terverifikasi) |
+| Footer & token | SELESAI | `neutral-*` literal → token `border-inverse*`; ESLint kini melarang `neutral-*` (celah regex) |
+| PWA | SELESAI | `theme_color` hijau → cokelat merek; ikon PNG 192/512/maskable + apple-touch (`scripts/make-icons.mjs`); `viewport.themeColor`. **Bentuk logo masih placeholder** |
+| P3-5/P3-8 untuk portal | SELESAI | Audit axe pertama untuk dasbor: 1 pelanggaran kontras + overflow horizontal di 3 halaman (biang: `sr-only` absolut di tabel gulir tanpa `relative`, memengaruhi `TableWrap` lama juga). Diperbaiki di `TableWrap` |
+| P6-2 pengujian | SEBAGIAN | Vitest 40 tes (izin, formulir, CSV, domain, keamanan, validasi anggota; terbukti bisa gagal lewat uji mutasi). `npm run a11y` = axe-core 42 rute × 2 lebar. **Belum:** tes komponen, e2e alur kritis (Playwright), cakupan 70% |
+| P6-3 CI/CD | SEBAGIAN | `.github/workflows/ci.yml` (lint → typecheck → test → seed → build → axe). Seluruh langkahnya dibuktikan lokal, **belum pernah jalan di GitHub Actions**. Belum: Lighthouse CI, branch protection, Sentry, uptime, backup |
+| P6-4 dokumentasi | SEBAGIAN | `AGENTS.md`, `CODEMAP.md`, `TASKS.md` disinkronkan; `docs/product/rancangan-v5.md` dipindah dari file bernama sisa prompt. **Belum:** menyisir `AI_CONTEXT.MD` |
+
+**Antrean berikutnya (urut saran):** (1) tahap *review* di alur berita draf → review → terbit (rancangan V5 §12; enum sekarang `DRAFT/PUBLISHED/ARCHIVED`) · (2) foto & aset nyata + lambang resmi Kwarcab · (3) e2e Playwright untuk alur kritis + jalankan CI di GitHub · (4) P1-2 validasi env Zod · (5) P1-6 keputusan migrasi Next 16 · (6) rate limit bersama (Redis/DB) sebelum >1 instance · (7) persetujuan wali terverifikasi, enkripsi kolom, retensi — lalu perbarui halaman privasi · (8) keputusan tertulis soal multibahasa (V5 minta ID/EN/SU; P2-8 memilih ID saja).
+
+**Belum dikerjakan (daftar lama, sebagian sudah usang — lihat koreksi di atas):** P0-1 (ratakan folder induk — mungkin sudah tak relevan di repo ini), P1-2 (validasi env Zod), P1-6 (keputusan migrasi Next 16), P5-1, P6-1 (Prettier/Husky).
 
 **Temuan tambahan saat eksekusi:** (1) `t("key") \|\| "fallback"` tidak pernah jatuh ke fallback karena `t()` mengembalikan *key*-nya sendiri, sehingga pengunjung akan melihat teks "news_title"; sudah diganti ke key yang ada. (2) Halaman hasil GitHub masih memuat emoji (`📅 📍`) dan warna literal `green-*` → tetap tugas P2. (3) `node_modules` lama tidak lengkap; `npm install` dijalankan ulang. (4) Ada proses lain yang menjalankan `generate_pages.js` di tengah sesi dan menimpa `src/app` dengan template lama; sudah dipulihkan. **Jangan jalankan kedua generator lagi**, keduanya sudah usang.
 

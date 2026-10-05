@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, tes, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      # Basis data tertanam (PGlite) khusus CI: build butuh data untuk generateStaticParams.
+      ALLOW_PGLITE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Isi data demo (fiktif) untuk build & audit
+        run: npm run db:seed -- --demo
+      - run: npm run build
+
+      - name: Audit aksesibilitas (axe-core, WCAG 2.2 AA)
+        run: |
+          npx playwright install --with-deps chromium
+          npx next start -p 3000 &
+          npx --yes wait-on http://localhost:3000 --timeout 60000
+          npm run a11y

@@ -28,7 +28,7 @@
     "no-restricted-syntax": [
       "error",
       {
-        "selector": "JSXAttribute[name.name='className'] Literal[value=/\\b(?:bg|text|border|ring|from|to|via|divide|outline|decoration|shadow)-(?:gray|green|blue|red|yellow|amber|emerald|slate|zinc|stone|orange|lime|teal|cyan|sky|indigo|violet|purple|fuchsia|pink|rose)-\\d{2,3}\\b/]",
+        "selector": "JSXAttribute[name.name='className'] Literal[value=/\\b(?:bg|text|border|ring|from|to|via|divide|outline|decoration|shadow)-(?:gray|neutral|green|blue|red|yellow|amber|emerald|slate|zinc|stone|orange|lime|teal|cyan|sky|indigo|violet|purple|fuchsia|pink|rose)-\\d{2,3}\\b/]",
         "message": "Jangan pakai warna literal Tailwind. Gunakan token semantic (surface-*, text-*, action-*, border-*, status-*)."
       },
       {

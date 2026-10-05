@@ -9,7 +9,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, isoDate, ok, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { UploadError, deleteMedia, isFile, saveImage } from '@/lib/storage';
-import { uniqueSlug } from './shared';
+import { uniqueSlug, revalidatePublicSite } from './shared';
 
 const AlbumSchema = z.object({
   title: requiredText('Judul album', 180),
@@ -38,6 +38,7 @@ export async function saveAlbumAction(id: string | null, _prev: FormState, formD
   }
   await audit(user, { action: 'content.save', summary: `Menyimpan album "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'album', entityId: id });
   revalidatePath('/dashboard/konten/galeri');
+  revalidatePublicSite();
   redirect(`/dashboard/konten/galeri/${id}?tersimpan=1`);
 }
 
@@ -51,6 +52,7 @@ export async function deleteAlbumAction(id: string): Promise<void> {
     await audit(user, { action: 'content.delete', summary: `Menghapus album "${row.title}" beserta ${photos.length} foto`, entityType: 'album', entityId: id });
   }
   revalidatePath('/dashboard/konten/galeri');
+  revalidatePublicSite();
   redirect('/dashboard/konten/galeri?dihapus=1');
 }
 
@@ -93,6 +95,7 @@ export async function uploadPhotosAction(albumId: string, _prev: FormState, form
   const okCount = files.length - failed.length;
   if (okCount) await audit(user, { action: 'content.upload', summary: `Mengunggah ${okCount} foto ke album "${album.title}"`, entityType: 'album', entityId: albumId });
   revalidatePath(`/dashboard/konten/galeri/${albumId}`);
+  revalidatePublicSite();
   return failed.length
     ? fail(`${okCount} foto tersimpan, ${failed.length} gagal:\n${failed.join('\n')}`)
     : ok(`${okCount} foto tersimpan. Metadata lokasi (GPS) pada foto otomatis dihapus.`);
@@ -111,6 +114,7 @@ export async function updatePhotoAction(photoId: string, _prev: FormState, formD
   const [row] = await db.update(schema.photos).set(parsed.data).where(eq(schema.photos.id, photoId)).returning({ albumId: schema.photos.albumId });
   if (!row) return fail('Foto tidak ditemukan.');
   revalidatePath(`/dashboard/konten/galeri/${row.albumId}`);
+  revalidatePublicSite();
   return ok('Keterangan foto tersimpan.');
 }
 
@@ -122,6 +126,7 @@ export async function deletePhotoAction(photoId: string): Promise<void> {
   await deleteMedia(row.url);
   await audit(user, { action: 'content.delete', summary: 'Menghapus satu foto galeri', entityType: 'album', entityId: row.albumId });
   revalidatePath(`/dashboard/konten/galeri/${row.albumId}`);
+  revalidatePublicSite();
   redirect(`/dashboard/konten/galeri/${row.albumId}?foto=dihapus`);
 }
 
@@ -134,5 +139,6 @@ export async function setCoverPhotoAction(photoId: string): Promise<void> {
   const [{ first }] = await db.select({ first: min(schema.photos.sortOrder) }).from(schema.photos).where(and(eq(schema.photos.albumId, photo.albumId)));
   await db.update(schema.photos).set({ sortOrder: (first ?? 0) - 1 }).where(eq(schema.photos.id, photoId));
   revalidatePath(`/dashboard/konten/galeri/${photo.albumId}`);
+  revalidatePublicSite();
   redirect(`/dashboard/konten/galeri/${photo.albumId}?foto=sampul`);
 }

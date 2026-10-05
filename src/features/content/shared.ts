@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { getDb } from '@/db';
@@ -28,4 +29,14 @@ export function toLocalDateTime(d: Date | null | undefined): string {
   if (!d) return '';
   const wib = new Date(d.getTime() + 7 * 3600_000);
   return wib.toISOString().slice(0, 16);
+}
+
+/**
+ * Konten publik (berita, agenda, galeri, dokumen, pengurus, prestasi) dibaca dari basis data,
+ * tetapi sebagian halamannya dibuat statis saat build. Setiap perubahan lewat CMS harus
+ * membuang cache itu, kalau tidak pengunjung masih melihat versi lama (atau 404 untuk
+ * konten yang baru terbit) sampai situs di-build ulang.
+ */
+export function revalidatePublicSite(): void {
+  revalidatePath('/', 'layout');
 }

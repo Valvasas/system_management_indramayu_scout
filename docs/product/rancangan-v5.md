@@ -1,3 +1,6 @@
+> **Dokumen rancangan sumber (V5).** Ini niat produk, bukan status implementasi. Status nyata per fitur ada di `TASKS.md` dan `CODEMAP.md`.
+> Beberapa keputusan di sini sudah berubah: ORM = Drizzle (bukan Prisma), UI Bahasa Indonesia saja pada Fase 1 (bukan 3 bahasa).
+
 # V5) perplexity 
 
 ## Rumah Pramuka Indramayu 

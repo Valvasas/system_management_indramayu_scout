@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { SkipToContent } from '@/components/ui/SkipToContent';
@@ -6,6 +6,9 @@ import { site, absoluteUrl } from '@/lib/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
+
+/** Warna bilah alamat peramban seluler; sama dengan --brown-600 dan manifest.json. */
+export const viewport: Viewport = { themeColor: '#6B4E31' };
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -16,6 +19,10 @@ export const metadata: Metadata = {
   },
   description: site.description,
   manifest: '/manifest.json',
+  icons: {
+    icon: [{ url: '/brand/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/brand/apple-touch-icon.png', sizes: '180x180' }],
+  },
   applicationName: site.name,
   alternates: { canonical: '/' },
   openGraph: {
