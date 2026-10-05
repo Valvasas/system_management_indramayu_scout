@@ -14,11 +14,10 @@ interface Params {
 }
 
 /**
- * Hanya slug hasil generateStaticParams yang dilayani. Tanpa ini, slug asing
- * dirender on-demand dan menghasilkan "soft 404" (halaman 404 dengan status 200)
- * yang membuat mesin pencari mengindeks halaman galat.
+ * Slug yang belum ada saat build (konten baru dari CMS) dirender saat diminta, lalu di-cache.
+ * Slug yang tidak ada di basis data memanggil notFound() di bawah → 404.
  */
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await getNewsSlugs();

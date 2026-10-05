@@ -8,7 +8,7 @@ import { getDb, schema } from '@/db';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
-import { parseLocalDateTime, uniqueSlug } from './shared';
+import { parseLocalDateTime, uniqueSlug, revalidatePublicSite } from './shared';
 
 const EventSchema = z
   .object({
@@ -50,6 +50,7 @@ export async function saveEventAction(id: string | null, _prev: FormState, formD
   }
   await audit(user, { action: 'content.save', summary: `Menyimpan agenda "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'event', entityId: id });
   revalidatePath('/dashboard/konten/agenda');
+  revalidatePublicSite();
   redirect('/dashboard/konten/agenda?tersimpan=1');
 }
 
@@ -59,5 +60,6 @@ export async function deleteEventAction(id: string): Promise<void> {
   const [row] = await db.delete(schema.events).where(eq(schema.events.id, id)).returning({ title: schema.events.title });
   if (row) await audit(user, { action: 'content.delete', summary: `Menghapus agenda "${row.title}"`, entityType: 'event', entityId: id });
   revalidatePath('/dashboard/konten/agenda');
+  revalidatePublicSite();
   redirect('/dashboard/konten/agenda?dihapus=1');
 }

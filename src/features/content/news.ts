@@ -10,7 +10,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, optionalIsoDate, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { UploadError, deleteMedia, isFile, saveImage } from '@/lib/storage';
-import { uniqueSlug } from './shared';
+import { uniqueSlug, revalidatePublicSite } from './shared';
 
 const NewsSchema = z.object({
   title: requiredText('Judul', 180),
@@ -88,6 +88,7 @@ export async function saveNewsAction(id: string | null, _prev: FormState, formDa
     entityId: newsId!,
   });
   revalidatePath('/dashboard/konten/berita');
+  revalidatePublicSite();
   redirect('/dashboard/konten/berita?tersimpan=1');
 }
 
@@ -100,5 +101,6 @@ export async function deleteNewsAction(id: string): Promise<void> {
     await audit(user, { action: 'content.delete', summary: `Menghapus berita "${row.title}"`, entityType: 'news', entityId: id });
   }
   revalidatePath('/dashboard/konten/berita');
+  revalidatePublicSite();
   redirect('/dashboard/konten/berita?dihapus=1');
 }

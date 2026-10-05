@@ -13,8 +13,11 @@ interface Params {
   params: { slug: string };
 }
 
-/** Slug di luar daftar -> 404 sungguhan, bukan halaman galat berstatus 200. */
-export const dynamicParams = false;
+/**
+ * Slug yang belum ada saat build (konten baru dari CMS) dirender saat diminta, lalu di-cache.
+ * Slug yang tidak ada di basis data memanggil notFound() di bawah → 404.
+ */
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await getAgendaSlugs();
