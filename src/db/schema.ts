@@ -42,7 +42,15 @@ export const genderEnum = pgEnum('gender', ['L', 'P']);
 /** PENDING = menunggu verifikasi · NEEDS_FIX = dikembalikan untuk diperbaiki. */
 export const memberStatusEnum = pgEnum('member_status', ['PENDING', 'ACTIVE', 'NEEDS_FIX', 'ARCHIVED']);
 
-export const publishStatusEnum = pgEnum('publish_status', ['DRAFT', 'PUBLISHED', 'ARCHIVED']);
+/** REVIEW = dikirim kontributor (staf gudep/kwarran) dan menunggu persetujuan editor Kwarcab. */
+export const publishStatusEnum = pgEnum('publish_status', ['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']);
+
+/** ACTIVATION = akun baru; RESET = lupa kata sandi. Keduanya sekali pakai & kedaluwarsa. */
+export const accessCodePurposeEnum = pgEnum('access_code_purpose', ['ACTIVATION', 'RESET']);
+
+export const resetRequestStatusEnum = pgEnum('reset_request_status', ['OPEN', 'RESOLVED', 'DISMISSED']);
+
+export const transferStatusEnum = pgEnum('transfer_status', ['REQUESTED', 'APPROVED', 'REJECTED', 'CANCELLED']);
 
 export const audienceEnum = pgEnum('audience', ['ALL', 'PESERTA', 'STAFF']);
 
@@ -137,6 +145,36 @@ export const members = pgTable(
   ],
 );
 
+/**
+ * Mutasi anggota antar-gudep. Baris tidak pernah dihapus: sekaligus menjadi riwayat gudep anggota.
+ * Diajukan staf gudep asal, disetujui pengurus yang berwenang atas gudep tujuan (V5 §9).
+ */
+export const memberTransfers = pgTable(
+  'member_transfers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    fromGudepId: uuid('from_gudep_id')
+      .notNull()
+      .references(() => gudep.id, { onDelete: 'restrict' }),
+    toGudepId: uuid('to_gudep_id')
+      .notNull()
+      .references(() => gudep.id, { onDelete: 'restrict' }),
+    reason: text('reason').notNull(),
+    status: transferStatusEnum('status').notNull().default('REQUESTED'),
+    requestedById: uuid('requested_by_id'),
+    requestedByName: text('requested_by_name').notNull(),
+    decidedById: uuid('decided_by_id'),
+    decidedByName: text('decided_by_name'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('transfers_member_idx').on(t.memberId), index('transfers_status_idx').on(t.status)],
+);
+
 /* ------------------------------------------------------------------ */
 /* Akun, sesi, audit                                                    */
 /* ------------------------------------------------------------------ */
@@ -178,6 +216,45 @@ export const sessions = pgTable(
   (t) => [index('sessions_user_idx').on(t.userId)],
 );
 
+/**
+ * Kode akses sekali pakai untuk aktivasi akun & reset sandi. Yang disimpan hanya hash-nya;
+ * pembina menyerahkan kode, pemilik akun sendiri yang membuat kata sandinya (V5 §10).
+ */
+export const accessCodes = pgTable(
+  'access_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    purpose: accessCodePurposeEnum('purpose').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdById: uuid('created_by_id'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('access_codes_user_idx').on(t.userId)],
+);
+
+/** Permintaan "lupa kata sandi" dari halaman masuk, diteruskan ke pembina/pengurus yang berwenang. */
+export const passwordResetRequests = pgTable(
+  'password_reset_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: resetRequestStatusEnum('status').notNull().default('OPEN'),
+    /** Keterangan singkat dari peminta (mis. nama gudep). Tidak wajib. */
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    resolvedById: uuid('resolved_by_id'),
+  },
+  (t) => [index('reset_requests_status_idx').on(t.status, t.createdAt)],
+);
+
 export const auditLogs = pgTable(
   'audit_logs',
   {
@@ -212,6 +289,8 @@ export const news = pgTable(
     author: text('author').notNull(),
     tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
     status: publishStatusEnum('status').notNull().default('DRAFT'),
+    /** Catatan editor saat berita dikembalikan ke kontributor. */
+    reviewNote: text('review_note'),
     publishedAt: timestamp('published_at', { withTimezone: true }),
     createdById: uuid('created_by_id'),
     ...timestamps,
@@ -365,6 +444,7 @@ export type Role = (typeof roleEnum.enumValues)[number];
 export type Golongan = (typeof golonganEnum.enumValues)[number];
 export type MemberStatus = (typeof memberStatusEnum.enumValues)[number];
 export type PublishStatus = (typeof publishStatusEnum.enumValues)[number];
+export type TransferStatus = (typeof transferStatusEnum.enumValues)[number];
 export type Audience = (typeof audienceEnum.enumValues)[number];
 
 export type KwarranRow = typeof kwarran.$inferSelect;

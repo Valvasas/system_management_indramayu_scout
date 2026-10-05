@@ -31,11 +31,16 @@ export interface NewsDefaults {
   hasCover?: boolean;
 }
 
-export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults?: NewsDefaults; defaultAuthor: string }> = ({
+/**
+ * `editor` (content.manage): semua status termasuk Tayang & tanggal terbit.
+ * `contributor` (content.contribute): hanya simpan draf atau kirim untuk review.
+ */
+export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults?: NewsDefaults; defaultAuthor: string; mode?: 'editor' | 'contributor' }> = ({
   action,
   categories,
   defaults = {},
   defaultAuthor,
+  mode = 'editor',
 }) => (
   <ActionForm action={action} aria-label="Formulir berita">
     <FieldGroup title="Isi berita">
@@ -69,23 +74,47 @@ export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults
       {defaults.hasCover && <CheckboxField name="removeCover" label="Hapus sampul saat ini" />}
     </FieldGroup>
 
-    <FieldGroup title="Penayangan">
-      <div className="grid gap-4 sm:grid-cols-2">
+    {mode === 'editor' ? (
+      <FieldGroup title="Penayangan">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SelectField
+            name="status"
+            label="Status"
+            defaultValue={defaults.status ?? 'DRAFT'}
+            options={[
+              { value: 'DRAFT', label: 'Draf (belum tayang)' },
+              { value: 'REVIEW', label: 'Menunggu review' },
+              { value: 'PUBLISHED', label: 'Tayang' },
+              { value: 'ARCHIVED', label: 'Arsip' },
+            ]}
+            required
+          />
+          <TextField name="publishedAt" label="Tanggal terbit" type="date" defaultValue={defaults.publishedAt} hint="Kosongkan untuk memakai hari ini." />
+        </div>
+      </FieldGroup>
+    ) : (
+      <FieldGroup title="Kirim" description="Berita tidak langsung tayang. Editor Kwarcab akan memeriksa, lalu menerbitkan atau mengembalikannya dengan catatan.">
         <SelectField
           name="status"
-          label="Status"
-          defaultValue={defaults.status ?? 'DRAFT'}
+          label="Tindakan"
+          defaultValue={defaults.status === 'REVIEW' ? 'REVIEW' : 'DRAFT'}
           options={[
-            { value: 'DRAFT', label: 'Draf (belum tayang)' },
-            { value: 'PUBLISHED', label: 'Tayang' },
-            { value: 'ARCHIVED', label: 'Arsip' },
+            { value: 'DRAFT', label: 'Simpan sebagai draf' },
+            { value: 'REVIEW', label: 'Kirim untuk direview' },
           ]}
           required
         />
-        <TextField name="publishedAt" label="Tanggal terbit" type="date" defaultValue={defaults.publishedAt} hint="Kosongkan untuk memakai hari ini." />
-      </div>
-    </FieldGroup>
+      </FieldGroup>
+    )}
     <SaveButton />
+  </ActionForm>
+);
+
+/** Editor mengembalikan berita kontributor dengan catatan yang jelas. */
+export const ReturnNewsForm: React.FC<{ action: Action }> = ({ action }) => (
+  <ActionForm action={action} aria-label="Kembalikan berita ke penulis" className="space-y-3">
+    <TextAreaField name="reviewNote" label="Catatan untuk penulis" rows={3} maxLength={1000} hint="Sebutkan apa yang perlu diperbaiki, mis. foto menampilkan wajah anak, tanggal kegiatan kurang." required />
+    <SubmitButton variant="outline">Kembalikan ke penulis</SubmitButton>
   </ActionForm>
 );
 

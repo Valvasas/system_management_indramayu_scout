@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import { randomInt } from 'node:crypto';
 
 const COST = 12;
 export const MIN_PASSWORD_LENGTH = 10;
@@ -21,12 +20,4 @@ export function passwordProblem(plain: string): string | null {
   if (plain.length > 128) return 'Maksimal 128 karakter.';
   if (!/[A-Za-z]/.test(plain) || !/\d/.test(plain)) return 'Gunakan kombinasi huruf dan angka.';
   return null;
-}
-
-/** Kata sandi sementara yang mudah dibacakan: tanpa huruf/angka yang mirip (0/O, 1/l). */
-export function generateTemporaryPassword(): string {
-  const letters = 'abcdefghjkmnpqrstuvwxyz';
-  const digits = '23456789';
-  const pick = (set: string, n: number) => Array.from({ length: n }, () => set[randomInt(set.length)]).join('');
-  return `${pick(letters, 4)}-${pick(digits, 4)}-${pick(letters, 4)}`;
 }

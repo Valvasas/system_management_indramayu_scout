@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
-import { buildNav } from '@/components/dashboard/nav';
+import { buildNav, type BadgeKey } from '@/components/dashboard/nav';
+import { countOpenResetRequests } from '@/features/auth/access-codes';
+import { countNewsInReview } from '@/features/content/queries';
+import { transfersAwaitingDecision } from '@/features/members/transfers';
 import { ROLE_LABELS } from '@/lib/auth/permissions';
 import { memberScope } from '@/lib/auth/scope';
 import { can, requireUser, type SessionUser } from '@/lib/auth/session';
@@ -26,7 +29,7 @@ async function scopeLabel(user: SessionUser): Promise<string | null> {
 
 async function badges(user: SessionUser) {
   const db = await getDb();
-  const out: { pendingMembers?: number; unreadMessages?: number } = {};
+  const out: Partial<Record<BadgeKey, number>> = {};
   if (can(user, 'members.read')) {
     // Verifikator melihat antrean verifikasi; pengisi melihat data yang dikembalikan untuk diperbaiki.
     const status = can(user, 'members.verify') ? 'PENDING' : 'NEEDS_FIX';
@@ -41,6 +44,9 @@ async function badges(user: SessionUser) {
     const [r] = await db.select({ n: count() }).from(schema.contactMessages).where(isNull(schema.contactMessages.readAt));
     out.unreadMessages = r.n;
   }
+  if (can(user, 'members.verify')) out.pendingTransfers = (await transfersAwaitingDecision(user)).length;
+  if (can(user, 'users.manage') || can(user, 'users.create_peserta')) out.resetRequests = await countOpenResetRequests(user);
+  if (can(user, 'content.manage')) out.reviewNews = await countNewsInReview();
   return out;
 }
 

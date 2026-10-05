@@ -12,11 +12,13 @@ import { formatDate } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Berita' };
 
-const STATUS_LABEL = { PUBLISHED: 'Tayang', DRAFT: 'Draf', ARCHIVED: 'Arsip' } as const;
+const STATUS_LABEL = { PUBLISHED: 'Tayang', DRAFT: 'Draf', REVIEW: 'Menunggu review', ARCHIVED: 'Arsip' } as const;
 
-export default async function BeritaAdminPage({ searchParams = {} }: { searchParams?: { tersimpan?: string; dihapus?: string } }) {
+export default async function BeritaAdminPage({ searchParams = {} }: { searchParams?: { tersimpan?: string; dihapus?: string; dikembalikan?: string } }) {
   await requirePermission('content.manage');
-  const rows = await listNewsAdmin();
+  // Antrean review selalu di atas: itu pekerjaan yang menunggu editor.
+  const rows = (await listNewsAdmin()).sort((a, b) => Number(b.status === 'REVIEW') - Number(a.status === 'REVIEW'));
+  const inReview = rows.filter((r) => r.status === 'REVIEW').length;
 
   return (
     <>
@@ -33,6 +35,8 @@ export default async function BeritaAdminPage({ searchParams = {} }: { searchPar
       />
       {searchParams.tersimpan && <Notice>Berita tersimpan.</Notice>}
       {searchParams.dihapus && <Notice>Berita dihapus.</Notice>}
+      {searchParams.dikembalikan && <Notice>Berita dikembalikan ke penulis beserta catatan Anda.</Notice>}
+      {inReview > 0 && <Notice tone="info">{inReview} berita dari kontributor menunggu review Anda.</Notice>}
 
       <Panel>
         {rows.length === 0 ? (

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { generateTemporaryPassword, hashPassword, passwordProblem, verifyPassword } from '@/lib/auth/password';
+import { hashPassword, passwordProblem, verifyPassword } from '@/lib/auth/password';
 import { createRateLimiter } from '@/lib/security/request';
 
 describe('kebijakan kata sandi', () => {
@@ -15,14 +15,6 @@ describe('kebijakan kata sandi', () => {
     expect(hash).not.toContain('pramuka');
     expect(await verifyPassword('pramuka-2026-ok', hash)).toBe(true);
     expect(await verifyPassword('salah', hash)).toBe(false);
-  });
-
-  it('sandi sementara memenuhi kebijakan dan tanpa karakter membingungkan', () => {
-    for (let i = 0; i < 50; i++) {
-      const p = generateTemporaryPassword();
-      expect(passwordProblem(p), p).toBeNull();
-      expect(p).not.toMatch(/[01oOlI]/);
-    }
   });
 });
 

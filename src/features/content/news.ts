@@ -9,8 +9,8 @@ import { publishStatusEnum } from '@/db/schema';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, optionalIsoDate, parseForm, requiredText, type FormState } from '@/lib/forms';
-import { UploadError, deleteMedia, isFile, saveImage } from '@/lib/storage';
-import { uniqueSlug, revalidatePublicSite } from './shared';
+import { deleteMedia } from '@/lib/storage';
+import { resolveCover, uniqueSlug, revalidatePublicSite } from './shared';
 
 const NewsSchema = z.object({
   title: requiredText('Judul', 180),
@@ -36,21 +36,9 @@ export async function saveNewsAction(id: string | null, _prev: FormState, formDa
   const existing = id ? (await db.select().from(schema.news).where(eq(schema.news.id, id)).limit(1))[0] : undefined;
   if (id && !existing) return fail('Berita tidak ditemukan.');
 
-  let coverImage = existing?.coverImage ?? null;
-  const file = formData.get('cover');
-  try {
-    if (isFile(file)) {
-      const saved = await saveImage(file, 'berita');
-      await deleteMedia(coverImage);
-      coverImage = saved.url;
-    } else if (v.removeCover) {
-      await deleteMedia(coverImage);
-      coverImage = null;
-    }
-  } catch (e) {
-    if (e instanceof UploadError) return fail(e.message, { cover: e.message });
-    throw e;
-  }
+  const cover = await resolveCover(formData, existing?.coverImage ?? null, v.removeCover);
+  if ('error' in cover) return fail(cover.error, { cover: cover.error });
+  const coverImage = cover.url;
 
   const publishedAt =
     v.status === 'PUBLISHED'
@@ -69,6 +57,8 @@ export async function saveNewsAction(id: string | null, _prev: FormState, formDa
     tags: v.tags,
     coverImage,
     publishedAt,
+    // Catatan editor hanya relevan selama berita belum terbit.
+    reviewNote: v.status === 'PUBLISHED' ? null : (existing?.reviewNote ?? null),
   };
 
   let newsId = id;
@@ -103,4 +93,23 @@ export async function deleteNewsAction(id: string): Promise<void> {
   revalidatePath('/dashboard/konten/berita');
   revalidatePublicSite();
   redirect('/dashboard/konten/berita?dihapus=1');
+}
+
+const ReturnSchema = z.object({ reviewNote: requiredText('Catatan untuk penulis', 1000) });
+
+/** Editor mengembalikan berita yang dikirim kontributor, beserta catatan perbaikan. */
+export async function returnNewsAction(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requirePermission('content.manage');
+  const parsed = parseForm(ReturnSchema, formData);
+  if (parsed.error) return parsed.error;
+  const db = await getDb();
+  const [row] = await db
+    .update(schema.news)
+    .set({ status: 'DRAFT', reviewNote: parsed.data.reviewNote })
+    .where(eq(schema.news.id, id))
+    .returning({ title: schema.news.title });
+  if (!row) return fail('Berita tidak ditemukan.');
+  await audit(user, { action: 'content.return', summary: `Mengembalikan berita "${row.title}" ke penulis`, entityType: 'news', entityId: id });
+  revalidatePath('/dashboard/konten/berita');
+  redirect('/dashboard/konten/berita?dikembalikan=1');
 }

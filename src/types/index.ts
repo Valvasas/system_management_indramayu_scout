@@ -1,4 +1,4 @@
-export type NewsStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type NewsStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 
 export type AgendaStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 

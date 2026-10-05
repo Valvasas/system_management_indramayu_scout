@@ -12,7 +12,7 @@ export default async function KontenPage() {
   const c = await contentCounts();
 
   const sections: { href: string; title: string; description: string; count: string; icon: LucideIcon }[] = [
-    { href: '/dashboard/konten/berita', title: 'Berita', description: 'Tulis, simpan sebagai draf, lalu tayangkan.', count: `${c.news} berita${c.draftNews ? ` · ${c.draftNews} draf` : ''}`, icon: Newspaper },
+    { href: '/dashboard/konten/berita', title: 'Berita', description: 'Tulis, simpan sebagai draf, lalu tayangkan.', count: `${c.news} berita${c.inReview ? ` · ${c.inReview} menunggu review` : ''}${c.draftNews ? ` · ${c.draftNews} draf` : ''}`, icon: Newspaper },
     { href: '/dashboard/konten/agenda', title: 'Agenda', description: 'Jadwal kegiatan dan pembukaan pendaftaran.', count: `${c.events} kegiatan`, icon: CalendarDays },
     { href: '/dashboard/konten/galeri', title: 'Galeri', description: 'Album dan foto dokumentasi.', count: `${c.albums} album`, icon: Images },
     { href: '/dashboard/konten/dokumen', title: 'Dokumen', description: 'Surat keputusan, formulir, dan panduan.', count: `${c.documents} dokumen`, icon: FileText },

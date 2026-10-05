@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getDb, schema } from '@/db';
 import type { MemberRow } from '@/db/schema';
 import { audit } from '@/lib/auth/audit';
-import { generateTemporaryPassword, hashPassword } from '@/lib/auth/password';
+import { accessCodeMessage, issueAccessCode, unusablePasswordHash } from '@/features/auth/access-codes';
 import { canAccessGudep } from '@/lib/auth/scope';
 import { can, destroyUserSessions, requirePermission } from '@/lib/auth/session';
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
@@ -247,7 +247,6 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
   if (current.portalUserId) return fail('Anggota ini sudah memiliki akun portal.');
 
   const username = await uniqueUsername(current.m.fullName);
-  const password = generateTemporaryPassword();
   const db = await getDb();
   const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.memberId, id))).limit(1);
   if (existing) return fail('Anggota ini sudah memiliki akun portal.');
@@ -260,14 +259,14 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
       role: 'PESERTA',
       memberId: id,
       gudepId: current.m.gudepId,
-      passwordHash: await hashPassword(password),
-      mustChangePassword: true,
+      // Pembina tidak pernah mengetahui sandi anggota: anggota membuatnya sendiri dengan kode aktivasi.
+      passwordHash: await unusablePasswordHash(),
+      mustChangePassword: false,
     })
     .returning({ id: schema.users.id });
 
   await audit(user, { action: 'user.create', summary: `Membuat akun portal peserta untuk ${current.m.fullName}`, entityType: 'user', entityId: created.id });
+  const { code, expiresAt } = await issueAccessCode(user, { id: created.id, username }, 'ACTIVATION');
   revalidatePath(`/dashboard/anggota/${id}`);
-  return ok(
-    `Akun portal dibuat. Berikan kepada anggota (atau orang tua/wali) secara langsung — sandi ini hanya tampil sekali:\nNama pengguna: ${username}\nKata sandi sementara: ${password}`,
-  );
+  return ok(accessCodeMessage(username, code, expiresAt, 'ACTIVATION'));
 }

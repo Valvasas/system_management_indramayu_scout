@@ -75,7 +75,7 @@ export const PortalAccountForm: React.FC<{ action: Action; reset?: boolean }> = 
   <ActionForm action={action}>
     <SubmitButton variant="outline">
       {reset ? <KeyRound className="h-4 w-4" aria-hidden="true" /> : <UserPlus className="h-4 w-4" aria-hidden="true" />}
-      {reset ? 'Reset kata sandi' : 'Buat akun portal'}
+      {reset ? 'Buat kode reset' : 'Buat akun & kode aktivasi'}
     </SubmitButton>
   </ActionForm>
 );

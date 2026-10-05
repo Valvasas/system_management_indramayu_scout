@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getDb, schema } from '@/db';
 import { roleEnum, type Role } from '@/db/schema';
 import { audit } from '@/lib/auth/audit';
-import { generateTemporaryPassword, hashPassword } from '@/lib/auth/password';
+import { accessCodeMessage, canManageAccess, issueAccessCode, unusablePasswordHash } from '@/features/auth/access-codes';
 import { ROLE_LABELS, assignableRoles } from '@/lib/auth/permissions';
 import { destroyUserSessions, requirePermission, type SessionUser } from '@/lib/auth/session';
 import { checkbox, fail, ok, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
@@ -63,7 +63,6 @@ export async function createUserAction(_prev: FormState, formData: FormData): Pr
   if (roleProblem) return fail(roleProblem, { role: roleProblem });
   if (await usernameTaken(v.username)) return fail('Nama pengguna sudah dipakai.', { username: 'Pilih nama pengguna lain.' });
 
-  const password = generateTemporaryPassword();
   const db = await getDb();
   const [created] = await db
     .insert(schema.users)
@@ -73,17 +72,17 @@ export async function createUserAction(_prev: FormState, formData: FormData): Pr
       email: v.email,
       role: v.role,
       ...scopeFor(v.role, v.kwarranId, v.gudepId),
-      passwordHash: await hashPassword(password),
-      mustChangePassword: true,
+      // Sandi acak yang tidak diketahui siapa pun: pemilik membuat sandinya sendiri dengan kode aktivasi.
+      passwordHash: await unusablePasswordHash(),
+      mustChangePassword: false,
       active: true,
     })
     .returning({ id: schema.users.id });
 
   await audit(actor, { action: 'user.create', summary: `Membuat akun ${v.username} (${ROLE_LABELS[v.role]})`, entityType: 'user', entityId: created.id });
+  const { code, expiresAt } = await issueAccessCode(actor, { id: created.id, username: v.username }, 'ACTIVATION');
   revalidatePath('/dashboard/pengguna');
-  return ok(
-    `Akun dibuat. Sampaikan langsung kepada pemiliknya — sandi ini hanya tampil sekali:\nNama pengguna: ${v.username}\nKata sandi sementara: ${password}\nPemilik wajib mengganti sandi saat pertama masuk.`,
-  );
+  return ok(accessCodeMessage(v.username, code, expiresAt, 'ACTIVATION'));
 }
 
 export async function updateUserAction(id: string, _prev: FormState, formData: FormData): Promise<FormState> {
@@ -129,35 +128,33 @@ export async function updateUserAction(id: string, _prev: FormState, formData: F
   redirect('/dashboard/pengguna?tersimpan=1');
 }
 
+/**
+ * "Reset" akun staf = menerbitkan kode reset sekali pakai. Pengelola tidak pernah melihat
+ * atau menentukan kata sandi orang lain (V5 §10); sandi lama tetap berlaku sampai kode dipakai.
+ */
 export async function resetPasswordAction(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   const actor = await requirePermission('users.manage');
   const target = await getUser(id);
   if (!target) return fail('Akun tidak ditemukan.');
-  if (target.role === 'SUPER_ADMIN' && actor.role !== 'SUPER_ADMIN') return fail('Hanya Super Admin yang dapat mereset sandi Super Admin.');
   if (target.id === actor.id) return fail('Untuk akun Anda sendiri, gunakan menu Akun Saya → Ganti kata sandi.');
-
-  const password = generateTemporaryPassword();
-  const db = await getDb();
-  await db.update(schema.users).set({ passwordHash: await hashPassword(password), mustChangePassword: true }).where(eq(schema.users.id, id));
-  await destroyUserSessions(id);
-  await audit(actor, { action: 'user.reset_password', summary: `Mereset sandi akun ${target.username}`, entityType: 'user', entityId: id });
-  return ok(`Sandi direset. Sampaikan langsung kepada pemiliknya — hanya tampil sekali:\nNama pengguna: ${target.username}\nKata sandi sementara: ${password}`);
+  if (!(await canManageAccess(actor, target))) return fail('Hanya Super Admin yang dapat mengelola akses akun Super Admin.');
+  const { code, expiresAt } = await issueAccessCode(actor, target, 'RESET');
+  return ok(accessCodeMessage(target.username, code, expiresAt, 'RESET'));
 }
 
-/** Reset sandi akun peserta oleh staf yang berwenang atas anggotanya. */
+/** Kode reset untuk akun peserta, oleh staf yang berwenang atas anggotanya. */
 export async function resetPesertaPasswordAction(memberId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   const actor = await requirePermission('users.create_peserta');
   const { getMember } = await import('@/features/members/queries');
   const member = await getMember(actor, memberId);
   if (!member?.portalUserId) return fail('Akun portal anggota tidak ditemukan.');
   if (member.m.status === 'ARCHIVED') return fail('Anggota diarsipkan; akunnya tidak dapat diaktifkan kembali.');
-  const password = generateTemporaryPassword();
-  const db = await getDb();
-  await db
-    .update(schema.users)
-    .set({ passwordHash: await hashPassword(password), mustChangePassword: true, active: true })
-    .where(eq(schema.users.id, member.portalUserId));
-  await destroyUserSessions(member.portalUserId);
-  await audit(actor, { action: 'user.reset_password', summary: `Mereset sandi akun peserta ${member.portalUsername}`, entityType: 'user', entityId: member.portalUserId });
-  return ok(`Sandi direset — hanya tampil sekali:\nNama pengguna: ${member.portalUsername}\nKata sandi sementara: ${password}`);
+  const target = await getUser(member.portalUserId);
+  if (!target) return fail('Akun portal anggota tidak ditemukan.');
+  if (!target.active) {
+    const db = await getDb();
+    await db.update(schema.users).set({ active: true }).where(eq(schema.users.id, target.id));
+  }
+  const { code, expiresAt } = await issueAccessCode(actor, target, 'RESET');
+  return ok(accessCodeMessage(target.username, code, expiresAt, 'RESET'));
 }

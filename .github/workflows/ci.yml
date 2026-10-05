@@ -39,3 +39,6 @@ jobs:
           npx next start -p 3000 &
           npx --yes wait-on http://localhost:3000 --timeout 60000
           npm run a11y
+
+      - name: Uji end-to-end alur portal (mengubah data demo, jadi dijalankan terakhir)
+        run: npm run e2e

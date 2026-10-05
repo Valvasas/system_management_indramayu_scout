@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { getDb } from '@/db';
 import { slugify } from '@/lib/domain';
+import { UploadError, deleteMedia, isFile, saveImage } from '@/lib/storage';
 
 /** Slug unik di tabel tertentu: "judul", "judul-2", "judul-3", … */
 export async function uniqueSlug(table: PgTable, slugColumn: PgColumn, idColumn: PgColumn, title: string, excludeId?: string | null) {
@@ -39,4 +40,27 @@ export function toLocalDateTime(d: Date | null | undefined): string {
  */
 export function revalidatePublicSite(): void {
   revalidatePath('/', 'layout');
+}
+
+/**
+ * Proses sampul berita dari formulir: unggah baru, hapus, atau pertahankan yang lama.
+ * Mengembalikan URL sampul akhir, atau pesan galat unggah untuk ditampilkan di kolom `cover`.
+ */
+export async function resolveCover(formData: FormData, current: string | null, remove: boolean): Promise<{ url: string | null } | { error: string }> {
+  const file = formData.get('cover');
+  try {
+    if (isFile(file)) {
+      const saved = await saveImage(file, 'berita');
+      await deleteMedia(current);
+      return { url: saved.url };
+    }
+    if (remove) {
+      await deleteMedia(current);
+      return { url: null };
+    }
+    return { url: current };
+  } catch (e) {
+    if (e instanceof UploadError) return { error: e.message };
+    throw e;
+  }
 }
