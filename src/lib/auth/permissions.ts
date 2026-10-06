@@ -14,6 +14,8 @@ export const PERMISSIONS = [
   'members.export',
   'members.import',
   'members.view_sensitive',
+  /** Menghapus identitas anggota nonaktif (tidak dapat dibatalkan). Hanya tingkat Kwarcab. */
+  'members.anonymize',
   'gudep.read',
   'gudep.create',
   'gudep.update',

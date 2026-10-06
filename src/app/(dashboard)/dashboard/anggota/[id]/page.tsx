@@ -2,13 +2,19 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { and, desc, eq } from 'drizzle-orm';
-import { AlertTriangle, Lock, Pencil, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Lock, Pencil, RotateCcw, UserX } from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { ActionButton } from '@/components/dashboard/ConfirmButton';
 import { ArchiveForm, PortalAccountForm, VerifyForm } from '@/components/dashboard/members/MemberActions';
 import { InfoList, MemberStatusBadge, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
 import { ButtonLink } from '@/components/ui/Button';
-import { archiveMemberAction, createPortalAccountAction, restoreMemberAction, verifyMemberAction } from '@/features/members/actions';
+import {
+  anonymizeMemberAction,
+  archiveMemberAction,
+  createPortalAccountAction,
+  restoreMemberAction,
+  verifyMemberAction,
+} from '@/features/members/actions';
 import { getMember } from '@/features/members/queries';
 import { cancelTransferAction, requestTransferAction } from '@/features/members/transfer-actions';
 import { transferTargetOptions, transfersForMember } from '@/features/members/transfers';
@@ -38,7 +44,7 @@ export default async function DetailAnggotaPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams?: { tersimpan?: string };
+  searchParams?: { tersimpan?: string; anonim?: string };
 }) {
   const user = await requirePermission('members.read');
   const row = await getMember(user, params.id);
@@ -103,6 +109,12 @@ export default async function DetailAnggotaPage({
         }
       />
       {searchParams?.tersimpan && SAVED[searchParams.tersimpan] && <Notice>{SAVED[searchParams.tersimpan]}</Notice>}
+      {searchParams?.anonim === 'ok' && (
+        <Notice>Identitas anggota dihapus. Riwayat gudep, kegiatan, dan statistik tetap tersimpan tanpa nama.</Notice>
+      )}
+      {searchParams?.anonim === 'belum-nonaktif' && (
+        <Notice tone="warning">Hanya anggota nonaktif (diarsipkan) yang dapat dianonimkan.</Notice>
+      )}
 
       {m.status === 'NEEDS_FIX' && m.reviewNote && (
         <div
@@ -215,6 +227,31 @@ export default async function DetailAnggotaPage({
             />
           </Panel>
 
+          {can(user, 'members.anonymize') && archived && !m.anonymizedAt && (
+            <Panel title="Hapus identitas (anonimkan)">
+              <p className="text-sm text-text-secondary">
+                Atas permintaan anggota atau wali (hak subjek data). Nama, KTA, tanggal lahir (kecuali tahun), kontak, alamat, data wali,
+                catatan, dan akun portal dihapus. Riwayat gudep, kegiatan, dan statistik golongan tetap ada tanpa nama.
+              </p>
+              <div className="mt-4">
+                <ActionButton
+                  action={anonymizeMemberAction.bind(null, m.id)}
+                  variant="danger"
+                  size="md"
+                  confirm="Hapus identitas anggota ini secara permanen? Tindakan ini tidak dapat dibatalkan."
+                >
+                  <UserX className="h-4 w-4" aria-hidden="true" />
+                  Anonimkan sekarang
+                </ActionButton>
+              </div>
+            </Panel>
+          )}
+          {m.anonymizedAt && (
+            <Panel title="Data dianonimkan">
+              <p className="text-sm text-text-secondary">Identitas dihapus pada {formatDate(m.anonymizedAt.toISOString())}.</p>
+            </Panel>
+          )}
+
           {can(user, 'users.create_peserta') && !archived && (
             <Panel title="Akun portal peserta">
               {row.portalUsername ? (
@@ -325,7 +362,7 @@ export default async function DetailAnggotaPage({
             )}
           </Panel>
 
-          {can(user, 'members.archive') && (
+          {can(user, 'members.archive') && !m.anonymizedAt && (
             <Panel
               title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'}
               description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}

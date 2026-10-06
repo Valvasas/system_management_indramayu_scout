@@ -143,6 +143,8 @@ export const members = pgTable(
     verifiedById: uuid('verified_by_id'),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
     createdById: uuid('created_by_id'),
+    /** Diisi saat identitas dihapus (hak subjek data). Baris tetap ada agar statistik & riwayat utuh. */
+    anonymizedAt: timestamp('anonymized_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [

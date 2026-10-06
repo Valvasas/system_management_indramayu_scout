@@ -15,6 +15,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:demo": "tsx scripts/seed.ts --demo",
     "db:encrypt-backfill": "tsx scripts/encrypt-backfill.ts",
+    "db:retention": "tsx scripts/retention.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "a11y": "node scripts/a11y-audit.mjs",

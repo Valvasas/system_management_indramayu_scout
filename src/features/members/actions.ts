@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { and, eq, like } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb, schema } from '@/db';
@@ -15,6 +15,7 @@ import { findDuplicates, getMember } from './queries';
 import { memberConsentSummary } from '@/features/consent/consent';
 import { dataConsentSatisfied, needsGuardianConsent } from '@/features/consent/status';
 import { MemberSchema, type MemberInput } from './validation';
+import { anonymizeMember } from './anonymize';
 
 const LABELS: Partial<Record<keyof MemberRow, string>> = {
   fullName: 'nama',
@@ -230,7 +231,8 @@ export async function archiveMemberAction(id: string, _prev: FormState, formData
 export async function restoreMemberAction(id: string): Promise<void> {
   const user = await requirePermission('members.archive');
   const current = await getMember(user, id);
-  if (!current || current.m.status !== 'ARCHIVED') redirect(`/dashboard/anggota/${id}`);
+  // Data yang sudah dianonimkan tidak bisa dihidupkan lagi (identitasnya sudah tidak ada).
+  if (!current || current.m.status !== 'ARCHIVED' || current.m.anonymizedAt) redirect(`/dashboard/anggota/${id}`);
   const db = await getDb();
   await db.update(schema.members).set({ status: 'PENDING' }).where(eq(schema.members.id, id));
   await audit(user, {
@@ -307,4 +309,17 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
   const { code, expiresAt } = await issueAccessCode(user, { id: created.id, username }, 'ACTIVATION');
   revalidatePath(`/dashboard/anggota/${id}`);
   return ok(accessCodeMessage(username, code, expiresAt, 'ACTIVATION'));
+}
+
+/** Hapus identitas anggota nonaktif (hak subjek data). Tidak dapat dibatalkan; tercatat tanpa nama. */
+export async function anonymizeMemberAction(id: string): Promise<void> {
+  const user = await requirePermission('members.anonymize');
+  const result = await anonymizeMember(user, id);
+  if (!result.ok) {
+    if (result.reason === 'tidak-ditemukan') notFound();
+    redirect(`/dashboard/anggota/${id}?anonim=${result.reason}`);
+  }
+  await audit(user, { action: 'member.anonymized', summary: `Menganonimkan data: ${result.label}`, entityType: 'member', entityId: id });
+  revalidatePath('/dashboard/anggota');
+  redirect(`/dashboard/anggota/${id}?anonim=ok`);
 }
