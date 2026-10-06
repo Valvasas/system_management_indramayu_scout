@@ -1,4 +1,5 @@
-import { getDb, schema } from '@/db';
+import { getDb } from '@/db';
+import { appendAuditEntry } from './audit-chain';
 import { clientIp } from '@/lib/security/request';
 import type { SessionUser } from './session';
 
@@ -17,13 +18,14 @@ export interface AuditEntry {
 export async function audit(actor: Pick<SessionUser, 'id' | 'name'> | null, entry: AuditEntry): Promise<void> {
   try {
     const db = await getDb();
-    await db.insert(schema.auditLogs).values({
+    // Masuk rantai HMAC tahan-ubah (audit-chain.ts); tabel INSERT-only di tingkat DB.
+    await appendAuditEntry(db, {
       userId: actor?.id ?? null,
       actorName: actor?.name ?? 'Sistem',
       action: entry.action,
       summary: entry.summary.slice(0, 500),
-      entityType: entry.entityType,
-      entityId: entry.entityId,
+      entityType: entry.entityType ?? null,
+      entityId: entry.entityId ?? null,
       ip: safeIp(),
     });
   } catch (err) {

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { and, count, desc, gte, ilike, or, type SQL } from 'drizzle-orm';
-import { Search } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { Pagination, Panel, PortalHeader, TableWrap, td, th, withQuery } from '@/components/dashboard/ui';
-import { requirePermission } from '@/lib/auth/session';
+import { ButtonLink } from '@/components/ui/Button';
+import { can, requirePermission } from '@/lib/auth/session';
 import { formatDate, formatTime } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Log aktivitas' };
@@ -18,7 +19,7 @@ const RANGES: Record<string, { label: string; days: number }> = {
 };
 
 export default async function LogPage({ searchParams = {} }: { searchParams?: { q?: string; rentang?: string; page?: string } }) {
-  await requirePermission('audit.view');
+  const user = await requirePermission('audit.view');
   const q = (searchParams.q ?? '').trim().slice(0, 80) || undefined;
   const rentang = RANGES[searchParams.rentang ?? ''] ? searchParams.rentang! : '30';
   const page = Math.max(1, Number(searchParams.page) || 1);
@@ -45,7 +46,15 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
     <>
       <PortalHeader
         title="Log aktivitas"
-        description="Catatan otomatis: siapa melakukan apa dan kapan. Tidak dapat diubah atau dihapus dari portal."
+        description="Catatan otomatis: siapa melakukan apa dan kapan. Terkunci rantai hash dan tidak dapat diubah atau dihapus, bahkan oleh basis data aplikasi."
+        actions={
+          can(user, 'audit.verify') ? (
+            <ButtonLink href="/dashboard/log/integritas" variant="secondary">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              Periksa integritas
+            </ButtonLink>
+          ) : undefined
+        }
       />
       <Panel bodyClassName="p-0 sm:p-0">
         <form

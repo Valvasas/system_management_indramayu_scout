@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD wajib diisi di .env}
       POSTGRES_DB: rumah_pramuka
       APP_DB_USER: rumah_pramuka_app
+      # Password user aplikasi TERPISAH dari superuser (dulu sama — kebocoran DATABASE_URL = akses superuser).
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD wajib diisi di .env}
     ports:
       # Hanya loopback: tidak terekspos ke jaringan kantor/kampus
       - '127.0.0.1:5432:5432'

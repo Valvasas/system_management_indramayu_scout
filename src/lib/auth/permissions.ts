@@ -27,6 +27,12 @@ export const PERMISSIONS = [
   'messages.read',
   'settings.manage',
   'audit.view',
+  /** Memverifikasi integritas rantai log audit. Khusus Super Admin. */
+  'audit.verify',
+  /** Mereset MFA akun lain (tercatat di log). Khusus Super Admin. */
+  'users.reset_mfa',
+  /** Memicu backup manual & melihat statusnya. Khusus Super Admin. */
+  'system.backup',
   'self.portal',
 ] as const;
 
@@ -46,9 +52,12 @@ const STAFF_MEMBER_BASE: Permission[] = [
   'content.contribute',
 ];
 
+/** Izin yang tidak pernah diberikan selain kepada Super Admin. */
+export const SUPER_ADMIN_ONLY: readonly Permission[] = ['audit.verify', 'users.reset_mfa', 'system.backup'];
+
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   SUPER_ADMIN: PERMISSIONS.filter((p) => p !== 'self.portal'),
-  ADMIN_KWARCAB: PERMISSIONS.filter((p) => p !== 'self.portal'),
+  ADMIN_KWARCAB: PERMISSIONS.filter((p) => p !== 'self.portal' && !SUPER_ADMIN_ONLY.includes(p)),
   ADMIN_WEBSITE: ['content.manage', 'content.contribute', 'announcements.manage', 'messages.read', 'settings.manage'],
   STAFF_KWARRAN: [...STAFF_MEMBER_BASE, 'members.verify', 'members.archive', 'gudep.create'],
   STAFF_GUDEP: STAFF_MEMBER_BASE,

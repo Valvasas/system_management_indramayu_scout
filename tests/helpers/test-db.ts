@@ -15,10 +15,22 @@ export interface TestDb {
   close: () => Promise<void>;
 }
 
+let template: Promise<PGlite> | undefined;
+
+/** Migrasi sekali per worker, lalu tiap tes mendapat salinan (clone) yang terisolasi. */
+async function migratedTemplate(): Promise<PGlite> {
+  template ??= (async () => {
+    const client = new PGlite();
+    await migrate(drizzle(client, { schema }), { migrationsFolder: path.join(process.cwd(), 'drizzle') });
+    return client;
+  })();
+  return template;
+}
+
 export async function createTestDb(): Promise<TestDb> {
-  const client = new PGlite();
+  // clone() bertipe PGliteInterface; implementasinya tetap PGlite.
+  const client = (await (await migratedTemplate()).clone()) as PGlite;
   const db = drizzle(client, { schema });
-  await migrate(db, { migrationsFolder: path.join(process.cwd(), 'drizzle') });
   return { db: db as unknown as Database, client, close: () => client.close() };
 }
 

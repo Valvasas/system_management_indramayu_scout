@@ -7,6 +7,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
   date,
@@ -279,9 +280,28 @@ export const auditLogs = pgTable(
     entityId: text('entity_id'),
     summary: text('summary').notNull(),
     ip: text('ip'),
+    /**
+     * Rantai HMAC tahan-ubah (src/lib/auth/audit-chain.ts): `hash` = HMAC(isi entri + `prev_hash`).
+     * Null hanya untuk entri lama sebelum rantai diaktifkan. Tabel ini INSERT-only:
+     * trigger memblokir UPDATE/DELETE/TRUNCATE dan user aplikasi tidak punya hak keduanya.
+     */
+    prevHash: text('prev_hash'),
+    hash: text('hash'),
   },
   (t) => [index('audit_at_idx').on(t.at), index('audit_entity_idx').on(t.entityType, t.entityId)],
 );
+
+/**
+ * Jangkar rantai audit setelah retensi menghapus entri tertua: `prev_hash` milik entri
+ * pertama yang tersisa, dicatat oleh `npm run db:retention` (dijalankan pemilik skema).
+ */
+export const auditChainAnchors = pgTable('audit_chain_anchors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  firstLogId: bigint('first_log_id', { mode: 'number' }).notNull(),
+  prevHash: text('prev_hash').notNull(),
+  deletedCount: integer('deleted_count').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 /* ------------------------------------------------------------------ */
 /* Konten publik                                                        */
