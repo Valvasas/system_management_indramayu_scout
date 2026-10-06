@@ -12,6 +12,8 @@ import { canAccessGudep } from '@/lib/auth/scope';
 import { can, destroyUserSessions, requirePermission } from '@/lib/auth/session';
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { findDuplicates, getMember } from './queries';
+import { memberConsentSummary } from '@/features/consent/consent';
+import { dataConsentSatisfied, needsGuardianConsent } from '@/features/consent/status';
 import { MemberSchema, type MemberInput } from './validation';
 
 const LABELS: Partial<Record<keyof MemberRow, string>> = {
@@ -25,7 +27,6 @@ const LABELS: Partial<Record<keyof MemberRow, string>> = {
   address: 'alamat',
   guardianName: 'nama wali',
   guardianPhone: 'telepon wali',
-  guardianConsentAt: 'persetujuan wali',
   joinedAt: 'tanggal bergabung',
   notes: 'catatan',
 };
@@ -168,6 +169,15 @@ export async function verifyMemberAction(id: string, _prev: FormState, formData:
   const db = await getDb();
 
   if (decision === 'approve') {
+    // UU PDP: data anak baru boleh diverifikasi setelah wali sendiri menyetujui pengelolaan datanya.
+    if (needsGuardianConsent(current.m.birthDate)) {
+      const { statuses } = await memberConsentSummary(id);
+      if (!dataConsentSatisfied(statuses)) {
+        return fail(
+          'Belum ada persetujuan wali (data pribadi) yang terverifikasi. Buat kode untuk wali di bagian Persetujuan wali, lalu verifikasi setelah wali menyetujui.',
+        );
+      }
+    }
     const newKta = kta ?? current.m.kta;
     if (await ktaTaken(newKta, id)) return fail('Nomor KTA sudah dipakai anggota lain.', { kta: 'Nomor KTA sudah terdaftar.' });
     await db

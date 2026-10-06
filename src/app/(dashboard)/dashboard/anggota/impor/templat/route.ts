@@ -19,7 +19,6 @@ export async function GET() {
     'alamat',
     'nama_wali',
     'telepon_wali',
-    'tanggal_persetujuan_wali',
     'tanggal_bergabung',
     'catatan',
   ];

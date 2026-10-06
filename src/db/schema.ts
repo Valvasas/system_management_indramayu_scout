@@ -48,6 +48,15 @@ export const resetRequestStatusEnum = pgEnum('reset_request_status', ['OPEN', 'R
 export const transferStatusEnum = pgEnum('transfer_status', ['REQUESTED', 'APPROVED', 'REJECTED', 'CANCELLED']);
 
 export const audienceEnum = pgEnum('audience', ['ALL', 'PESERTA', 'STAFF']);
+/** Cakupan persetujuan wali (V5 §10): data pribadi, foto/dokumentasi, keikutsertaan kegiatan. */
+export const consentScopeEnum = pgEnum('consent_scope', ['DATA', 'PHOTO', 'ACTIVITY']);
+/**
+ * Cara keputusan persetujuan tercatat:
+ * GUARDIAN_CODE      = wali sendiri, diverifikasi kode sekali pakai (satu-satunya cara MEMBERI persetujuan)
+ * STAFF_REVOCATION   = pembina mencatat pencabutan atas permintaan wali (hanya bisa mencabut)
+ * LEGACY_MANUAL      = tanggal yang diketik staf sebelum fitur ini (belum terverifikasi)
+ */
+export const consentMethodEnum = pgEnum('consent_method', ['GUARDIAN_CODE', 'STAFF_REVOCATION', 'LEGACY_MANUAL']);
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -122,7 +131,10 @@ export const members = pgTable(
     address: encryptedText('address', aadFor('members', 'address')),
     guardianName: encryptedText('guardian_name', aadFor('members', 'guardian_name')),
     guardianPhone: encryptedText('guardian_phone', aadFor('members', 'guardian_phone')),
-    /** Tanggal persetujuan orang tua/wali (wajib untuk anggota di bawah 18 tahun). */
+    /**
+     * USANG (6 Okt 2026): tanggal yang diketik staf, tanpa verifikasi. Tidak ditulis lagi; isinya
+     * dipindah ke `guardian_consents` (method LEGACY_MANUAL). Kolom tetap ada agar data lama tidak hilang.
+     */
     guardianConsentAt: date('guardian_consent_at', { mode: 'string' }),
     joinedAt: date('joined_at', { mode: 'string' }),
     notes: text('notes'),
@@ -139,6 +151,57 @@ export const members = pgTable(
     index('members_name_idx').on(t.fullName),
     uniqueIndex('members_kta_uq').on(t.kta),
   ],
+);
+
+/**
+ * Permintaan persetujuan wali: pembina membuat kode sekali pakai, wali memakainya di
+ * /persetujuan-wali (tanpa email/akun, V5 §10). Hanya hash kode yang disimpan.
+ */
+export const guardianConsentRequests = pgTable(
+  'guardian_consent_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    requestedById: uuid('requested_by_id'),
+    requestedByName: text('requested_by_name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('consent_requests_member_idx').on(t.memberId)],
+);
+
+/**
+ * Keputusan persetujuan wali — APPEND-ONLY: status terkini per cakupan = baris terbaru.
+ * Pencabutan adalah baris baru (granted=false), riwayat tidak pernah ditimpa.
+ */
+export const guardianConsents = pgTable(
+  'guardian_consents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    requestId: uuid('request_id').references(() => guardianConsentRequests.id, { onDelete: 'set null' }),
+    scope: consentScopeEnum('scope').notNull(),
+    granted: boolean('granted').notNull(),
+    /** Versi teks persetujuan yang dibaca wali (src/features/consent/texts.ts). */
+    textVersion: text('text_version').notNull(),
+    method: consentMethodEnum('method').notNull(),
+    /** Nama yang diketik wali saat menyetujui (terenkripsi). */
+    guardianName: encryptedText('guardian_name', aadFor('guardian_consents', 'guardian_name')),
+    /** HMAC IP pengirim — bukti tanpa menyimpan IP mentah. */
+    ipHash: text('ip_hash'),
+    recordedById: uuid('recorded_by_id'),
+    recordedByName: text('recorded_by_name'),
+    note: text('note'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('consents_member_scope_idx').on(t.memberId, t.scope, t.decidedAt)],
 );
 
 /**
@@ -516,6 +579,8 @@ export type MemberStatus = (typeof memberStatusEnum.enumValues)[number];
 export type PublishStatus = (typeof publishStatusEnum.enumValues)[number];
 export type TransferStatus = (typeof transferStatusEnum.enumValues)[number];
 export type Audience = (typeof audienceEnum.enumValues)[number];
+export type ConsentScope = (typeof consentScopeEnum.enumValues)[number];
+export type ConsentMethod = (typeof consentMethodEnum.enumValues)[number];
 
 export type KwarranRow = typeof kwarran.$inferSelect;
 export type GudepRow = typeof gudep.$inferSelect;

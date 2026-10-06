@@ -20,7 +20,9 @@ export type NavIcon =
   | 'swap'
   | 'clipboard'
   | 'pen'
-  | 'key';
+  | 'key'
+  | 'consent'
+  | 'backup';
 
 export interface NavItem {
   href: string;
@@ -54,6 +56,7 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
       { href: '/dashboard/kwarran', label: 'Kwarran', icon: 'building', permission: 'kwarran.manage' },
       { href: '/dashboard/mutasi', label: 'Mutasi anggota', icon: 'swap', permission: 'members.update', badgeKey: 'pendingTransfers' },
       { href: '/dashboard/pendaftaran', label: 'Pendaftaran kegiatan', icon: 'clipboard', permission: 'members.read' },
+      { href: '/dashboard/persetujuan', label: 'Persetujuan wali', icon: 'consent', permission: 'members.read' },
     ],
   },
   {
@@ -83,6 +86,7 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
         badgeKey: 'resetRequests',
       },
       { href: '/dashboard/log', label: 'Log aktivitas', icon: 'list', permission: 'audit.view' },
+      { href: '/dashboard/backup', label: 'Backup', icon: 'backup', permission: 'system.backup' },
     ],
   },
 ];

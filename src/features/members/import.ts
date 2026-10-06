@@ -53,12 +53,12 @@ const COLUMNS: Record<string, keyof MemberInput | 'gudepNumber'> = {
   alamat: 'address',
   nama_wali: 'guardianName',
   telepon_wali: 'guardianPhone',
-  tanggal_persetujuan_wali: 'guardianConsentAt',
   tanggal_bergabung: 'joinedAt',
   catatan: 'notes',
 };
 
-const DATE_FIELDS = new Set(['birthDate', 'guardianConsentAt', 'joinedAt']);
+// Kolom tanggal_persetujuan_wali (templat lama) sengaja diabaikan: persetujuan wali hanya lewat kode wali.
+const DATE_FIELDS = new Set(['birthDate', 'joinedAt']);
 
 function normalizeGender(v: string) {
   const s = v.trim().toLowerCase();

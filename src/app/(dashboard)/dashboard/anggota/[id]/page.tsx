@@ -13,6 +13,7 @@ import { getMember } from '@/features/members/queries';
 import { cancelTransferAction, requestTransferAction } from '@/features/members/transfer-actions';
 import { transferTargetOptions, transfersForMember } from '@/features/members/transfers';
 import { TransferRequestForm } from '@/components/dashboard/members/TransferForms';
+import { ConsentPanel } from '@/components/dashboard/consent/ConsentPanel';
 import { resetPesertaPasswordAction } from '@/features/users/actions';
 import { can, requirePermission } from '@/lib/auth/session';
 import { GENDER_LABELS, ageOn, golonganLabel } from '@/lib/domain';
@@ -175,16 +176,6 @@ export default async function DetailAnggotaPage({
                       </a>
                     ) : null,
                   },
-                  {
-                    label: 'Persetujuan wali',
-                    value: m.guardianConsentAt ? (
-                      formatDate(m.guardianConsentAt)
-                    ) : ageOn(m.birthDate) < 18 ? (
-                      <span className="text-status-danger-text">Belum ada</span>
-                    ) : (
-                      'Tidak diperlukan (dewasa)'
-                    ),
-                  },
                   { label: 'Telepon anggota', value: m.phone },
                   { label: 'Alamat', value: m.address },
                 ]}
@@ -196,6 +187,13 @@ export default async function DetailAnggotaPage({
               </p>
             )}
           </Panel>
+
+          <ConsentPanel
+            memberId={m.id}
+            birthDate={m.birthDate}
+            canManage={can(user, 'members.update') && !archived}
+            sensitive={sensitive}
+          />
 
           {m.notes && (
             <Panel title="Catatan internal">

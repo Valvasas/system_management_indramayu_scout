@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  DatabaseBackup,
+  FileCheck2,
   ArrowLeftRight,
   Building2,
   CalendarDays,
@@ -50,6 +52,8 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   clipboard: ClipboardList,
   pen: PenLine,
   key: KeyRound,
+  consent: FileCheck2,
+  backup: DatabaseBackup,
 };
 
 const initials = (name: string) =>

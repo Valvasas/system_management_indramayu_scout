@@ -15,7 +15,6 @@ export const MemberSchema = z
     address: optionalText(300),
     guardianName: optionalText(120),
     guardianPhone: phone,
-    guardianConsentAt: optionalIsoDate,
     joinedAt: optionalIsoDate,
     notes: optionalText(1000),
     confirmDuplicate: checkbox,
@@ -31,12 +30,11 @@ export const MemberSchema = z
     if (age < 6 || age > 100) {
       ctx.addIssue({ code: 'custom', path: ['birthDate'], message: 'Usia di luar rentang anggota (6–100 tahun).' });
     }
-    // UU PDP: data anak wajib disertai persetujuan orang tua/wali.
+    // UU PDP: data anak wajib disertai kontak orang tua/wali. Persetujuannya diberikan wali SENDIRI
+    // lewat kode sekali pakai (features/consent) — bukan tanggal yang diketik staf.
     if (age < 18) {
       if (!v.guardianName) ctx.addIssue({ code: 'custom', path: ['guardianName'], message: 'Wajib untuk anggota di bawah 18 tahun.' });
       if (!v.guardianPhone) ctx.addIssue({ code: 'custom', path: ['guardianPhone'], message: 'Wajib untuk anggota di bawah 18 tahun.' });
-      if (!v.guardianConsentAt)
-        ctx.addIssue({ code: 'custom', path: ['guardianConsentAt'], message: 'Isi tanggal orang tua/wali memberi persetujuan.' });
     }
   });
 

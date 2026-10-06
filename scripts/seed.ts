@@ -243,13 +243,56 @@ async function seedDemo() {
       kta: status === 'ACTIVE' ? `10.12.11.${String(1000 + i)}` : null,
       guardianName: `Orang Tua ${f}`,
       guardianPhone: `0813-0000-${String(1000 + i)}`,
-      guardianConsentAt: isoDate(daysFromNow(-60)),
       joinedAt: isoDate(daysFromNow(-200 + i)),
       reviewNote: status === 'NEEDS_FIX' ? 'Tanggal lahir tidak sesuai akta. Mohon periksa kembali.' : null,
     };
   });
   const memberRows = await db.insert(schema.members).values(memberSeed).returning();
   const dimas = memberRows.find((m) => m.fullName.startsWith('Dimas'))!;
+
+  // Persetujuan wali FIKTIF: anggota aktif → disetujui wali lewat kode (sebagian menolak foto),
+  // satu anggota hanya punya tanggal manual lama, anggota menunggu verifikasi → belum ada.
+  const minors = memberRows.filter((m) => m.golongan !== 'DEWASA' && m.golongan !== 'PANDEGA');
+  const decidedAt = daysFromNow(-45);
+  const consentRows: (typeof schema.guardianConsents.$inferInsert)[] = [];
+  for (const [i, m] of minors.entries()) {
+    if (m.status !== 'ACTIVE') continue;
+    if (i === 0) {
+      consentRows.push({
+        memberId: m.id,
+        scope: 'DATA',
+        granted: true,
+        textVersion: 'manual-sebelum-2026-10',
+        method: 'LEGACY_MANUAL',
+        note: 'Tanggal persetujuan diketik staf sebelum alur kode wali (belum terverifikasi).',
+        decidedAt,
+      });
+      continue;
+    }
+    const [req] = await db
+      .insert(schema.guardianConsentRequests)
+      .values({
+        memberId: m.id,
+        codeHash: `demo-${m.id}`,
+        expiresAt: decidedAt,
+        usedAt: decidedAt,
+        requestedByName: 'Pembina Gudep (demo)',
+      })
+      .returning();
+    for (const scope of ['DATA', 'PHOTO', 'ACTIVITY'] as const) {
+      consentRows.push({
+        memberId: m.id,
+        requestId: req.id,
+        scope,
+        granted: !(scope === 'PHOTO' && i % 3 === 0),
+        textVersion: '2026-10-v1',
+        method: 'GUARDIAN_CODE',
+        guardianName: `Orang Tua ${m.fullName.split(' ')[0]}`,
+        decidedAt,
+      });
+    }
+  }
+  if (consentRows.length) await db.insert(schema.guardianConsents).values(consentRows);
 
   const pwd = await hashPassword(DEMO_PASSWORD);
   const demoUsers = [

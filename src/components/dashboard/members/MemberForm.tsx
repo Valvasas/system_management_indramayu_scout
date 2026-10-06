@@ -19,7 +19,6 @@ export interface MemberFormValues {
   address?: string | null;
   guardianName?: string | null;
   guardianPhone?: string | null;
-  guardianConsentAt?: string | null;
   joinedAt?: string | null;
   notes?: string | null;
 }
@@ -125,14 +124,10 @@ export const MemberForm: React.FC<{
             required={minor}
           />
         </div>
-        <TextField
-          name="guardianConsentAt"
-          label="Tanggal persetujuan orang tua/wali"
-          type="date"
-          defaultValue={defaults.guardianConsentAt ?? ''}
-          hint="Tanggal surat/formulir persetujuan pendataan ditandatangani. Simpan dokumennya di gudep."
-          required={minor}
-        />
+        <p className="text-sm text-text-secondary">
+          Persetujuan diberikan orang tua/wali sendiri memakai kode sekali pakai. Setelah data disimpan, buat kodenya di halaman anggota
+          (bagian Persetujuan wali).
+        </p>
       </FieldGroup>
 
       {showSensitive && (
