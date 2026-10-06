@@ -47,5 +47,5 @@
       "rules": { "no-restricted-syntax": "off" }
     }
   ],
-  "ignorePatterns": ["node_modules/", ".next/", "out/", "generate_pages.js", "create_components.js"]
+  "ignorePatterns": ["node_modules/", ".next/", "out/", "coverage/"]
 }

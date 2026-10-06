@@ -45,7 +45,6 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal, 1280 & 390px. Butuh server jalan + data demo |
 | `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar. **Mengubah data**, pakai data demo segar |
 | `make-icons.mjs` | Membuat ikon PWA PNG + menyelaraskan warna `logo.svg` |
-| `_archive/` | Tidak ada. `generate_pages.js` / `create_components.js` di root **usang**, jangan dijalankan |
 
 ## Dokumentasi
 

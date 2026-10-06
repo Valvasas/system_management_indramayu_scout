@@ -178,7 +178,6 @@ system_management_indramayu_scout-main/
 │   ├── manifest.json                 # PWA manifest (standalone, theme green)
 │   └── brand/                        # Asset branding (logo SVG)
 │
-├── generate_pages.js                 # Script scaffold halaman Next.js (one-time generator)
 ├── package.json                      # Dependencies & scripts
 ├── tailwind.config.ts                # Tailwind config (token-based colors, custom shadows)
 ├── tsconfig.json                     # TypeScript config (strict, path alias @/*)
@@ -351,7 +350,7 @@ pnpm test:coverage    # Coverage report
 2. **Selalu gunakan design tokens** — jangan hardcode warna, spacing, shadow
 3. **Perhatikan aksesibilitas** — setiap komponen harus keyboard-navigable, punya focus state, dan semantic HTML
 4. **Data anak = sangat sensitif** — jangan tampilkan foto wajah anak di halaman publik
-5. **Cek `generate_pages.js`** — berisi template/scaffold untuk semua halaman yang belum dibuat
+5. **Kebenaran ada di kode + `CODEMAP.md`** — generator scaffold lama sudah dihapus; jangan membuat ulang
 6. **Bahasa** — tulis langsung dalam Bahasa Indonesia; tidak ada kamus terjemahan di Fase 1
 7. **Komponen baru** → taruh di `components/ui/` (atomic) atau `components/public/` (section)
 8. **Path alias** — gunakan `@/` untuk import dari `src/`
