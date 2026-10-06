@@ -17,10 +17,37 @@ const DEMO = args.has('--demo');
 
 /** 31 kecamatan Kabupaten Indramayu = 31 Kwartir Ranting. Kode & ketua diisi pengurus lewat portal. */
 const KECAMATAN = [
-  'Anjatan', 'Arahan', 'Balongan', 'Bangodua', 'Bongas', 'Cantigi', 'Cikedung', 'Gabuswetan',
-  'Gantar', 'Haurgeulis', 'Indramayu', 'Jatibarang', 'Juntinyuat', 'Kandanghaur', 'Karangampel',
-  'Kedokan Bunder', 'Kertasemaya', 'Krangkeng', 'Kroya', 'Lelea', 'Lohbener', 'Losarang', 'Pasekan',
-  'Patrol', 'Sindang', 'Sliyeg', 'Sukagumiwang', 'Sukra', 'Terisi', 'Tukdana', 'Widasari',
+  'Anjatan',
+  'Arahan',
+  'Balongan',
+  'Bangodua',
+  'Bongas',
+  'Cantigi',
+  'Cikedung',
+  'Gabuswetan',
+  'Gantar',
+  'Haurgeulis',
+  'Indramayu',
+  'Jatibarang',
+  'Juntinyuat',
+  'Kandanghaur',
+  'Karangampel',
+  'Kedokan Bunder',
+  'Kertasemaya',
+  'Krangkeng',
+  'Kroya',
+  'Lelea',
+  'Lohbener',
+  'Losarang',
+  'Pasekan',
+  'Patrol',
+  'Sindang',
+  'Sliyeg',
+  'Sukagumiwang',
+  'Sukra',
+  'Terisi',
+  'Tukdana',
+  'Widasari',
 ];
 
 async function main() {
@@ -95,17 +122,108 @@ async function seedDemo() {
     .where(eq(schema.kwarran.id, kw['Indramayu']));
 
   const gudepSeed = [
-    { kwarranId: kw['Indramayu'], number: '11.001-11.002', name: 'Gudep SMP Negeri Contoh 1', pangkalan: 'SMP Negeri Contoh 1 Indramayu', jenjang: 'SMP/MTs', address: 'Jl. Contoh Raya No. 5, Indramayu', lat: -6.3301, lng: 108.3253, contactName: 'Kak Rina Kartika', contactPhone: '0812-0000-0001' },
-    { kwarranId: kw['Indramayu'], number: '11.003-11.004', name: 'Gudep SD Negeri Contoh 2', pangkalan: 'SD Negeri Contoh 2 Indramayu', jenjang: 'SD/MI', address: 'Jl. Contoh Tengah No. 12, Indramayu', lat: -6.3222, lng: 108.3301, contactName: 'Kak Budi Santoso', contactPhone: '0812-0000-0002' },
-    { kwarranId: kw['Indramayu'], number: '11.005-11.006', name: 'Gudep SMA Negeri Contoh 1', pangkalan: 'SMA Negeri Contoh 1 Indramayu', jenjang: 'SMA/SMK/MA', address: 'Jl. Contoh Barat No. 3, Indramayu', lat: -6.3359, lng: 108.3178, contactName: 'Kak Andi Wijaya', contactPhone: '0812-0000-0003' },
-    { kwarranId: kw['Sindang'], number: '12.001-12.002', name: 'Gudep SMK Contoh Sindang', pangkalan: 'SMK Contoh Sindang', jenjang: 'SMA/SMK/MA', address: 'Jl. Contoh Sindang No. 8', lat: -6.3149, lng: 108.2988, contactName: 'Kak Wulan Sari', contactPhone: '0812-0000-0004' },
-    { kwarranId: kw['Jatibarang'], number: '13.001-13.002', name: 'Gudep MTs Contoh Jatibarang', pangkalan: 'MTs Contoh Jatibarang', jenjang: 'SMP/MTs', address: 'Jl. Contoh Jatibarang No. 20', lat: -6.4745, lng: 108.3118, contactName: 'Kak Hasan Basri', contactPhone: '0812-0000-0005' },
-    { kwarranId: kw['Haurgeulis'], number: null, name: 'Gudep SD Contoh Haurgeulis', pangkalan: 'SD Negeri Contoh Haurgeulis', jenjang: 'SD/MI', address: 'Jl. Contoh Haurgeulis', lat: null, lng: null, contactName: null, contactPhone: null },
+    {
+      kwarranId: kw['Indramayu'],
+      number: '11.001-11.002',
+      name: 'Gudep SMP Negeri Contoh 1',
+      pangkalan: 'SMP Negeri Contoh 1 Indramayu',
+      jenjang: 'SMP/MTs',
+      address: 'Jl. Contoh Raya No. 5, Indramayu',
+      lat: -6.3301,
+      lng: 108.3253,
+      contactName: 'Kak Rina Kartika',
+      contactPhone: '0812-0000-0001',
+    },
+    {
+      kwarranId: kw['Indramayu'],
+      number: '11.003-11.004',
+      name: 'Gudep SD Negeri Contoh 2',
+      pangkalan: 'SD Negeri Contoh 2 Indramayu',
+      jenjang: 'SD/MI',
+      address: 'Jl. Contoh Tengah No. 12, Indramayu',
+      lat: -6.3222,
+      lng: 108.3301,
+      contactName: 'Kak Budi Santoso',
+      contactPhone: '0812-0000-0002',
+    },
+    {
+      kwarranId: kw['Indramayu'],
+      number: '11.005-11.006',
+      name: 'Gudep SMA Negeri Contoh 1',
+      pangkalan: 'SMA Negeri Contoh 1 Indramayu',
+      jenjang: 'SMA/SMK/MA',
+      address: 'Jl. Contoh Barat No. 3, Indramayu',
+      lat: -6.3359,
+      lng: 108.3178,
+      contactName: 'Kak Andi Wijaya',
+      contactPhone: '0812-0000-0003',
+    },
+    {
+      kwarranId: kw['Sindang'],
+      number: '12.001-12.002',
+      name: 'Gudep SMK Contoh Sindang',
+      pangkalan: 'SMK Contoh Sindang',
+      jenjang: 'SMA/SMK/MA',
+      address: 'Jl. Contoh Sindang No. 8',
+      lat: -6.3149,
+      lng: 108.2988,
+      contactName: 'Kak Wulan Sari',
+      contactPhone: '0812-0000-0004',
+    },
+    {
+      kwarranId: kw['Jatibarang'],
+      number: '13.001-13.002',
+      name: 'Gudep MTs Contoh Jatibarang',
+      pangkalan: 'MTs Contoh Jatibarang',
+      jenjang: 'SMP/MTs',
+      address: 'Jl. Contoh Jatibarang No. 20',
+      lat: -6.4745,
+      lng: 108.3118,
+      contactName: 'Kak Hasan Basri',
+      contactPhone: '0812-0000-0005',
+    },
+    {
+      kwarranId: kw['Haurgeulis'],
+      number: null,
+      name: 'Gudep SD Contoh Haurgeulis',
+      pangkalan: 'SD Negeri Contoh Haurgeulis',
+      jenjang: 'SD/MI',
+      address: 'Jl. Contoh Haurgeulis',
+      lat: null,
+      lng: null,
+      contactName: null,
+      contactPhone: null,
+    },
   ];
   const gudepRows = await db.insert(schema.gudep).values(gudepSeed).returning();
   const gd = gudepRows.map((g) => g.id);
 
-  const first = ['Aulia', 'Bagas', 'Citra', 'Dimas', 'Eka', 'Fajar', 'Gita', 'Hana', 'Irfan', 'Jihan', 'Kevin', 'Laras', 'Maulana', 'Nadia', 'Oki', 'Putri', 'Raka', 'Salsa', 'Tegar', 'Umi', 'Vina', 'Wahyu', 'Yusuf', 'Zahra'];
+  const first = [
+    'Aulia',
+    'Bagas',
+    'Citra',
+    'Dimas',
+    'Eka',
+    'Fajar',
+    'Gita',
+    'Hana',
+    'Irfan',
+    'Jihan',
+    'Kevin',
+    'Laras',
+    'Maulana',
+    'Nadia',
+    'Oki',
+    'Putri',
+    'Raka',
+    'Salsa',
+    'Tegar',
+    'Umi',
+    'Vina',
+    'Wahyu',
+    'Yusuf',
+    'Zahra',
+  ];
   const last = ['Saputra', 'Rahmawati', 'Lestari', 'Pratama', 'Anggraini', 'Nugroho', 'Permata', 'Wicaksono', 'Kusuma', 'Hidayat'];
   const statuses = ['ACTIVE', 'ACTIVE', 'ACTIVE', 'PENDING', 'ACTIVE', 'NEEDS_FIX'] as const;
   const golonganByGudep = ['PENGGALANG', 'SIAGA', 'PENEGAK', 'PENEGAK', 'PENGGALANG', 'SIAGA'] as const;
@@ -150,45 +268,182 @@ async function seedDemo() {
   const eventRows = await db
     .insert(schema.events)
     .values([
-      { slug: 'perkemahan-bakti-penggalang', title: 'Perkemahan Bakti Penggalang', dateStart: daysFromNow(14), dateEnd: daysFromNow(16, 15), location: 'Bumi Perkemahan Contoh', organizer: 'Kwarcab Indramayu', description: 'Perkemahan tiga hari untuk Pramuka Penggalang se-Kabupaten Indramayu: pionering, penjelajahan, dan bakti lingkungan.', contactPerson: 'Sekretariat Kwarcab', published: true, registrationOpen: true },
-      { slug: 'latihan-gabungan-kwarran-indramayu', title: 'Latihan Gabungan Kwarran Indramayu', dateStart: daysFromNow(22, 7), dateEnd: daysFromNow(22, 12), location: 'Lapangan Kecamatan Indramayu', organizer: 'Kwarran Indramayu', description: 'Latihan bersama antargudep di wilayah Kwarran Indramayu.', contactPerson: 'Staf Kwarran Indramayu', published: true, registrationOpen: true },
-      { slug: 'kursus-mahir-dasar', title: 'Kursus Pembina Mahir Dasar (KMD)', dateStart: daysFromNow(35), dateEnd: daysFromNow(41, 15), location: 'Pusdiklatcab Indramayu', organizer: 'Pusdiklatcab', description: 'Kursus wajib bagi calon pembina gugus depan.', contactPerson: 'Pusdiklatcab', published: true },
-      { slug: 'jambore-ranting-serentak', title: 'Jambore Ranting Serentak', dateStart: daysFromNow(-50), dateEnd: daysFromNow(-48, 15), location: 'Seluruh Kwartir Ranting', organizer: 'Kwarran', description: 'Jambore Pramuka Penggalang serentak di Hari Pramuka.', published: true },
+      {
+        slug: 'perkemahan-bakti-penggalang',
+        title: 'Perkemahan Bakti Penggalang',
+        dateStart: daysFromNow(14),
+        dateEnd: daysFromNow(16, 15),
+        location: 'Bumi Perkemahan Contoh',
+        organizer: 'Kwarcab Indramayu',
+        description: 'Perkemahan tiga hari untuk Pramuka Penggalang se-Kabupaten Indramayu: pionering, penjelajahan, dan bakti lingkungan.',
+        contactPerson: 'Sekretariat Kwarcab',
+        published: true,
+        registrationOpen: true,
+      },
+      {
+        slug: 'latihan-gabungan-kwarran-indramayu',
+        title: 'Latihan Gabungan Kwarran Indramayu',
+        dateStart: daysFromNow(22, 7),
+        dateEnd: daysFromNow(22, 12),
+        location: 'Lapangan Kecamatan Indramayu',
+        organizer: 'Kwarran Indramayu',
+        description: 'Latihan bersama antargudep di wilayah Kwarran Indramayu.',
+        contactPerson: 'Staf Kwarran Indramayu',
+        published: true,
+        registrationOpen: true,
+      },
+      {
+        slug: 'kursus-mahir-dasar',
+        title: 'Kursus Pembina Mahir Dasar (KMD)',
+        dateStart: daysFromNow(35),
+        dateEnd: daysFromNow(41, 15),
+        location: 'Pusdiklatcab Indramayu',
+        organizer: 'Pusdiklatcab',
+        description: 'Kursus wajib bagi calon pembina gugus depan.',
+        contactPerson: 'Pusdiklatcab',
+        published: true,
+      },
+      {
+        slug: 'jambore-ranting-serentak',
+        title: 'Jambore Ranting Serentak',
+        dateStart: daysFromNow(-50),
+        dateEnd: daysFromNow(-48, 15),
+        location: 'Seluruh Kwartir Ranting',
+        organizer: 'Kwarran',
+        description: 'Jambore Pramuka Penggalang serentak di Hari Pramuka.',
+        published: true,
+      },
     ])
     .returning();
   await db.insert(schema.eventRegistrations).values({ eventId: eventRows[1].id, memberId: dimas.id });
 
   await db.insert(schema.news).values([
-    { slug: 'pelantikan-dewan-kerja-cabang', title: 'Pelantikan Dewan Kerja Cabang Kwarcab Indramayu', category: 'Organisasi', excerpt: 'Kepengurusan baru DKC resmi dilantik untuk masa bakti lima tahun.', content: 'Pelantikan Dewan Kerja Cabang (DKC) Gerakan Pramuka Indramayu berlangsung khidmat di aula Kwarcab.\n\nDKC baru akan memimpin program Pramuka Penegak dan Pandega se-kabupaten.', author: 'Humas Kwarcab', status: 'PUBLISHED' as const, publishedAt: daysFromNow(-3) },
-    { slug: 'lomba-tingkat-regu-penggalang', title: 'Lomba Tingkat Regu Penggalang Sukses Digelar', category: 'Prestasi', excerpt: 'Regu terbaik siap mewakili Indramayu di tingkat provinsi.', content: 'Lomba Tingkat yang diikuti utusan dari seluruh Kwarran berjalan kompetitif dan tertib.', author: 'Binamuda Kwarcab', status: 'PUBLISHED' as const, publishedAt: daysFromNow(-9) },
-    { slug: 'pelatihan-kmd', title: 'Pendaftaran Kursus Mahir Dasar Dibuka', category: 'Pendidikan', excerpt: 'Pusdiklatcab membuka pendaftaran KMD bagi calon pembina.', content: 'Pusdiklatcab Indramayu kembali menyelenggarakan Kursus Pembina Pramuka Mahir Tingkat Dasar.', author: 'Pusdiklatcab', status: 'PUBLISHED' as const, publishedAt: daysFromNow(-15) },
-    { slug: 'draf-rapat-kerja', title: 'Rapat Kerja Cabang Rumuskan Program Tahunan', category: 'Organisasi', excerpt: 'Draf berita menunggu terbit.', content: 'Isi draf.', author: 'Humas Kwarcab', status: 'DRAFT' as const },
+    {
+      slug: 'pelantikan-dewan-kerja-cabang',
+      title: 'Pelantikan Dewan Kerja Cabang Kwarcab Indramayu',
+      category: 'Organisasi',
+      excerpt: 'Kepengurusan baru DKC resmi dilantik untuk masa bakti lima tahun.',
+      content:
+        'Pelantikan Dewan Kerja Cabang (DKC) Gerakan Pramuka Indramayu berlangsung khidmat di aula Kwarcab.\n\nDKC baru akan memimpin program Pramuka Penegak dan Pandega se-kabupaten.',
+      author: 'Humas Kwarcab',
+      status: 'PUBLISHED' as const,
+      publishedAt: daysFromNow(-3),
+    },
+    {
+      slug: 'lomba-tingkat-regu-penggalang',
+      title: 'Lomba Tingkat Regu Penggalang Sukses Digelar',
+      category: 'Prestasi',
+      excerpt: 'Regu terbaik siap mewakili Indramayu di tingkat provinsi.',
+      content: 'Lomba Tingkat yang diikuti utusan dari seluruh Kwarran berjalan kompetitif dan tertib.',
+      author: 'Binamuda Kwarcab',
+      status: 'PUBLISHED' as const,
+      publishedAt: daysFromNow(-9),
+    },
+    {
+      slug: 'pelatihan-kmd',
+      title: 'Pendaftaran Kursus Mahir Dasar Dibuka',
+      category: 'Pendidikan',
+      excerpt: 'Pusdiklatcab membuka pendaftaran KMD bagi calon pembina.',
+      content: 'Pusdiklatcab Indramayu kembali menyelenggarakan Kursus Pembina Pramuka Mahir Tingkat Dasar.',
+      author: 'Pusdiklatcab',
+      status: 'PUBLISHED' as const,
+      publishedAt: daysFromNow(-15),
+    },
+    {
+      slug: 'draf-rapat-kerja',
+      title: 'Rapat Kerja Cabang Rumuskan Program Tahunan',
+      category: 'Organisasi',
+      excerpt: 'Draf berita menunggu terbit.',
+      content: 'Isi draf.',
+      author: 'Humas Kwarcab',
+      status: 'DRAFT' as const,
+    },
   ]);
 
   await db.insert(schema.albums).values([
-    { slug: 'hari-pramuka', title: 'Peringatan Hari Pramuka', date: isoDate(daysFromNow(-50)), location: 'Alun-alun Indramayu', organizer: 'Kwarcab Indramayu', category: 'Perayaan', description: 'Upacara dan apel besar Hari Pramuka di pusat kabupaten.', published: true },
-    { slug: 'bakti-sosial-donor-darah', title: 'Bakti Sosial Donor Darah', date: isoDate(daysFromNow(-110)), location: 'Gedung Kwarcab', organizer: 'DKC & PMI', category: 'Sosial', description: 'Pramuka Peduli menggelar donor darah bersama PMI.', published: true },
+    {
+      slug: 'hari-pramuka',
+      title: 'Peringatan Hari Pramuka',
+      date: isoDate(daysFromNow(-50)),
+      location: 'Alun-alun Indramayu',
+      organizer: 'Kwarcab Indramayu',
+      category: 'Perayaan',
+      description: 'Upacara dan apel besar Hari Pramuka di pusat kabupaten.',
+      published: true,
+    },
+    {
+      slug: 'bakti-sosial-donor-darah',
+      title: 'Bakti Sosial Donor Darah',
+      date: isoDate(daysFromNow(-110)),
+      location: 'Gedung Kwarcab',
+      organizer: 'DKC & PMI',
+      category: 'Sosial',
+      description: 'Pramuka Peduli menggelar donor darah bersama PMI.',
+      published: true,
+    },
   ]);
 
   await db.insert(schema.documents).values([
-    { title: 'Petunjuk Penyelenggaraan Perkemahan Bakti Penggalang', category: 'Petunjuk Teknis', description: 'Pedoman teknis pelaksanaan bagi pangkalan peserta.', date: isoDate(daysFromNow(-20)), fileType: 'PDF', published: true },
-    { title: 'Formulir Pendaftaran Ulang Gugus Depan', category: 'Formulir', description: 'Formulir pemutakhiran data gudep.', date: isoDate(daysFromNow(-40)), fileType: 'DOCX', published: true },
+    {
+      title: 'Petunjuk Penyelenggaraan Perkemahan Bakti Penggalang',
+      category: 'Petunjuk Teknis',
+      description: 'Pedoman teknis pelaksanaan bagi pangkalan peserta.',
+      date: isoDate(daysFromNow(-20)),
+      fileType: 'PDF',
+      published: true,
+    },
+    {
+      title: 'Formulir Pendaftaran Ulang Gugus Depan',
+      category: 'Formulir',
+      description: 'Formulir pemutakhiran data gudep.',
+      date: isoDate(daysFromNow(-40)),
+      fileType: 'DOCX',
+      published: true,
+    },
   ]);
 
   await db.insert(schema.boardMembers).values([
     { name: 'Kak Contoh Ketua', position: 'Ketua Kwartir Cabang', department: 'Pimpinan', period: '2026–2031', sortOrder: 1 },
     { name: 'Kak Contoh Sekretaris', position: 'Sekretaris', department: 'Pimpinan', period: '2026–2031', sortOrder: 2 },
-    { name: 'Kak Contoh Ketua DKC', position: 'Ketua Dewan Kerja Cabang', department: 'Dewan Kerja Cabang', period: '2026–2031', sortOrder: 10 },
+    {
+      name: 'Kak Contoh Ketua DKC',
+      position: 'Ketua Dewan Kerja Cabang',
+      department: 'Dewan Kerja Cabang',
+      period: '2026–2031',
+      sortOrder: 10,
+    },
   ]);
 
   await db.insert(schema.achievements).values([
-    { title: 'Juara Umum Lomba Tingkat IV Jawa Barat', level: 'Provinsi', year: 2026, recipient: 'Regu Penggalang Kwarcab Indramayu', description: 'Juara umum pada ajang Lomba Tingkat IV Provinsi Jawa Barat.' },
+    {
+      title: 'Juara Umum Lomba Tingkat IV Jawa Barat',
+      level: 'Provinsi',
+      year: 2026,
+      recipient: 'Regu Penggalang Kwarcab Indramayu',
+      description: 'Juara umum pada ajang Lomba Tingkat IV Provinsi Jawa Barat.',
+    },
   ]);
 
   await db.insert(schema.announcements).values([
-    { title: 'Pemutakhiran data anggota paling lambat akhir bulan', body: 'Setiap gudep diminta memeriksa dan melengkapi data anggota di portal.', audience: 'STAFF' as const, authorName: 'Sekretariat Kwarcab' },
-    { title: 'Latihan rutin pindah ke Sabtu pukul 14.00', body: 'Mulai pekan ini latihan rutin dilaksanakan Sabtu sore di lapangan sekolah.', audience: 'PESERTA' as const, gudepId: gd[0], authorName: 'Rina Kartika' },
-    { title: 'Pendaftaran Perkemahan Bakti dibuka', body: 'Daftar lewat menu Kegiatan. Siapkan surat izin orang tua.', audience: 'ALL' as const, authorName: 'Sekretariat Kwarcab' },
+    {
+      title: 'Pemutakhiran data anggota paling lambat akhir bulan',
+      body: 'Setiap gudep diminta memeriksa dan melengkapi data anggota di portal.',
+      audience: 'STAFF' as const,
+      authorName: 'Sekretariat Kwarcab',
+    },
+    {
+      title: 'Latihan rutin pindah ke Sabtu pukul 14.00',
+      body: 'Mulai pekan ini latihan rutin dilaksanakan Sabtu sore di lapangan sekolah.',
+      audience: 'PESERTA' as const,
+      gudepId: gd[0],
+      authorName: 'Rina Kartika',
+    },
+    {
+      title: 'Pendaftaran Perkemahan Bakti dibuka',
+      body: 'Daftar lewat menu Kegiatan. Siapkan surat izin orang tua.',
+      audience: 'ALL' as const,
+      authorName: 'Sekretariat Kwarcab',
+    },
   ]);
 
   await db.insert(schema.contactMessages).values({

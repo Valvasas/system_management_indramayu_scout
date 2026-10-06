@@ -29,7 +29,12 @@ export default async function AksesPage({ searchParams = {} }: { searchParams?: 
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel title={`Menunggu (${requests.length})`} className="lg:col-span-2">
           {requests.length === 0 ? (
-            <EmptyState variant="icon" icon={KeyRound} title="Tidak ada permintaan" description="Permintaan lupa kata sandi dari anggota dalam cakupan Anda akan muncul di sini." />
+            <EmptyState
+              variant="icon"
+              icon={KeyRound}
+              title="Tidak ada permintaan"
+              description="Permintaan lupa kata sandi dari anggota dalam cakupan Anda akan muncul di sini."
+            />
           ) : (
             <ul className="divide-y divide-border-subtle">
               {requests.map((r) => (
@@ -40,14 +45,21 @@ export default async function AksesPage({ searchParams = {} }: { searchParams?: 
                       {r.username} · {ROLE_LABELS[r.role]}
                       {r.gudepName ? ` · ${r.gudepName}` : ''}
                     </p>
-                    {r.note && <p className="mt-2 rounded-xl bg-surface-subtle px-3 py-2 text-sm text-text-primary">&ldquo;{r.note}&rdquo;</p>}
+                    {r.note && (
+                      <p className="mt-2 rounded-xl bg-surface-subtle px-3 py-2 text-sm text-text-primary">&ldquo;{r.note}&rdquo;</p>
+                    )}
                     <p className="mt-1 text-xs text-text-muted">
                       Diminta {formatDate(r.createdAt.toISOString())}, {formatTime(r.createdAt.toISOString())}
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end">
                     <IssueCodeForm action={issueResetCodeAction.bind(null, r.userId)} />
-                    <ActionButton action={dismissResetRequestAction.bind(null, r.id)} variant="ghost" confirm={`Abaikan permintaan dari ${r.name}?`} label={`Abaikan permintaan ${r.name}`}>
+                    <ActionButton
+                      action={dismissResetRequestAction.bind(null, r.id)}
+                      variant="ghost"
+                      confirm={`Abaikan permintaan dari ${r.name}?`}
+                      label={`Abaikan permintaan ${r.name}`}
+                    >
                       <X className="h-4 w-4" aria-hidden="true" />
                       Abaikan
                     </ActionButton>

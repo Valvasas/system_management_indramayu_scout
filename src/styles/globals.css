@@ -72,7 +72,9 @@
 
   /* Kartu yang sedikit terangkat saat disorot. Gerak dimatikan oleh reduced-motion di bawah. */
   .lift {
-    transition: transform 300ms var(--ease-out), box-shadow 300ms var(--ease-out);
+    transition:
+      transform 300ms var(--ease-out),
+      box-shadow 300ms var(--ease-out);
   }
   .lift:hover,
   .lift:focus-within {
@@ -89,7 +91,9 @@
   [data-reveal='shown'] {
     opacity: 1;
     transform: none;
-    transition: opacity var(--duration-reveal) var(--ease-out), transform var(--duration-reveal) var(--ease-out);
+    transition:
+      opacity var(--duration-reveal) var(--ease-out),
+      transform var(--duration-reveal) var(--ease-out);
     transition-delay: var(--reveal-delay, 0ms);
   }
 
@@ -115,16 +119,31 @@
   body {
     background-color: var(--surface-canvas);
     color: var(--text-primary);
-    font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    font-family:
+      var(--font-jakarta),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      'Noto Sans',
+      sans-serif;
     font-feature-settings: 'ss01' on;
   }
 
   /* Fraunces: sumbu SOFT & optical size membuat judul besar terasa hangat, bukan kaku. */
   .font-display {
-    font-variation-settings: 'SOFT' 60, 'opsz' 96;
+    font-variation-settings:
+      'SOFT' 60,
+      'opsz' 96;
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     text-wrap: balance;
   }
 

@@ -20,7 +20,10 @@ const KEYS = ['heroImage', 'heroImageAlt', 'heroCaption'] as const;
 
 export async function getSiteAppearance(): Promise<SiteAppearance> {
   const db = await getDb();
-  const rows = await db.select().from(schema.siteSettings).where(inArray(schema.siteSettings.key, [...KEYS]));
+  const rows = await db
+    .select()
+    .from(schema.siteSettings)
+    .where(inArray(schema.siteSettings.key, [...KEYS]));
   const values = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return {
     heroImage: typeof values.heroImage === 'string' && values.heroImage ? values.heroImage : null,

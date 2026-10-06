@@ -18,11 +18,18 @@ export default async function PengurusEditorPage({ params }: { params: { id: str
 
   return (
     <>
-      <PortalHeader title={row ? 'Ubah pengurus' : 'Tambah pengurus'} back={{ href: '/dashboard/konten/pengurus', label: 'Daftar pengurus' }} />
+      <PortalHeader
+        title={row ? 'Ubah pengurus' : 'Tambah pengurus'}
+        back={{ href: '/dashboard/konten/pengurus', label: 'Daftar pengurus' }}
+      />
       <div className="max-w-3xl">
         <BoardForm
           action={saveBoardMemberAction.bind(null, id)}
-          defaults={row ? { name: row.name, position: row.position, department: row.department, period: row.period, sortOrder: row.sortOrder } : undefined}
+          defaults={
+            row
+              ? { name: row.name, position: row.position, department: row.department, period: row.period, sortOrder: row.sortOrder }
+              : undefined
+          }
         />
       </div>
     </>

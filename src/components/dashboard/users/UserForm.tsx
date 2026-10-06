@@ -15,7 +15,15 @@ export const UserForm: React.FC<{
   roles: { value: Role; label: string; description: string }[];
   kwarranOptions: Option[];
   gudepOptions: Option[];
-  defaults?: { name?: string; username?: string; email?: string | null; role?: Role; kwarranId?: string | null; gudepId?: string | null; active?: boolean };
+  defaults?: {
+    name?: string;
+    username?: string;
+    email?: string | null;
+    role?: Role;
+    kwarranId?: string | null;
+    gudepId?: string | null;
+    active?: boolean;
+  };
   isNew: boolean;
   /** Akun milik pengguna sendiri: peran & status dikunci. */
   isSelf?: boolean;
@@ -28,7 +36,15 @@ export const UserForm: React.FC<{
       <FieldGroup title="Identitas akun">
         <TextField name="name" label="Nama lengkap" defaultValue={defaults.name} required />
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField name="username" label="Nama pengguna" defaultValue={defaults.username} autoCapitalize="none" spellCheck={false} hint="Dipakai untuk masuk, mis. sri.wahyuni" required />
+          <TextField
+            name="username"
+            label="Nama pengguna"
+            defaultValue={defaults.username}
+            autoCapitalize="none"
+            spellCheck={false}
+            hint="Dipakai untuk masuk, mis. sri.wahyuni"
+            required
+          />
           <TextField name="email" label="Pos-el" type="email" defaultValue={defaults.email ?? ''} hint="Opsional." />
         </div>
       </FieldGroup>
@@ -54,17 +70,36 @@ export const UserForm: React.FC<{
               required
             />
             {role === 'STAFF_KWARRAN' && (
-              <SelectField name="kwarranId" label="Kwarran yang dikelola" placeholder="Pilih kwarran…" defaultValue={defaults.kwarranId ?? undefined} options={kwarranOptions} required />
+              <SelectField
+                name="kwarranId"
+                label="Kwarran yang dikelola"
+                placeholder="Pilih kwarran…"
+                defaultValue={defaults.kwarranId ?? undefined}
+                options={kwarranOptions}
+                required
+              />
             )}
             {role === 'STAFF_GUDEP' && (
-              <SelectField name="gudepId" label="Gudep yang dikelola" placeholder="Pilih gudep…" defaultValue={defaults.gudepId ?? undefined} options={gudepOptions} required />
+              <SelectField
+                name="gudepId"
+                label="Gudep yang dikelola"
+                placeholder="Pilih gudep…"
+                defaultValue={defaults.gudepId ?? undefined}
+                options={gudepOptions}
+                required
+              />
             )}
           </>
         )}
         {isNew || isSelf ? (
           <input type="hidden" name="active" value="on" />
         ) : (
-          <CheckboxField name="active" label="Akun aktif" description="Akun nonaktif tidak dapat masuk; sesi yang sedang berjalan langsung diakhiri." defaultChecked={defaults.active ?? true} />
+          <CheckboxField
+            name="active"
+            label="Akun aktif"
+            description="Akun nonaktif tidak dapat masuk; sesi yang sedang berjalan langsung diakhiri."
+            defaultChecked={defaults.active ?? true}
+          />
         )}
       </FieldGroup>
 
@@ -77,14 +112,21 @@ export const UserForm: React.FC<{
           {isNew ? 'Selesai' : 'Batal'}
         </ButtonLink>
       </div>
-      {isNew && <p className="text-sm text-text-secondary">Kode aktivasi sekali pakai dibuat otomatis dan tampil sekali setelah akun dibuat. Pemilik akun membuat kata sandinya sendiri.</p>}
+      {isNew && (
+        <p className="text-sm text-text-secondary">
+          Kode aktivasi sekali pakai dibuat otomatis dan tampil sekali setelah akun dibuat. Pemilik akun membuat kata sandinya sendiri.
+        </p>
+      )}
     </ActionForm>
   );
 };
 
 export const ResetPasswordForm: React.FC<{ action: (state: FormState, formData: FormData) => Promise<FormState> }> = ({ action }) => (
   <ActionForm action={action}>
-    <p className="text-sm text-text-secondary">Terbitkan kode reset sekali pakai (berlaku 24 jam). Pemilik membuat kata sandi barunya sendiri; Anda tidak pernah melihat kata sandinya.</p>
+    <p className="text-sm text-text-secondary">
+      Terbitkan kode reset sekali pakai (berlaku 24 jam). Pemilik membuat kata sandi barunya sendiri; Anda tidak pernah melihat kata
+      sandinya.
+    </p>
     <SubmitButton variant="outline">
       <KeyRound className="h-4 w-4" aria-hidden="true" />
       Buat kode reset

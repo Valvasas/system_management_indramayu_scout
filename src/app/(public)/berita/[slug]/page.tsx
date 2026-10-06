@@ -53,9 +53,7 @@ export default async function DetailBeritaPage({ params }: Params) {
   const news = await getNewsBySlug(params.slug);
   if (!news) notFound();
 
-  const related = (await getNews({ category: undefined, limit: 4 })).filter(
-    (n) => n.slug !== news.slug,
-  );
+  const related = (await getNews({ category: undefined, limit: 4 })).filter((n) => n.slug !== news.slug);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -145,7 +143,10 @@ export default async function DetailBeritaPage({ params }: Params) {
                 </>
               )}
             </div>
-            <Link href="/berita" className="mt-4 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+            <Link
+              href="/berita"
+              className="mt-4 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline"
+            >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Semua berita
             </Link>
@@ -162,7 +163,14 @@ export default async function DetailBeritaPage({ params }: Params) {
               {related.slice(0, 3).map((item) => (
                 <li key={item.id}>
                   <article className="lift group relative h-full overflow-hidden rounded-2xl border border-border-subtle bg-surface-base">
-                    <MediaFrame src={item.coverImage} alt="" aspect="video" keepAspect sizes="(max-width: 768px) 100vw, 33vw" fallbackLabel="Foto menyusul" />
+                    <MediaFrame
+                      src={item.coverImage}
+                      alt=""
+                      aspect="video"
+                      keepAspect
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      fallbackLabel="Foto menyusul"
+                    />
                     <div className="p-5">
                       <time className="text-xs text-text-secondary" dateTime={item.publishedAt}>
                         {formatDate(item.publishedAt)}
@@ -181,10 +189,7 @@ export default async function DetailBeritaPage({ params }: Params) {
         )}
       </div>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </div>
   );
 }

@@ -125,7 +125,9 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
   const linkClass = (active: boolean) =>
     cn(
       'flex min-h-12 items-center gap-3 rounded-xl px-3 text-[0.95rem] font-medium transition-colors',
-      active ? 'bg-surface-base text-action-secondary-text shadow-sm' : 'text-text-inverse-muted hover:bg-surface-inverse hover:text-text-inverse',
+      active
+        ? 'bg-surface-base text-action-secondary-text shadow-sm'
+        : 'text-text-inverse-muted hover:bg-surface-inverse hover:text-text-inverse',
     );
 
   const navList = (
@@ -133,7 +135,9 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
       <div className="space-y-6">
         {nav.map((group, gi) => (
           <div key={group.title ?? gi}>
-            {group.title && <p className="mb-1.5 px-3 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-text-inverse-muted">{group.title}</p>}
+            {group.title && (
+              <p className="mb-1.5 px-3 text-[0.7rem] font-bold uppercase tracking-[0.14em] text-text-inverse-muted">{group.title}</p>
+            )}
             <ul className="space-y-0.5">
               {group.items.map((item) => {
                 const Icon = ICONS[item.icon];
@@ -160,7 +164,11 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
 
       <ul className="mt-8 space-y-0.5 border-t border-border-inverse-subtle pt-4">
         <li>
-          <Link href="/dashboard/akun" aria-current={isActive('/dashboard/akun') ? 'page' : undefined} className={linkClass(isActive('/dashboard/akun'))}>
+          <Link
+            href="/dashboard/akun"
+            aria-current={isActive('/dashboard/akun') ? 'page' : undefined}
+            className={linkClass(isActive('/dashboard/akun'))}
+          >
             <UserCog className="h-5 w-5 shrink-0" aria-hidden="true" />
             Akun saya
           </Link>
@@ -225,7 +233,10 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
               <p className="text-sm font-semibold text-text-primary">{user.name}</p>
               <p className="text-xs text-text-secondary">{user.roleLabel}</p>
             </div>
-            <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-surface-meadow font-display text-sm font-semibold text-action-secondary-text" aria-hidden="true">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-pill bg-surface-meadow font-display text-sm font-semibold text-action-secondary-text"
+              aria-hidden="true"
+            >
               {initials(user.name)}
             </span>
             <form action={logoutAction} className="hidden lg:block">
@@ -247,7 +258,10 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
       </div>
 
       {/* Navigasi bawah ponsel */}
-      <nav aria-label="Navigasi cepat" className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border-subtle bg-surface-base shadow-dialog lg:hidden">
+      <nav
+        aria-label="Navigasi cepat"
+        className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border-subtle bg-surface-base shadow-dialog lg:hidden"
+      >
         <ul className="mx-auto grid max-w-md grid-cols-5">
           {quick.map((item) => {
             const Icon = ICONS[item.icon];
@@ -257,9 +271,17 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
                 <Link
                   href={item.href}
                   aria-current={active ? 'page' : undefined}
-                  className={cn('relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 px-1 text-[0.7rem] font-semibold', active ? 'text-text-accent' : 'text-text-secondary')}
+                  className={cn(
+                    'relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 px-1 text-[0.7rem] font-semibold',
+                    active ? 'text-text-accent' : 'text-text-secondary',
+                  )}
                 >
-                  <span className={cn('flex h-7 w-12 items-center justify-center rounded-pill transition-colors', active && 'bg-surface-meadow')}>
+                  <span
+                    className={cn(
+                      'flex h-7 w-12 items-center justify-center rounded-pill transition-colors',
+                      active && 'bg-surface-meadow',
+                    )}
+                  >
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="max-w-full truncate">{item.label}</span>

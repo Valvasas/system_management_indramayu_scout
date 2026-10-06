@@ -2,18 +2,11 @@ import { desc, eq } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import type { AchievementItem, AchievementLevel } from '@/types';
 
-export const ACHIEVEMENT_LEVELS: AchievementLevel[] = [
-  'Internasional',
-  'Nasional',
-  'Provinsi',
-  'Kabupaten',
-  'Kecamatan',
-];
+export const ACHIEVEMENT_LEVELS: AchievementLevel[] = ['Internasional', 'Nasional', 'Provinsi', 'Kabupaten', 'Kecamatan'];
 
 export const levelSlug = (level: string) => level.toLowerCase();
 
-export const levelFromSlug = (slug: string): AchievementLevel | undefined =>
-  ACHIEVEMENT_LEVELS.find((l) => levelSlug(l) === slug);
+export const levelFromSlug = (slug: string): AchievementLevel | undefined => ACHIEVEMENT_LEVELS.find((l) => levelSlug(l) === slug);
 
 async function publishedAchievements(): Promise<AchievementItem[]> {
   const db = await getDb();

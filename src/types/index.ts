@@ -2,12 +2,7 @@ export type NewsStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 
 export type AgendaStatus = 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 
-export type AchievementLevel =
-  | 'Kecamatan'
-  | 'Kabupaten'
-  | 'Provinsi'
-  | 'Nasional'
-  | 'Internasional';
+export type AchievementLevel = 'Kecamatan' | 'Kabupaten' | 'Provinsi' | 'Nasional' | 'Internasional';
 
 export interface NewsItem {
   id: string;

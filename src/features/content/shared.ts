@@ -46,7 +46,11 @@ export function revalidatePublicSite(): void {
  * Proses sampul berita dari formulir: unggah baru, hapus, atau pertahankan yang lama.
  * Mengembalikan URL sampul akhir, atau pesan galat unggah untuk ditampilkan di kolom `cover`.
  */
-export async function resolveCover(formData: FormData, current: string | null, remove: boolean): Promise<{ url: string | null } | { error: string }> {
+export async function resolveCover(
+  formData: FormData,
+  current: string | null,
+  remove: boolean,
+): Promise<{ url: string | null } | { error: string }> {
   const file = formData.get('cover');
   try {
     if (isFile(file)) {

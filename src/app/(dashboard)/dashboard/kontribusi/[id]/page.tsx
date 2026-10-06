@@ -30,7 +30,16 @@ export default async function KontribusiEditorPage({ params }: { params: { id: s
           defaultAuthor={user.name}
           defaults={
             row
-              ? { title: row.title, category: row.category, excerpt: row.excerpt, content: row.content, author: row.author, tags: row.tags, status: row.status, hasCover: Boolean(row.coverImage) }
+              ? {
+                  title: row.title,
+                  category: row.category,
+                  excerpt: row.excerpt,
+                  content: row.content,
+                  author: row.author,
+                  tags: row.tags,
+                  status: row.status,
+                  hasCover: Boolean(row.coverImage),
+                }
               : undefined
           }
         />

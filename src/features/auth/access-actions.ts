@@ -37,7 +37,8 @@ const GENERIC_REQUEST =
 export async function requestPasswordResetAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(RequestSchema, formData);
   if (parsed.error) return parsed.error;
-  if (requestPerIp.limited(clientIp())) return fail('Terlalu banyak permintaan. Coba lagi dalam satu jam, atau hubungi pembina Anda langsung.');
+  if (requestPerIp.limited(clientIp()))
+    return fail('Terlalu banyak permintaan. Coba lagi dalam satu jam, atau hubungi pembina Anda langsung.');
 
   const db = await getDb();
   const [user] = await db.select().from(schema.users).where(eq(schema.users.username, parsed.data.username)).limit(1);
@@ -50,7 +51,12 @@ export async function requestPasswordResetAction(_prev: FormState, formData: For
       .limit(1);
     if (!open) {
       await db.insert(schema.passwordResetRequests).values({ userId: user.id, note: parsed.data.note });
-      await audit(null, { action: 'auth.reset_requested', summary: `Permintaan reset sandi untuk "${user.username}"`, entityType: 'user', entityId: user.id });
+      await audit(null, {
+        action: 'auth.reset_requested',
+        summary: `Permintaan reset sandi untuk "${user.username}"`,
+        entityType: 'user',
+        entityId: user.id,
+      });
     }
   }
   return ok(GENERIC_REQUEST);
@@ -104,7 +110,12 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
     .orderBy(desc(schema.accessCodes.createdAt))
     .limit(1);
   if (!valid || !accessCodeMatches(code, valid.codeHash)) {
-    await audit(null, { action: 'auth.code_failed', summary: `Kode akses salah untuk "${username}"`, entityType: 'user', entityId: user.id });
+    await audit(null, {
+      action: 'auth.code_failed',
+      summary: `Kode akses salah untuk "${username}"`,
+      entityType: 'user',
+      entityId: user.id,
+    });
     return fail(GENERIC_REDEEM);
   }
 
@@ -163,7 +174,12 @@ export async function dismissResetRequestAction(requestId: string): Promise<void
       .update(schema.passwordResetRequests)
       .set({ status: 'DISMISSED', resolvedAt: new Date(), resolvedById: actor.id })
       .where(eq(schema.passwordResetRequests.id, requestId));
-    await audit(actor, { action: 'user.reset_dismissed', summary: `Mengabaikan permintaan reset akun ${row.user.username}`, entityType: 'user', entityId: row.user.id });
+    await audit(actor, {
+      action: 'user.reset_dismissed',
+      summary: `Mengabaikan permintaan reset akun ${row.user.username}`,
+      entityType: 'user',
+      entityId: row.user.id,
+    });
   }
   revalidatePath('/dashboard/akses');
   redirect('/dashboard/akses?diabaikan=1');

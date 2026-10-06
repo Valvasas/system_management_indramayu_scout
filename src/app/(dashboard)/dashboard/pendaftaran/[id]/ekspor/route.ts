@@ -15,9 +15,22 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const rows = await registrantsFor(user, event.id);
   const csv = toCsv(
     ['Nama Lengkap', 'No KTA', 'Jenis Kelamin', 'Golongan', 'Gudep', 'Kwarran', 'Tanggal Mendaftar'],
-    rows.map((r) => [r.fullName, r.kta, GENDER_LABELS[r.gender], golonganLabel(r.golongan), r.gudepName, r.kwarranName, r.registeredAt.toISOString().slice(0, 10)]),
+    rows.map((r) => [
+      r.fullName,
+      r.kta,
+      GENDER_LABELS[r.gender],
+      golonganLabel(r.golongan),
+      r.gudepName,
+      r.kwarranName,
+      r.registeredAt.toISOString().slice(0, 10),
+    ]),
   );
-  await audit(user, { action: 'event.export', summary: `Mengekspor ${rows.length} pendaftar "${event.title}"`, entityType: 'event', entityId: event.id });
+  await audit(user, {
+    action: 'event.export',
+    summary: `Mengekspor ${rows.length} pendaftar "${event.title}"`,
+    entityType: 'event',
+    entityId: event.id,
+  });
   return new Response(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',

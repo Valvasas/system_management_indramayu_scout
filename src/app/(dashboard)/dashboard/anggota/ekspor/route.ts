@@ -25,11 +25,33 @@ export async function GET(req: Request) {
   const rows = await listMembersForExport(user, filters);
   const sensitive = can(user, 'members.view_sensitive');
 
-  const header = ['No KTA', 'Nama Lengkap', 'Jenis Kelamin', 'Tanggal Lahir', 'Golongan', 'Gudep', 'No Gudep', 'Kwarran', 'Status', 'Tanggal Bergabung'];
+  const header = [
+    'No KTA',
+    'Nama Lengkap',
+    'Jenis Kelamin',
+    'Tanggal Lahir',
+    'Golongan',
+    'Gudep',
+    'No Gudep',
+    'Kwarran',
+    'Status',
+    'Tanggal Bergabung',
+  ];
   if (sensitive) header.push('Telepon', 'Alamat', 'Nama Wali', 'Telepon Wali', 'Tanggal Persetujuan Wali');
 
   const body = rows.map(({ m, gudepName, gudepNumber, kwarranName }) => {
-    const base: unknown[] = [m.kta, m.fullName, GENDER_LABELS[m.gender], m.birthDate, golonganLabel(m.golongan), gudepName, gudepNumber, kwarranName, MEMBER_STATUS_LABELS[m.status], m.joinedAt];
+    const base: unknown[] = [
+      m.kta,
+      m.fullName,
+      GENDER_LABELS[m.gender],
+      m.birthDate,
+      golonganLabel(m.golongan),
+      gudepName,
+      gudepNumber,
+      kwarranName,
+      MEMBER_STATUS_LABELS[m.status],
+      m.joinedAt,
+    ];
     if (sensitive) base.push(m.phone, m.address, m.guardianName, m.guardianPhone, m.guardianConsentAt);
     return base;
   });

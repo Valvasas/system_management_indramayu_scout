@@ -60,7 +60,10 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
           </p>
           <p className="text-text-secondary">gudep aktif sudah bertitik lokasi</p>
           <div className="mt-3 h-2 overflow-hidden rounded-pill bg-surface-sunken" aria-hidden="true">
-            <div className="h-full rounded-pill bg-action-primary" style={{ width: `${coverage.total ? Math.round((coverage.located / coverage.total) * 100) : 0}%` }} />
+            <div
+              className="h-full rounded-pill bg-action-primary"
+              style={{ width: `${coverage.total ? Math.round((coverage.located / coverage.total) * 100) : 0}%` }}
+            />
           </div>
           {missing > 0 ? (
             <Link
@@ -77,13 +80,25 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
       </div>
 
       <Panel bodyClassName="p-0 sm:p-0">
-        <form role="search" method="get" action="/dashboard/gudep" className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12">
+        <form
+          role="search"
+          method="get"
+          action="/dashboard/gudep"
+          className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12"
+        >
           <div className="relative md:col-span-5">
             <label htmlFor="cari-gudep" className="sr-only">
               Cari nama, nomor, atau pangkalan
             </label>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-            <Input id="cari-gudep" name="q" type="search" defaultValue={q} placeholder="Cari nama, nomor, atau pangkalan" className="pl-9" />
+            <Input
+              id="cari-gudep"
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder="Cari nama, nomor, atau pangkalan"
+              className="pl-9"
+            />
           </div>
           {wide ? (
             <div className="md:col-span-3">
@@ -134,17 +149,28 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
                   <caption className="sr-only">Daftar gudep</caption>
                   <thead>
                     <tr className="border-b border-border-subtle">
-                      <th scope="col" className={th}>Gudep</th>
-                      <th scope="col" className={th}>Kwarran</th>
-                      <th scope="col" className={cn(th, 'text-right')}>Anggota aktif</th>
-                      <th scope="col" className={th}>Lokasi</th>
+                      <th scope="col" className={th}>
+                        Gudep
+                      </th>
+                      <th scope="col" className={th}>
+                        Kwarran
+                      </th>
+                      <th scope="col" className={cn(th, 'text-right')}>
+                        Anggota aktif
+                      </th>
+                      <th scope="col" className={th}>
+                        Lokasi
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
                     {result.rows.map((g) => (
                       <tr key={g.id} className="hover:bg-surface-canvas">
                         <td className={td}>
-                          <Link href={`/dashboard/gudep/${g.id}`} className="font-semibold text-text-primary hover:text-text-accent hover:underline">
+                          <Link
+                            href={`/dashboard/gudep/${g.id}`}
+                            className="font-semibold text-text-primary hover:text-text-accent hover:underline"
+                          >
                             {g.name}
                           </Link>
                           <p className="text-sm text-text-secondary">
@@ -160,9 +186,13 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
                         </td>
                         <td className={td}>
                           {g.lat !== null ? (
-                            <Badge tone="success" icon={MapPin} className="whitespace-nowrap">Ada titik</Badge>
+                            <Badge tone="success" icon={MapPin} className="whitespace-nowrap">
+                              Ada titik
+                            </Badge>
                           ) : (
-                            <Badge tone="warning" icon={MapPinOff} className="whitespace-nowrap">Belum ada</Badge>
+                            <Badge tone="warning" icon={MapPinOff} className="whitespace-nowrap">
+                              Belum ada
+                            </Badge>
                           )}
                         </td>
                       </tr>
@@ -170,7 +200,13 @@ export default async function GudepPage({ searchParams = {} }: { searchParams?: 
                   </tbody>
                 </table>
               </TableWrap>
-              <Pagination page={result.page} pageCount={result.pageCount} total={result.total} unit="gudep" hrefFor={(p) => withQuery('/dashboard/gudep', current, { page: p })} />
+              <Pagination
+                page={result.page}
+                pageCount={result.pageCount}
+                total={result.total}
+                unit="gudep"
+                hrefFor={(p) => withQuery('/dashboard/gudep', current, { page: p })}
+              />
             </>
           )}
         </div>

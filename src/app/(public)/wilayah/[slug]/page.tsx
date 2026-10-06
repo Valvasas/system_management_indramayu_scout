@@ -80,10 +80,16 @@ export default async function KwarranPage({ params }: Params) {
             ) : (
               <ul className="mt-6 space-y-3">
                 {k.gudep.map((g) => (
-                  <li key={g.id} id={`gudep-${g.id}`} className="scroll-mt-28 rounded-2xl border border-border-subtle bg-surface-base p-5 target:ring-2 target:ring-focus-ring">
+                  <li
+                    key={g.id}
+                    id={`gudep-${g.id}`}
+                    className="scroll-mt-28 rounded-2xl border border-border-subtle bg-surface-base p-5 target:ring-2 target:ring-focus-ring"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <h3 className="font-display text-xl font-semibold text-text-primary">{g.name}</h3>
-                      {g.number && <span className="rounded-pill bg-surface-sand px-3 py-1 text-xs font-semibold text-tag-text">No. {g.number}</span>}
+                      {g.number && (
+                        <span className="rounded-pill bg-surface-sand px-3 py-1 text-xs font-semibold text-tag-text">No. {g.number}</span>
+                      )}
                     </div>
                     <ul className="mt-3 grid gap-x-6 gap-y-1.5 text-sm text-text-secondary sm:grid-cols-2">
                       {g.pangkalan && (
@@ -151,7 +157,10 @@ export default async function KwarranPage({ params }: Params) {
           </aside>
         </div>
 
-        <Link href="/wilayah" className="mt-12 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+        <Link
+          href="/wilayah"
+          className="mt-12 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Semua Kwarran
         </Link>

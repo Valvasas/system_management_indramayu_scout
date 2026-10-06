@@ -17,12 +17,21 @@ describe('CSV', () => {
   });
 
   it('mendeteksi pemisah koma maupun titik koma', () => {
-    expect(parseCsv('a,b\n1,2')).toEqual([['a', 'b'], ['1', '2']]);
-    expect(parseCsv('a;b\n1;2')).toEqual([['a', 'b'], ['1', '2']]);
+    expect(parseCsv('a,b\n1,2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
+    expect(parseCsv('a;b\n1;2')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
   });
 
   it('membuang baris kosong dan BOM', () => {
-    expect(parseCsv('﻿a;b\r\n\r\n1;2\r\n')).toEqual([['a', 'b'], ['1', '2']]);
+    expect(parseCsv('﻿a;b\r\n\r\n1;2\r\n')).toEqual([
+      ['a', 'b'],
+      ['1', '2'],
+    ]);
   });
 
   it('normalizeDate menerima beberapa format dan menolak sisanya', () => {

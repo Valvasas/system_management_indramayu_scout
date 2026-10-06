@@ -31,7 +31,13 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
   const where = and(...conds);
   const db = await getDb();
   const [rows, [{ total }]] = await Promise.all([
-    db.select().from(schema.auditLogs).where(where).orderBy(desc(schema.auditLogs.at)).limit(PAGE).offset((page - 1) * PAGE),
+    db
+      .select()
+      .from(schema.auditLogs)
+      .where(where)
+      .orderBy(desc(schema.auditLogs.at))
+      .limit(PAGE)
+      .offset((page - 1) * PAGE),
     db.select({ total: count() }).from(schema.auditLogs).where(where),
   ]);
 
@@ -42,13 +48,25 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
         description="Catatan otomatis: siapa melakukan apa dan kapan. Tidak dapat diubah atau dihapus dari portal."
       />
       <Panel bodyClassName="p-0 sm:p-0">
-        <form role="search" method="get" action="/dashboard/log" className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12">
+        <form
+          role="search"
+          method="get"
+          action="/dashboard/log"
+          className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12"
+        >
           <div className="relative md:col-span-6">
             <label htmlFor="cari-log" className="sr-only">
               Cari pelaku atau aktivitas
             </label>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-            <Input id="cari-log" name="q" type="search" defaultValue={q} placeholder="Cari pelaku atau aktivitas, mis. ekspor" className="pl-9" />
+            <Input
+              id="cari-log"
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder="Cari pelaku atau aktivitas, mis. ekspor"
+              className="pl-9"
+            />
           </div>
           <div className="md:col-span-4">
             <label htmlFor="f-rentang" className="sr-only">
@@ -72,10 +90,18 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
               <caption className="sr-only">Log aktivitas</caption>
               <thead>
                 <tr className="border-b border-border-subtle">
-                  <th scope="col" className={th}>Waktu</th>
-                  <th scope="col" className={th}>Pelaku</th>
-                  <th scope="col" className={th}>Aktivitas</th>
-                  <th scope="col" className={th}>IP</th>
+                  <th scope="col" className={th}>
+                    Waktu
+                  </th>
+                  <th scope="col" className={th}>
+                    Pelaku
+                  </th>
+                  <th scope="col" className={th}>
+                    Aktivitas
+                  </th>
+                  <th scope="col" className={th}>
+                    IP
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -97,7 +123,13 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
               </tbody>
             </table>
           </TableWrap>
-          <Pagination page={page} pageCount={Math.max(1, Math.ceil(total / PAGE))} total={total} unit="catatan" hrefFor={(p) => withQuery('/dashboard/log', { q, rentang }, { page: p })} />
+          <Pagination
+            page={page}
+            pageCount={Math.max(1, Math.ceil(total / PAGE))}
+            total={total}
+            unit="catatan"
+            hrefFor={(p) => withQuery('/dashboard/log', { q, rentang }, { page: p })}
+          />
         </div>
       </Panel>
     </>

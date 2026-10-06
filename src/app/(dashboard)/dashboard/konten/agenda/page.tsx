@@ -35,18 +35,32 @@ export default async function AgendaAdminPage({ searchParams = {} }: { searchPar
 
       <Panel>
         {rows.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="Belum ada agenda" description="Tambahkan kegiatan pertama agar tampil di halaman Agenda." />
+          <EmptyState
+            icon={CalendarDays}
+            title="Belum ada agenda"
+            description="Tambahkan kegiatan pertama agar tampil di halaman Agenda."
+          />
         ) : (
           <TableWrap label="Daftar agenda">
             <table className="w-full min-w-[44rem] text-base">
               <caption className="sr-only">Daftar agenda, kegiatan terjauh di atas</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Kegiatan</th>
-                  <th scope="col" className={th}>Waktu</th>
-                  <th scope="col" className={th}>Status</th>
-                  <th scope="col" className={th}>Pendaftaran</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Kegiatan
+                  </th>
+                  <th scope="col" className={th}>
+                    Waktu
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
+                  <th scope="col" className={th}>
+                    Pendaftaran
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -71,7 +85,12 @@ export default async function AgendaAdminPage({ searchParams = {} }: { searchPar
                       <span className="block text-sm text-text-secondary">{totals.get(e.id) ?? 0} pendaftar</span>
                     </td>
                     <td className={td}>
-                      <ActionButton action={deleteEventAction.bind(null, e.id)} variant="ghost" confirm={`Hapus agenda "${e.title}"?`} label={`Hapus agenda ${e.title}`}>
+                      <ActionButton
+                        action={deleteEventAction.bind(null, e.id)}
+                        variant="ghost"
+                        confirm={`Hapus agenda "${e.title}"?`}
+                        label={`Hapus agenda ${e.title}`}
+                      >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Hapus
                       </ActionButton>

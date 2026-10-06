@@ -20,9 +20,13 @@ const NewsSchema = z.object({
   author: requiredText('Penulis', 120),
   status: z.enum(publishStatusEnum.enumValues),
   publishedAt: optionalIsoDate,
-  tags: z
-    .union([z.string(), z.undefined()])
-    .transform((s) => (s ?? '').split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10)),
+  tags: z.union([z.string(), z.undefined()]).transform((s) =>
+    (s ?? '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 10),
+  ),
   removeCover: checkbox,
 });
 
@@ -66,7 +70,10 @@ export async function saveNewsAction(id: string | null, _prev: FormState, formDa
     await db.update(schema.news).set(values).where(eq(schema.news.id, existing.id));
   } else {
     const slug = await uniqueSlug(schema.news, schema.news.slug, schema.news.id, v.title);
-    const [row] = await db.insert(schema.news).values({ ...values, slug, createdById: user.id }).returning({ id: schema.news.id });
+    const [row] = await db
+      .insert(schema.news)
+      .values({ ...values, slug, createdById: user.id })
+      .returning({ id: schema.news.id });
     newsId = row.id;
   }
 
@@ -109,7 +116,12 @@ export async function returnNewsAction(id: string, _prev: FormState, formData: F
     .where(eq(schema.news.id, id))
     .returning({ title: schema.news.title });
   if (!row) return fail('Berita tidak ditemukan.');
-  await audit(user, { action: 'content.return', summary: `Mengembalikan berita "${row.title}" ke penulis`, entityType: 'news', entityId: id });
+  await audit(user, {
+    action: 'content.return',
+    summary: `Mengembalikan berita "${row.title}" ke penulis`,
+    entityType: 'news',
+    entityId: id,
+  });
   revalidatePath('/dashboard/konten/berita');
   redirect('/dashboard/konten/berita?dikembalikan=1');
 }

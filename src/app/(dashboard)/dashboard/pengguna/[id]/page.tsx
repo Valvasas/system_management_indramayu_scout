@@ -39,7 +39,11 @@ export default async function AkunPenggunaPage({ params }: { params: { id: strin
     <>
       <PortalHeader
         title={isNew ? 'Buat akun staf' : target!.name}
-        description={isNew ? 'Untuk pengurus Kwarcab, admin website, staf Kwarran, atau pembina/staf gudep.' : `${ROLE_LABELS[target!.role]} · ${target!.username}`}
+        description={
+          isNew
+            ? 'Untuk pengurus Kwarcab, admin website, staf Kwarran, atau pembina/staf gudep.'
+            : `${ROLE_LABELS[target!.role]} · ${target!.username}`
+        }
         back={{ href: '/dashboard/pengguna', label: 'Kembali ke daftar akun' }}
       />
       {locked ? (

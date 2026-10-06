@@ -14,11 +14,20 @@ describe('iCalendar', () => {
     const long = 'DESCRIPTION:' + 'é'.repeat(80);
     const folded = foldIcsLine(long);
     for (const part of folded.split('\r\n')) expect(new TextEncoder().encode(part).length).toBeLessThanOrEqual(75);
-    expect(folded.split('\r\n').map((p, i) => (i ? p.slice(1) : p)).join('')).toBe(long);
+    expect(
+      folded
+        .split('\r\n')
+        .map((p, i) => (i ? p.slice(1) : p))
+        .join(''),
+    ).toBe(long);
   });
 
   it('membangun VEVENT lengkap dengan durasi bawaan 2 jam', () => {
-    const ics = buildIcs([{ uid: 'a@x', title: 'Kemah', start: new Date('2026-10-17T01:00:00Z') }], 'Tes', new Date('2026-10-01T00:00:00Z'));
+    const ics = buildIcs(
+      [{ uid: 'a@x', title: 'Kemah', start: new Date('2026-10-17T01:00:00Z') }],
+      'Tes',
+      new Date('2026-10-01T00:00:00Z'),
+    );
     expect(ics).toContain('BEGIN:VEVENT');
     expect(ics).toContain('DTSTART:20261017T010000Z');
     expect(ics).toContain('DTEND:20261017T030000Z');

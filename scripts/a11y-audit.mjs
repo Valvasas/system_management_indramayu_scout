@@ -18,17 +18,63 @@ const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const PASSWORD = process.env.DEMO_PASSWORD ?? 'demo-pramuka-2026';
 
 const PUBLIC = [
-  '/', '/tentang', '/struktur-organisasi', '/golongan', '/golongan/penggalang', '/bergabung', '/wilayah', '/wilayah/indramayu',
-  '/berita', '/berita/pelatihan-kmd', '/agenda', '/agenda/perkemahan-bakti-penggalang', '/galeri', '/galeri/hari-pramuka', '/prestasi',
-  '/dokumen', '/kontak', '/cari?q=kemah', '/kebijakan-privasi', '/aksesibilitas', '/masuk', '/masuk/lupa-sandi', '/masuk/kode', '/halaman-tidak-ada',
+  '/',
+  '/tentang',
+  '/struktur-organisasi',
+  '/golongan',
+  '/golongan/penggalang',
+  '/bergabung',
+  '/wilayah',
+  '/wilayah/indramayu',
+  '/berita',
+  '/berita/pelatihan-kmd',
+  '/agenda',
+  '/agenda/perkemahan-bakti-penggalang',
+  '/galeri',
+  '/galeri/hari-pramuka',
+  '/prestasi',
+  '/dokumen',
+  '/kontak',
+  '/cari?q=kemah',
+  '/kebijakan-privasi',
+  '/aksesibilitas',
+  '/masuk',
+  '/masuk/lupa-sandi',
+  '/masuk/kode',
+  '/halaman-tidak-ada',
 ];
 const ADMIN = [
-  '/dashboard', '/dashboard/konten', '/dashboard/konten/berita', '/dashboard/konten/berita/baru', '/dashboard/konten/agenda', '/dashboard/konten/agenda/baru',
-  '/dashboard/konten/galeri', '/dashboard/konten/galeri/baru', '/dashboard/konten/dokumen', '/dashboard/konten/dokumen/baru', '/dashboard/konten/pengurus',
-  '/dashboard/konten/pengurus/baru', '/dashboard/konten/prestasi', '/dashboard/konten/prestasi/baru', '/dashboard/anggota', '/dashboard/anggota/baru',
-  '/dashboard/anggota/impor', '/dashboard/gudep', '/dashboard/gudep/baru', '/dashboard/kwarran', '/dashboard/pengguna', '/dashboard/pengumuman',
-  '/dashboard/pesan', '/dashboard/log', '/dashboard/pengaturan', '/dashboard/akun', '/dashboard/mutasi', '/dashboard/pendaftaran',
-  '/dashboard/akses', '/dashboard/kontribusi', '/dashboard/kontribusi/baru',
+  '/dashboard',
+  '/dashboard/konten',
+  '/dashboard/konten/berita',
+  '/dashboard/konten/berita/baru',
+  '/dashboard/konten/agenda',
+  '/dashboard/konten/agenda/baru',
+  '/dashboard/konten/galeri',
+  '/dashboard/konten/galeri/baru',
+  '/dashboard/konten/dokumen',
+  '/dashboard/konten/dokumen/baru',
+  '/dashboard/konten/pengurus',
+  '/dashboard/konten/pengurus/baru',
+  '/dashboard/konten/prestasi',
+  '/dashboard/konten/prestasi/baru',
+  '/dashboard/anggota',
+  '/dashboard/anggota/baru',
+  '/dashboard/anggota/impor',
+  '/dashboard/gudep',
+  '/dashboard/gudep/baru',
+  '/dashboard/kwarran',
+  '/dashboard/pengguna',
+  '/dashboard/pengumuman',
+  '/dashboard/pesan',
+  '/dashboard/log',
+  '/dashboard/pengaturan',
+  '/dashboard/akun',
+  '/dashboard/mutasi',
+  '/dashboard/pendaftaran',
+  '/dashboard/akses',
+  '/dashboard/kontribusi',
+  '/dashboard/kontribusi/baru',
 ];
 const PESERTA = ['/dashboard', '/dashboard/kegiatan', '/dashboard/profil', '/dashboard/akun'];
 
@@ -53,7 +99,13 @@ async function scan(page, path, width, findings) {
   await page.evaluate(axeSource);
   const violations = await page.evaluate(async () => {
     const r = await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } });
-    return r.violations.map((v) => ({ id: v.id, impact: v.impact, count: v.nodes.length, target: v.nodes[0].target.join(' '), html: v.nodes[0].html.slice(0, 140) }));
+    return r.violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      count: v.nodes.length,
+      target: v.nodes[0].target.join(' '),
+      html: v.nodes[0].html.slice(0, 140),
+    }));
   });
   for (const v of violations) findings.push(`[${width}px] ${path} :: ${v.id} (${v.impact}) x${v.count}\n    ${v.target}\n    ${v.html}`);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -63,7 +115,11 @@ async function scan(page, path, width, findings) {
 const browser = await chromium.launch();
 const findings = [];
 let pages = 0;
-for (const [user, paths] of [[null, PUBLIC], ['admin', ADMIN], ['peserta.dimas', PESERTA]]) {
+for (const [user, paths] of [
+  [null, PUBLIC],
+  ['admin', ADMIN],
+  ['peserta.dimas', PESERTA],
+]) {
   for (const width of [1280, 390]) {
     const context = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 800 } });
     const page = await context.newPage();

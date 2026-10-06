@@ -88,11 +88,7 @@ export interface ServerEnv extends ParsedServer {
 export class EnvError extends Error {
   readonly issues: { variable: string; rule: string }[];
   constructor(issues: { variable: string; rule: string }[]) {
-    super(
-      `Konfigurasi environment tidak valid (lihat .env.example):\n${issues
-        .map((i) => `  - ${i.variable}: ${i.rule}`)
-        .join('\n')}`,
-    );
+    super(`Konfigurasi environment tidak valid (lihat .env.example):\n${issues.map((i) => `  - ${i.variable}: ${i.rule}`).join('\n')}`);
     this.name = 'EnvError';
     this.issues = issues;
   }
@@ -106,7 +102,7 @@ function toEnvError(error: z.ZodError): EnvError {
     if (seen.has(variable)) continue;
     seen.add(variable);
     // Pesan custom ditulis sendiri (tanpa nilai). Selain itu pakai RULES, bukan pesan Zod.
-    const rule = issue.code === z.ZodIssueCode.custom ? issue.message : RULES[variable] ?? 'tidak valid';
+    const rule = issue.code === z.ZodIssueCode.custom ? issue.message : (RULES[variable] ?? 'tidak valid');
     issues.push({ variable, rule });
   }
   return new EnvError(issues);

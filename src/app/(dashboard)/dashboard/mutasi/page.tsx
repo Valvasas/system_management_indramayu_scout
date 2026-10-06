@@ -48,7 +48,12 @@ export default async function MutasiPage({ searchParams = {} }: { searchParams?:
         {canDecide && (
           <Panel title={`Menunggu keputusan Anda (${awaiting.length})`} className="lg:col-span-2">
             {awaiting.length === 0 ? (
-              <EmptyState variant="icon" icon={ArrowLeftRight} title="Tidak ada pengajuan masuk" description="Pengajuan mutasi ke gudep di wilayah Anda akan muncul di sini." />
+              <EmptyState
+                variant="icon"
+                icon={ArrowLeftRight}
+                title="Tidak ada pengajuan masuk"
+                description="Pengajuan mutasi ke gudep di wilayah Anda akan muncul di sini."
+              />
             ) : (
               <ul className="grid gap-4 md:grid-cols-2">
                 {awaiting.map(({ t, memberName, golongan, fromName, toName }) => (
@@ -86,7 +91,12 @@ export default async function MutasiPage({ searchParams = {} }: { searchParams?:
                     <Route from={fromName} to={toName} />
                     <p className="mt-1 text-xs text-text-muted">{formatDate(t.createdAt.toISOString())}</p>
                   </div>
-                  <ActionButton action={cancelTransferAction.bind(null, t.id)} variant="ghost" confirm={`Batalkan pengajuan mutasi ${memberName}?`} label={`Batalkan mutasi ${memberName}`}>
+                  <ActionButton
+                    action={cancelTransferAction.bind(null, t.id)}
+                    variant="ghost"
+                    confirm={`Batalkan pengajuan mutasi ${memberName}?`}
+                    label={`Batalkan mutasi ${memberName}`}
+                  >
                     Batalkan
                   </ActionButton>
                 </li>

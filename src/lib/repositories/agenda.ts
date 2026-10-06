@@ -5,8 +5,7 @@ import type { AgendaItem, AgendaStatus } from '@/types';
 
 export const AGENDA_STATUSES: AgendaStatus[] = ['UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'];
 
-export const isAgendaStatus = (v: string): v is AgendaStatus =>
-  (AGENDA_STATUSES as string[]).includes(v);
+export const isAgendaStatus = (v: string): v is AgendaStatus => (AGENDA_STATUSES as string[]).includes(v);
 
 /** Status dihitung dari tanggal, jadi tidak perlu diperbarui manual. */
 export function agendaStatusOf(e: Pick<EventRow, 'cancelled' | 'dateStart' | 'dateEnd'>, now = new Date()): AgendaStatus {
@@ -32,11 +31,7 @@ const toItem = (e: EventRow): AgendaItem => ({
 
 async function publishedEvents(): Promise<AgendaItem[]> {
   const db = await getDb();
-  const rows = await db
-    .select()
-    .from(schema.events)
-    .where(eq(schema.events.published, true))
-    .orderBy(asc(schema.events.dateStart));
+  const rows = await db.select().from(schema.events).where(eq(schema.events.published, true)).orderBy(asc(schema.events.dateStart));
   return rows.map(toItem);
 }
 

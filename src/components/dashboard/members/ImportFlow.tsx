@@ -42,7 +42,10 @@ export const ImportFlow: React.FC = () => {
   return (
     <div className="space-y-6">
       {state.message && (
-        <p role={state.error ? 'alert' : 'status'} className="flex items-start gap-2 rounded-lg border border-status-danger-border bg-status-danger-surface px-4 py-3 text-sm font-medium text-status-danger-text">
+        <p
+          role={state.error ? 'alert' : 'status'}
+          className="flex items-start gap-2 rounded-lg border border-status-danger-border bg-status-danger-surface px-4 py-3 text-sm font-medium text-status-danger-text"
+        >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {state.message}
         </p>
@@ -91,14 +94,27 @@ export const ImportFlow: React.FC = () => {
             </div>
           </div>
 
-          <div className="max-h-[28rem] overflow-auto rounded-2xl border border-border-subtle bg-surface-base" role="region" aria-label="Pratinjau baris impor" tabIndex={0}>
+          <div
+            className="max-h-[28rem] overflow-auto rounded-2xl border border-border-subtle bg-surface-base"
+            role="region"
+            aria-label="Pratinjau baris impor"
+            tabIndex={0}
+          >
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-surface-canvas">
                 <tr className="border-b border-border-subtle text-text-secondary">
-                  <th scope="col" className="px-4 py-2 font-semibold">Baris</th>
-                  <th scope="col" className="px-4 py-2 font-semibold">Nama</th>
-                  <th scope="col" className="px-4 py-2 font-semibold">Gudep</th>
-                  <th scope="col" className="px-4 py-2 font-semibold">Hasil pemeriksaan</th>
+                  <th scope="col" className="px-4 py-2 font-semibold">
+                    Baris
+                  </th>
+                  <th scope="col" className="px-4 py-2 font-semibold">
+                    Nama
+                  </th>
+                  <th scope="col" className="px-4 py-2 font-semibold">
+                    Gudep
+                  </th>
+                  <th scope="col" className="px-4 py-2 font-semibold">
+                    Hasil pemeriksaan
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -110,7 +126,9 @@ export const ImportFlow: React.FC = () => {
                     <td className="px-4 py-2">
                       {!r.ok ? (
                         <>
-                          <Badge tone="danger" icon={AlertCircle}>Perlu diperbaiki</Badge>
+                          <Badge tone="danger" icon={AlertCircle}>
+                            Perlu diperbaiki
+                          </Badge>
                           <ul className="mt-1 list-disc pl-5 text-status-danger-text">
                             {r.problems.map((p) => (
                               <li key={p}>{p}</li>
@@ -118,9 +136,13 @@ export const ImportFlow: React.FC = () => {
                           </ul>
                         </>
                       ) : r.duplicate ? (
-                        <Badge tone="warning" icon={Copy}>Kemungkinan ganda</Badge>
+                        <Badge tone="warning" icon={Copy}>
+                          Kemungkinan ganda
+                        </Badge>
                       ) : (
-                        <Badge tone="success" icon={CheckCircle2}>Siap</Badge>
+                        <Badge tone="success" icon={CheckCircle2}>
+                          Siap
+                        </Badge>
                       )}
                     </td>
                   </tr>
@@ -140,13 +162,16 @@ export const ImportFlow: React.FC = () => {
                 </Submit>
               </form>
             ) : null}
-            <Link href="/dashboard/anggota/impor" className="inline-flex min-h-touch items-center rounded-lg px-3 font-semibold text-text-accent hover:underline">
+            <Link
+              href="/dashboard/anggota/impor"
+              className="inline-flex min-h-touch items-center rounded-lg px-3 font-semibold text-text-accent hover:underline"
+            >
               Unggah berkas lain
             </Link>
           </div>
           <p className="text-sm text-text-secondary">
-            Baris yang dilewati tidak disimpan. Perbaiki di Excel lalu impor ulang, atau tambahkan satu per satu. Data ganda perlu diperiksa manual
-            lewat menu Tambah anggota.
+            Baris yang dilewati tidak disimpan. Perbaiki di Excel lalu impor ulang, atau tambahkan satu per satu. Data ganda perlu diperiksa
+            manual lewat menu Tambah anggota.
           </p>
         </>
       )}

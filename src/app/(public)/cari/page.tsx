@@ -55,8 +55,18 @@ export default async function CariPage({ searchParams }: { searchParams?: { q?: 
 
   let groups: { id: string; label: string; icon: LucideIcon; hits: Hit[] }[] = [];
   if (tokens.length) {
-    const [news, agenda, docs, albums, kwarran] = await Promise.all([getNews(), getAgenda(), getDocuments(), getGalleryAlbums(), getKwarranDirectory()]);
-    const rank = (hits: Hit[]) => hits.filter((h) => h.score > 0).sort((a, b) => b.score - a.score).slice(0, 8);
+    const [news, agenda, docs, albums, kwarran] = await Promise.all([
+      getNews(),
+      getAgenda(),
+      getDocuments(),
+      getGalleryAlbums(),
+      getKwarranDirectory(),
+    ]);
+    const rank = (hits: Hit[]) =>
+      hits
+        .filter((h) => h.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
     groups = [
       {
         id: 'berita',
@@ -124,7 +134,11 @@ export default async function CariPage({ searchParams }: { searchParams?: { q?: 
             href: `/golongan/${g.id}`,
             meta: g.age,
             text: g.summary,
-            score: scoreText(tokens, `${g.name} golongan`, `${g.summary} ${g.about.join(' ')} ${g.activities.join(' ')} ${g.units.map((u) => u.name).join(' ')}`),
+            score: scoreText(
+              tokens,
+              `${g.name} golongan`,
+              `${g.summary} ${g.about.join(' ')} ${g.activities.join(' ')} ${g.units.map((u) => u.name).join(' ')}`,
+            ),
           })),
           ...kwarran.map((k) => ({
             title: `Kwarran ${k.name}`,
@@ -147,7 +161,12 @@ export default async function CariPage({ searchParams }: { searchParams?: { q?: 
 
   return (
     <>
-      <PageHero eyebrow="Pencarian" title={q ? `Hasil untuk “${q}”` : 'Cari di situs'} scene="forest" top={<Breadcrumbs items={[{ label: 'Cari' }]} />}>
+      <PageHero
+        eyebrow="Pencarian"
+        title={q ? `Hasil untuk “${q}”` : 'Cari di situs'}
+        scene="forest"
+        top={<Breadcrumbs items={[{ label: 'Cari' }]} />}
+      >
         <form action="/cari" role="search" className="relative max-w-xl">
           <label htmlFor="cari-q" className="sr-only">
             Kata kunci
@@ -172,7 +191,9 @@ export default async function CariPage({ searchParams }: { searchParams?: { q?: 
 
       <div className="civic-container pb-16 pt-6 sm:pb-24">
         {!q ? (
-          <p className="text-text-secondary">Ketik kata kunci untuk mencari di seluruh berita, agenda, dokumen, album, golongan, dan wilayah.</p>
+          <p className="text-text-secondary">
+            Ketik kata kunci untuk mencari di seluruh berita, agenda, dokumen, album, golongan, dan wilayah.
+          </p>
         ) : total === 0 ? (
           <EmptyState
             icon={SearchX}
@@ -189,7 +210,10 @@ export default async function CariPage({ searchParams }: { searchParams?: { q?: 
               <ul className="mt-3 flex flex-wrap gap-2 lg:flex-col lg:gap-1">
                 {groups.map((g) => (
                   <li key={g.id}>
-                    <a href={`#hasil-${g.id}`} className="inline-flex min-h-touch items-center gap-2 rounded-pill px-3 text-sm font-medium text-text-secondary hover:bg-surface-base hover:text-text-primary">
+                    <a
+                      href={`#hasil-${g.id}`}
+                      className="inline-flex min-h-touch items-center gap-2 rounded-pill px-3 text-sm font-medium text-text-secondary hover:bg-surface-base hover:text-text-primary"
+                    >
                       <g.icon className="h-4 w-4" aria-hidden="true" />
                       {g.label}
                       <span className="rounded-pill bg-surface-subtle px-2 text-xs tabular-nums">{g.hits.length}</span>

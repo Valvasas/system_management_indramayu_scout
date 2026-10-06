@@ -29,12 +29,21 @@ export async function cancelRegistrationAction(eventId: string): Promise<void> {
   const user = await requirePermission('self.portal');
   if (!user.memberId) redirect('/dashboard/kegiatan');
   const db = await getDb();
-  const [event] = await db.select({ title: schema.events.title, dateStart: schema.events.dateStart }).from(schema.events).where(eq(schema.events.id, eventId)).limit(1);
+  const [event] = await db
+    .select({ title: schema.events.title, dateStart: schema.events.dateStart })
+    .from(schema.events)
+    .where(eq(schema.events.id, eventId))
+    .limit(1);
   if (!event || event.dateStart < new Date()) redirect('/dashboard/kegiatan?gagal=lewat');
   await db
     .delete(schema.eventRegistrations)
     .where(and(eq(schema.eventRegistrations.eventId, eventId), eq(schema.eventRegistrations.memberId, user.memberId)));
-  await audit(user, { action: 'event.unregister', summary: `Membatalkan pendaftaran "${event.title}"`, entityType: 'event', entityId: eventId });
+  await audit(user, {
+    action: 'event.unregister',
+    summary: `Membatalkan pendaftaran "${event.title}"`,
+    entityType: 'event',
+    entityId: eventId,
+  });
   revalidatePath('/dashboard/kegiatan');
   redirect('/dashboard/kegiatan?batal=1');
 }

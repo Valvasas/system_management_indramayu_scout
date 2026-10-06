@@ -17,9 +17,7 @@ export default async function AkunPage() {
     <>
       <PortalHeader title="Akun saya" description="Informasi akun dan penggantian kata sandi." />
       {user.mustChangePassword && (
-        <Notice tone="warning">
-          Anda masuk dengan kata sandi sementara. Buat kata sandi baru terlebih dahulu untuk memakai portal.
-        </Notice>
+        <Notice tone="warning">Anda masuk dengan kata sandi sementara. Buat kata sandi baru terlebih dahulu untuk memakai portal.</Notice>
       )}
 
       <div className="grid gap-6 lg:grid-cols-5">

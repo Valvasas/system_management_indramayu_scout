@@ -26,7 +26,10 @@ export default async function PesanPage({ searchParams }: { searchParams?: { dih
       ) : (
         <ul className="space-y-4">
           {rows.map((m) => (
-            <li key={m.id} className={`rounded-lg border bg-surface-base p-5 shadow-sm ${m.readAt ? 'border-border-subtle' : 'border-border-brand'}`}>
+            <li
+              key={m.id}
+              className={`rounded-lg border bg-surface-base p-5 shadow-sm ${m.readAt ? 'border-border-subtle' : 'border-border-brand'}`}
+            >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-text-primary">
@@ -37,7 +40,11 @@ export default async function PesanPage({ searchParams }: { searchParams?: { dih
                     {formatDate(m.createdAt.toISOString())}, {formatTime(m.createdAt.toISOString())}
                   </p>
                 </div>
-                {!m.readAt && <Badge tone="info" icon={Mail}>Belum dibaca</Badge>}
+                {!m.readAt && (
+                  <Badge tone="info" icon={Mail}>
+                    Belum dibaca
+                  </Badge>
+                )}
               </div>
               <p className="mt-3 whitespace-pre-line text-text-primary">{m.message}</p>
               <div className="mt-4 flex flex-wrap gap-2">

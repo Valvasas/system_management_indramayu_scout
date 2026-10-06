@@ -26,14 +26,7 @@ import {
 /* Enum                                                                 */
 /* ------------------------------------------------------------------ */
 
-export const roleEnum = pgEnum('role', [
-  'SUPER_ADMIN',
-  'ADMIN_KWARCAB',
-  'ADMIN_WEBSITE',
-  'STAFF_KWARRAN',
-  'STAFF_GUDEP',
-  'PESERTA',
-]);
+export const roleEnum = pgEnum('role', ['SUPER_ADMIN', 'ADMIN_KWARCAB', 'ADMIN_WEBSITE', 'STAFF_KWARRAN', 'STAFF_GUDEP', 'PESERTA']);
 
 export const golonganEnum = pgEnum('golongan', ['SIAGA', 'PENGGALANG', 'PENEGAK', 'PANDEGA', 'DEWASA']);
 
@@ -287,7 +280,10 @@ export const news = pgTable(
     content: text('content').notNull().default(''),
     coverImage: text('cover_image'),
     author: text('author').notNull(),
-    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    tags: text('tags')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     status: publishStatusEnum('status').notNull().default('DRAFT'),
     /** Catatan editor saat berita dikembalikan ke kontributor. */
     reviewNote: text('review_note'),

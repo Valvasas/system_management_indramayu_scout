@@ -34,7 +34,9 @@ export default function LupaSandiPage() {
               <ol className="mt-5 space-y-3">
                 {steps.map((s, i) => (
                   <li key={s} className="flex gap-3 text-sm text-text-primary">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-pill bg-action-primary text-xs font-semibold text-text-on-brand">{i + 1}</span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-pill bg-action-primary text-xs font-semibold text-text-on-brand">
+                      {i + 1}
+                    </span>
                     <span className="pt-1">{s}</span>
                   </li>
                 ))}
@@ -48,18 +50,30 @@ export default function LupaSandiPage() {
             <h2 className="font-display text-2xl font-semibold text-text-primary">Kirim permintaan</h2>
             <ActionForm action={requestPasswordResetAction} resetOnSuccess aria-label="Formulir lupa kata sandi" className="mt-6">
               <TextField name="username" label="Nama pengguna" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
-              <TextAreaField name="note" label="Keterangan (opsional)" rows={3} maxLength={200} hint="Mis. nama gudep Anda, supaya pembina cepat mengenali." />
+              <TextAreaField
+                name="note"
+                label="Keterangan (opsional)"
+                rows={3}
+                maxLength={200}
+                hint="Mis. nama gudep Anda, supaya pembina cepat mengenali."
+              />
               <SubmitButton className="w-full" pendingLabel="Mengirim">
                 <Send className="h-4 w-4" aria-hidden="true" />
                 Kirim permintaan
               </SubmitButton>
             </ActionForm>
             <div className="mt-6 flex flex-col gap-2 text-sm sm:flex-row sm:justify-between">
-              <Link href="/masuk" className="inline-flex min-h-touch items-center gap-1.5 rounded-md font-semibold text-text-accent hover:underline">
+              <Link
+                href="/masuk"
+                className="inline-flex min-h-touch items-center gap-1.5 rounded-md font-semibold text-text-accent hover:underline"
+              >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 Kembali ke halaman masuk
               </Link>
-              <Link href="/masuk/kode" className="inline-flex min-h-touch items-center rounded-md font-semibold text-text-accent hover:underline">
+              <Link
+                href="/masuk/kode"
+                className="inline-flex min-h-touch items-center rounded-md font-semibold text-text-accent hover:underline"
+              >
                 Sudah punya kode akses?
               </Link>
             </div>

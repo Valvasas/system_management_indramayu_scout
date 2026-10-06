@@ -19,14 +19,24 @@ export default async function PrestasiEditorPage({ params }: { params: { id: str
 
   return (
     <>
-      <PortalHeader title={row ? 'Ubah prestasi' : 'Tambah prestasi'} back={{ href: '/dashboard/konten/prestasi', label: 'Daftar prestasi' }} />
+      <PortalHeader
+        title={row ? 'Ubah prestasi' : 'Tambah prestasi'}
+        back={{ href: '/dashboard/konten/prestasi', label: 'Daftar prestasi' }}
+      />
       <div className="max-w-3xl">
         <AchievementForm
           action={saveAchievementAction.bind(null, id)}
           levels={ACHIEVEMENT_LEVEL_OPTIONS}
           defaults={
             row
-              ? { title: row.title, level: row.level, year: row.year, recipient: row.recipient, description: row.description, published: row.published }
+              ? {
+                  title: row.title,
+                  level: row.level,
+                  year: row.year,
+                  recipient: row.recipient,
+                  description: row.description,
+                  published: row.published,
+                }
               : undefined
           }
         />

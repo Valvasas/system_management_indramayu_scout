@@ -32,7 +32,11 @@ export async function canManageAccess(actor: SessionUser, target: Pick<UserRow, 
     let gudepId = target.gudepId;
     if (target.memberId) {
       const db = await getDb();
-      const [m] = await db.select({ gudepId: schema.members.gudepId }).from(schema.members).where(eq(schema.members.id, target.memberId)).limit(1);
+      const [m] = await db
+        .select({ gudepId: schema.members.gudepId })
+        .from(schema.members)
+        .where(eq(schema.members.id, target.memberId))
+        .limit(1);
       gudepId = m?.gudepId ?? gudepId;
     }
     return gudepId ? canAccessGudep(actor, gudepId) : can(actor, 'users.manage');
@@ -54,7 +58,9 @@ export async function issueAccessCode(actor: SessionUser, target: Pick<UserRow, 
     .update(schema.accessCodes)
     .set({ usedAt: new Date() })
     .where(and(eq(schema.accessCodes.userId, target.id), isNull(schema.accessCodes.usedAt)));
-  await db.insert(schema.accessCodes).values({ userId: target.id, codeHash: hashAccessCode(code), purpose, expiresAt, createdById: actor.id });
+  await db
+    .insert(schema.accessCodes)
+    .values({ userId: target.id, codeHash: hashAccessCode(code), purpose, expiresAt, createdById: actor.id });
   await db
     .update(schema.passwordResetRequests)
     .set({ status: 'RESOLVED', resolvedAt: new Date(), resolvedById: actor.id })
@@ -113,7 +119,16 @@ export async function openResetRequestsFor(actor: SessionUser): Promise<ResetReq
   const out: ResetRequestRow[] = [];
   for (const r of rows) {
     if (await canManageAccess(actor, r.user)) {
-      out.push({ id: r.id, createdAt: r.createdAt, note: r.note, userId: r.user.id, username: r.user.username, name: r.user.name, role: r.user.role, gudepName: r.gudepName });
+      out.push({
+        id: r.id,
+        createdAt: r.createdAt,
+        note: r.note,
+        userId: r.user.id,
+        username: r.user.username,
+        name: r.user.name,
+        role: r.user.role,
+        gudepName: r.gudepName,
+      });
     }
   }
   return out;

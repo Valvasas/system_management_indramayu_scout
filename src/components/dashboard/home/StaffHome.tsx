@@ -1,7 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { count, desc, eq, isNull } from 'drizzle-orm';
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock, FileEdit, Inbox, MapPinOff, Megaphone, Upload, UserPlus, type LucideIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  FileEdit,
+  Inbox,
+  MapPinOff,
+  Megaphone,
+  Upload,
+  UserPlus,
+  type LucideIcon,
+} from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { ButtonLink } from '@/components/ui/Button';
 import { PortalWelcome, Panel } from '@/components/dashboard/ui';
@@ -27,28 +39,58 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
   const counts = can(user, 'members.read') ? await memberStatusCounts(user) : null;
   if (counts) {
     if (can(user, 'members.verify') && counts.PENDING)
-      tasks.push({ count: counts.PENDING, label: 'Data anggota menunggu verifikasi', hint: 'Periksa lalu setujui atau kembalikan.', href: '/dashboard/anggota?status=PENDING', icon: Clock });
+      tasks.push({
+        count: counts.PENDING,
+        label: 'Data anggota menunggu verifikasi',
+        hint: 'Periksa lalu setujui atau kembalikan.',
+        href: '/dashboard/anggota?status=PENDING',
+        icon: Clock,
+      });
     if (counts.NEEDS_FIX)
-      tasks.push({ count: counts.NEEDS_FIX, label: 'Data dikembalikan untuk diperbaiki', hint: 'Lihat catatan verifikator, perbaiki, simpan ulang.', href: '/dashboard/anggota?status=NEEDS_FIX', icon: AlertTriangle });
+      tasks.push({
+        count: counts.NEEDS_FIX,
+        label: 'Data dikembalikan untuk diperbaiki',
+        hint: 'Lihat catatan verifikator, perbaiki, simpan ulang.',
+        href: '/dashboard/anggota?status=NEEDS_FIX',
+        icon: AlertTriangle,
+      });
   }
   const coverage = can(user, 'gudep.read') ? await gudepLocationCoverage(user) : null;
   if (coverage && coverage.total - coverage.located > 0)
-    tasks.push({ count: coverage.total - coverage.located, label: 'Gudep belum punya titik lokasi', hint: 'Tandai lokasi di peta agar mudah ditemukan.', href: '/dashboard/gudep?lokasi=tanpa', icon: MapPinOff });
+    tasks.push({
+      count: coverage.total - coverage.located,
+      label: 'Gudep belum punya titik lokasi',
+      hint: 'Tandai lokasi di peta agar mudah ditemukan.',
+      href: '/dashboard/gudep?lokasi=tanpa',
+      icon: MapPinOff,
+    });
   if (can(user, 'messages.read')) {
     const [r] = await db.select({ n: count() }).from(schema.contactMessages).where(isNull(schema.contactMessages.readAt));
-    if (r.n) tasks.push({ count: r.n, label: 'Pesan masuk belum dibaca', hint: 'Dari formulir Kontak situs publik.', href: '/dashboard/pesan', icon: Inbox });
+    if (r.n)
+      tasks.push({
+        count: r.n,
+        label: 'Pesan masuk belum dibaca',
+        hint: 'Dari formulir Kontak situs publik.',
+        href: '/dashboard/pesan',
+        icon: Inbox,
+      });
   }
   if (can(user, 'content.manage')) {
     const [r] = await db.select({ n: count() }).from(schema.news).where(eq(schema.news.status, 'DRAFT'));
-    if (r.n) tasks.push({ count: r.n, label: 'Berita masih draf', hint: 'Periksa dan terbitkan bila sudah siap.', href: '/dashboard/konten/berita', icon: FileEdit });
+    if (r.n)
+      tasks.push({
+        count: r.n,
+        label: 'Berita masih draf',
+        hint: 'Periksa dan terbitkan bila sudah siap.',
+        href: '/dashboard/konten/berita',
+        icon: FileEdit,
+      });
   }
 
   const golongan = counts ? await golonganCounts(user) : [];
   const totalActive = golongan.reduce((s, g) => s + g.n, 0);
   const news = await announcementsFor(user, 3);
-  const logs = can(user, 'audit.view')
-    ? await db.select().from(schema.auditLogs).orderBy(desc(schema.auditLogs.at)).limit(5)
-    : [];
+  const logs = can(user, 'audit.view') ? await db.select().from(schema.auditLogs).orderBy(desc(schema.auditLogs.at)).limit(5) : [];
 
   return (
     <>
@@ -57,24 +99,24 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
         subtitle="Berikut yang perlu Anda perhatikan hari ini."
         actions={
           <>
-          {can(user, 'members.create') && (
-            <ButtonLink href="/dashboard/anggota/baru">
-              <UserPlus className="h-4 w-4" aria-hidden="true" />
-              Tambah anggota
-            </ButtonLink>
-          )}
-          {can(user, 'members.import') && (
-            <ButtonLink href="/dashboard/anggota/impor" variant="outline">
-              <Upload className="h-4 w-4" aria-hidden="true" />
-              Impor dari Excel
-            </ButtonLink>
-          )}
-          {can(user, 'content.manage') && !can(user, 'members.create') && (
-            <ButtonLink href="/dashboard/konten/berita/baru">
-              <FileEdit className="h-4 w-4" aria-hidden="true" />
-              Tulis berita
-            </ButtonLink>
-          )}
+            {can(user, 'members.create') && (
+              <ButtonLink href="/dashboard/anggota/baru">
+                <UserPlus className="h-4 w-4" aria-hidden="true" />
+                Tambah anggota
+              </ButtonLink>
+            )}
+            {can(user, 'members.import') && (
+              <ButtonLink href="/dashboard/anggota/impor" variant="outline">
+                <Upload className="h-4 w-4" aria-hidden="true" />
+                Impor dari Excel
+              </ButtonLink>
+            )}
+            {can(user, 'content.manage') && !can(user, 'members.create') && (
+              <ButtonLink href="/dashboard/konten/berita/baru">
+                <FileEdit className="h-4 w-4" aria-hidden="true" />
+                Tulis berita
+              </ButtonLink>
+            )}
           </>
         }
       />
@@ -92,7 +134,10 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
         ) : (
           <ul className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {tasks.map((t) => (
-              <li key={t.label} className="group relative flex gap-4 rounded-2xl border border-border-subtle bg-surface-base p-5 shadow-sm transition-shadow hover:shadow-md">
+              <li
+                key={t.label}
+                className="group relative flex gap-4 rounded-2xl border border-border-subtle bg-surface-base p-5 shadow-sm transition-shadow hover:shadow-md"
+              >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-meadow text-text-accent">
                   <t.icon className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -116,7 +161,10 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
             title="Anggota aktif per golongan"
             description={`${totalActive.toLocaleString('id-ID')} anggota aktif dalam wilayah Anda`}
             action={
-              <Link href="/dashboard/anggota" className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline">
+              <Link
+                href="/dashboard/anggota"
+                className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline"
+              >
                 Lihat data
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -129,7 +177,10 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
                 return (
                   <li key={o.value}>
                     <div className="flex items-baseline justify-between text-sm">
-                      <Link href={`/dashboard/anggota?golongan=${o.value}&status=ACTIVE`} className="font-medium text-text-primary hover:text-text-accent hover:underline">
+                      <Link
+                        href={`/dashboard/anggota?golongan=${o.value}&status=ACTIVE`}
+                        className="font-medium text-text-primary hover:text-text-accent hover:underline"
+                      >
                         {o.label}
                       </Link>
                       <span className="text-text-secondary">{n.toLocaleString('id-ID')}</span>
@@ -148,7 +199,10 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
           title="Pengumuman terbaru"
           action={
             can(user, 'announcements.manage') ? (
-              <Link href="/dashboard/pengumuman" className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline">
+              <Link
+                href="/dashboard/pengumuman"
+                className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline"
+              >
                 Kelola
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -180,7 +234,10 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
             title="Aktivitas terbaru"
             className="lg:col-span-2"
             action={
-              <Link href="/dashboard/log" className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline">
+              <Link
+                href="/dashboard/log"
+                className="inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline"
+              >
                 Semua log
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
@@ -204,4 +261,3 @@ export async function StaffHome({ user, notice }: { user: SessionUser; notice?: 
     </>
   );
 }
-

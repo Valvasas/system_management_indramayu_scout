@@ -25,7 +25,9 @@ export function normalizeAccessCode(input: string): string {
 }
 
 export function hashAccessCode(code: string): string {
-  return createHash('sha256').update(`rp-access:${normalizeAccessCode(code)}`).digest('hex');
+  return createHash('sha256')
+    .update(`rp-access:${normalizeAccessCode(code)}`)
+    .digest('hex');
 }
 
 /** Bandingkan hash secara waktu-konstan. */

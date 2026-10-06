@@ -35,18 +35,24 @@ export interface NewsDefaults {
  * `editor` (content.manage): semua status termasuk Tayang & tanggal terbit.
  * `contributor` (content.contribute): hanya simpan draf atau kirim untuk review.
  */
-export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults?: NewsDefaults; defaultAuthor: string; mode?: 'editor' | 'contributor' }> = ({
-  action,
-  categories,
-  defaults = {},
-  defaultAuthor,
-  mode = 'editor',
-}) => (
+export const NewsForm: React.FC<{
+  action: Action;
+  categories: string[];
+  defaults?: NewsDefaults;
+  defaultAuthor: string;
+  mode?: 'editor' | 'contributor';
+}> = ({ action, categories, defaults = {}, defaultAuthor, mode = 'editor' }) => (
   <ActionForm action={action} aria-label="Formulir berita">
     <FieldGroup title="Isi berita">
       <TextField name="title" label="Judul" defaultValue={defaults.title} maxLength={180} required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField name="category" label="Kategori" defaultValue={defaults.category ?? categories[0]} options={toOptions(categories)} required />
+        <SelectField
+          name="category"
+          label="Kategori"
+          defaultValue={defaults.category ?? categories[0]}
+          options={toOptions(categories)}
+          required
+        />
         <TextField name="author" label="Penulis" defaultValue={defaults.author ?? defaultAuthor} required />
       </div>
       <TextAreaField
@@ -69,7 +75,10 @@ export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults
       <TextField name="tags" label="Tag" defaultValue={defaults.tags?.join(', ')} hint="Pisahkan dengan koma, maksimal 10." />
     </FieldGroup>
 
-    <FieldGroup title="Gambar sampul" description="Gunakan foto kegiatan tanpa wajah anak yang dapat dikenali. Metadata lokasi (GPS) otomatis dihapus.">
+    <FieldGroup
+      title="Gambar sampul"
+      description="Gunakan foto kegiatan tanpa wajah anak yang dapat dikenali. Metadata lokasi (GPS) otomatis dihapus."
+    >
       <FileField name="cover" label="Foto sampul" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG, atau WEBP, maksimal 10 MB." />
       {defaults.hasCover && <CheckboxField name="removeCover" label="Hapus sampul saat ini" />}
     </FieldGroup>
@@ -89,11 +98,20 @@ export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults
             ]}
             required
           />
-          <TextField name="publishedAt" label="Tanggal terbit" type="date" defaultValue={defaults.publishedAt} hint="Kosongkan untuk memakai hari ini." />
+          <TextField
+            name="publishedAt"
+            label="Tanggal terbit"
+            type="date"
+            defaultValue={defaults.publishedAt}
+            hint="Kosongkan untuk memakai hari ini."
+          />
         </div>
       </FieldGroup>
     ) : (
-      <FieldGroup title="Kirim" description="Berita tidak langsung tayang. Editor Kwarcab akan memeriksa, lalu menerbitkan atau mengembalikannya dengan catatan.">
+      <FieldGroup
+        title="Kirim"
+        description="Berita tidak langsung tayang. Editor Kwarcab akan memeriksa, lalu menerbitkan atau mengembalikannya dengan catatan."
+      >
         <SelectField
           name="status"
           label="Tindakan"
@@ -113,7 +131,14 @@ export const NewsForm: React.FC<{ action: Action; categories: string[]; defaults
 /** Editor mengembalikan berita kontributor dengan catatan yang jelas. */
 export const ReturnNewsForm: React.FC<{ action: Action }> = ({ action }) => (
   <ActionForm action={action} aria-label="Kembalikan berita ke penulis" className="space-y-3">
-    <TextAreaField name="reviewNote" label="Catatan untuk penulis" rows={3} maxLength={1000} hint="Sebutkan apa yang perlu diperbaiki, mis. foto menampilkan wajah anak, tanggal kegiatan kurang." required />
+    <TextAreaField
+      name="reviewNote"
+      label="Catatan untuk penulis"
+      rows={3}
+      maxLength={1000}
+      hint="Sebutkan apa yang perlu diperbaiki, mis. foto menampilkan wajah anak, tanggal kegiatan kurang."
+      required
+    />
     <SubmitButton variant="outline">Kembalikan ke penulis</SubmitButton>
   </ActionForm>
 );
@@ -138,7 +163,14 @@ export const EventForm: React.FC<{ action: Action; defaults?: EventDefaults }> =
     <FieldGroup title="Kegiatan">
       <TextField name="title" label="Nama kegiatan" defaultValue={defaults.title} maxLength={180} required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="dateStart" label="Mulai" type="datetime-local" defaultValue={defaults.dateStart} hint="Waktu Indonesia Barat (WIB)." required />
+        <TextField
+          name="dateStart"
+          label="Mulai"
+          type="datetime-local"
+          defaultValue={defaults.dateStart}
+          hint="Waktu Indonesia Barat (WIB)."
+          required
+        />
         <TextField name="dateEnd" label="Selesai" type="datetime-local" defaultValue={defaults.dateEnd} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -146,7 +178,12 @@ export const EventForm: React.FC<{ action: Action; defaults?: EventDefaults }> =
         <TextField name="organizer" label="Penyelenggara" defaultValue={defaults.organizer ?? 'Kwarcab Indramayu'} required />
       </div>
       <TextAreaField name="description" label="Deskripsi" rows={6} defaultValue={defaults.description} required />
-      <TextField name="contactPerson" label="Narahubung" defaultValue={defaults.contactPerson ?? ''} hint="Nama dan nomor yang bisa dihubungi (opsional)." />
+      <TextField
+        name="contactPerson"
+        label="Narahubung"
+        defaultValue={defaults.contactPerson ?? ''}
+        hint="Nama dan nomor yang bisa dihubungi (opsional)."
+      />
     </FieldGroup>
     <FieldGroup title="Penayangan">
       <CheckboxField name="published" label="Tayangkan di situs publik" defaultChecked={defaults.published} />
@@ -156,7 +193,12 @@ export const EventForm: React.FC<{ action: Action; defaults?: EventDefaults }> =
         description="Peserta aktif dapat mendaftar dari dasbor mereka."
         defaultChecked={defaults.registrationOpen}
       />
-      <CheckboxField name="cancelled" label="Kegiatan dibatalkan" description="Tetap tampil dengan label Dibatalkan." defaultChecked={defaults.cancelled} />
+      <CheckboxField
+        name="cancelled"
+        label="Kegiatan dibatalkan"
+        description="Tetap tampil dengan label Dibatalkan."
+        defaultChecked={defaults.cancelled}
+      />
     </FieldGroup>
     <SaveButton />
   </ActionForm>
@@ -174,13 +216,23 @@ export interface AlbumDefaults {
   published?: boolean;
 }
 
-export const AlbumForm: React.FC<{ action: Action; categories: string[]; defaults?: AlbumDefaults }> = ({ action, categories, defaults = {} }) => (
+export const AlbumForm: React.FC<{ action: Action; categories: string[]; defaults?: AlbumDefaults }> = ({
+  action,
+  categories,
+  defaults = {},
+}) => (
   <ActionForm action={action} aria-label="Formulir album">
     <FieldGroup title="Informasi album">
       <TextField name="title" label="Judul album" defaultValue={defaults.title} maxLength={180} required />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="date" label="Tanggal kegiatan" type="date" defaultValue={defaults.date} required />
-        <SelectField name="category" label="Kategori" defaultValue={defaults.category ?? categories[0]} options={toOptions(categories)} required />
+        <SelectField
+          name="category"
+          label="Kategori"
+          defaultValue={defaults.category ?? categories[0]}
+          options={toOptions(categories)}
+          required
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="location" label="Lokasi" defaultValue={defaults.location} required />
@@ -195,7 +247,14 @@ export const AlbumForm: React.FC<{ action: Action; categories: string[]; default
 
 export const PhotoUploadForm: React.FC<{ action: Action }> = ({ action }) => (
   <ActionForm action={action} resetOnSuccess aria-label="Unggah foto">
-    <FileField name="photos" label="Pilih foto" accept="image/jpeg,image/png,image/webp" multiple hint="Sampai 20 foto sekali unggah, masing-masing maksimal 10 MB." required />
+    <FileField
+      name="photos"
+      label="Pilih foto"
+      accept="image/jpeg,image/png,image/webp"
+      multiple
+      hint="Sampai 20 foto sekali unggah, masing-masing maksimal 10 MB."
+      required
+    />
     <TextField name="caption" label="Keterangan (opsional)" hint="Dipakai untuk semua foto yang diunggah kali ini." maxLength={200} />
     <CheckboxField
       name="consent"
@@ -212,7 +271,14 @@ export const PhotoUploadForm: React.FC<{ action: Action }> = ({ action }) => (
 export const PhotoCaptionForm: React.FC<{ action: Action; caption: string; altText: string }> = ({ action, caption, altText }) => (
   <ActionForm action={action} aria-label="Keterangan foto" className="space-y-3">
     <TextField name="caption" label="Keterangan" defaultValue={caption} maxLength={200} required />
-    <TextField name="altText" label="Teks alternatif" defaultValue={altText} maxLength={250} hint="Deskripsikan isi foto untuk pembaca layar." required />
+    <TextField
+      name="altText"
+      label="Teks alternatif"
+      defaultValue={altText}
+      maxLength={250}
+      hint="Deskripsikan isi foto untuk pembaca layar."
+      required
+    />
     <SubmitButton>Simpan keterangan</SubmitButton>
   </ActionForm>
 );
@@ -228,12 +294,22 @@ export interface DocumentDefaults {
   fileName?: string | null;
 }
 
-export const DocumentForm: React.FC<{ action: Action; categories: string[]; defaults?: DocumentDefaults }> = ({ action, categories, defaults = {} }) => (
+export const DocumentForm: React.FC<{ action: Action; categories: string[]; defaults?: DocumentDefaults }> = ({
+  action,
+  categories,
+  defaults = {},
+}) => (
   <ActionForm action={action} aria-label="Formulir dokumen">
     <FieldGroup title="Informasi dokumen">
       <TextField name="title" label="Judul dokumen" defaultValue={defaults.title} maxLength={200} required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField name="category" label="Kategori" defaultValue={defaults.category ?? categories[0]} options={toOptions(categories)} required />
+        <SelectField
+          name="category"
+          label="Kategori"
+          defaultValue={defaults.category ?? categories[0]}
+          options={toOptions(categories)}
+          required
+        />
         <TextField name="date" label="Tanggal dokumen" type="date" defaultValue={defaults.date} required />
       </div>
       <TextAreaField name="description" label="Keterangan singkat" rows={3} maxLength={500} defaultValue={defaults.description ?? ''} />
@@ -243,9 +319,18 @@ export const DocumentForm: React.FC<{ action: Action; categories: string[]; defa
         name="file"
         label={defaults.fileName ? 'Ganti berkas' : 'Berkas'}
         accept=".pdf,.docx,.xlsx,.pptx"
-        hint={defaults.fileName ? `Berkas saat ini: ${defaults.fileName}. Kosongkan bila tidak diganti.` : 'PDF, DOCX, XLSX, atau PPTX, maksimal 15 MB.'}
+        hint={
+          defaults.fileName
+            ? `Berkas saat ini: ${defaults.fileName}. Kosongkan bila tidak diganti.`
+            : 'PDF, DOCX, XLSX, atau PPTX, maksimal 15 MB.'
+        }
       />
-      <CheckboxField name="published" label="Tayangkan di Pusat Dokumen" description="Dokumen hanya bisa tayang bila berkasnya sudah diunggah." defaultChecked={defaults.published} />
+      <CheckboxField
+        name="published"
+        label="Tayangkan di Pusat Dokumen"
+        description="Dokumen hanya bisa tayang bila berkasnya sudah diunggah."
+        defaultChecked={defaults.published}
+      />
     </FieldGroup>
     <SaveButton />
   </ActionForm>
@@ -267,11 +352,26 @@ export const BoardForm: React.FC<{ action: Action; defaults?: BoardDefaults }> =
       <TextField name="name" label="Nama" defaultValue={defaults.name} required />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="position" label="Jabatan" defaultValue={defaults.position} required />
-        <TextField name="department" label="Bidang" defaultValue={defaults.department} hint="Mis. Pimpinan, Organisasi, Pembinaan." required />
+        <TextField
+          name="department"
+          label="Bidang"
+          defaultValue={defaults.department}
+          hint="Mis. Pimpinan, Organisasi, Pembinaan."
+          required
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="period" label="Masa bakti" defaultValue={defaults.period ?? '2024–2029'} required />
-        <TextField name="sortOrder" label="Urutan tampil" type="number" min={0} max={999} defaultValue={defaults.sortOrder ?? 0} hint="Angka kecil tampil lebih dulu." required />
+        <TextField
+          name="sortOrder"
+          label="Urutan tampil"
+          type="number"
+          min={0}
+          max={999}
+          defaultValue={defaults.sortOrder ?? 0}
+          hint="Angka kecil tampil lebih dulu."
+          required
+        />
       </div>
     </FieldGroup>
     <SaveButton />
@@ -289,7 +389,11 @@ export interface AchievementDefaults {
   published?: boolean;
 }
 
-export const AchievementForm: React.FC<{ action: Action; levels: string[]; defaults?: AchievementDefaults }> = ({ action, levels, defaults = {} }) => (
+export const AchievementForm: React.FC<{ action: Action; levels: string[]; defaults?: AchievementDefaults }> = ({
+  action,
+  levels,
+  defaults = {},
+}) => (
   <ActionForm action={action} aria-label="Formulir prestasi">
     <FieldGroup title="Data prestasi">
       <TextField name="title" label="Nama prestasi" defaultValue={defaults.title} maxLength={200} required />
@@ -297,7 +401,13 @@ export const AchievementForm: React.FC<{ action: Action; levels: string[]; defau
         <SelectField name="level" label="Tingkat" defaultValue={defaults.level ?? levels[0]} options={toOptions(levels)} required />
         <TextField name="year" label="Tahun" type="number" min={1961} defaultValue={defaults.year ?? new Date().getFullYear()} required />
       </div>
-      <TextField name="recipient" label="Penerima" defaultValue={defaults.recipient} hint="Nama gudep atau tim. Hindari nama lengkap anak di bawah umur." required />
+      <TextField
+        name="recipient"
+        label="Penerima"
+        defaultValue={defaults.recipient}
+        hint="Nama gudep atau tim. Hindari nama lengkap anak di bawah umur."
+        required
+      />
       <TextAreaField name="description" label="Keterangan" rows={3} maxLength={1000} defaultValue={defaults.description} />
       <CheckboxField name="published" label="Tayangkan di halaman Prestasi" defaultChecked={defaults.published ?? true} />
     </FieldGroup>

@@ -23,15 +23,7 @@ export interface FieldProps {
  * Pembungkus label + kontrol + galat. Label selalu wajib — tidak ada
  * kontrol tanpa label yang terlihat (placeholder bukan pengganti label).
  */
-export const Field: React.FC<FieldProps> = ({
-  id,
-  label,
-  error,
-  hint,
-  required,
-  className,
-  children,
-}) => (
+export const Field: React.FC<FieldProps> = ({ id, label, error, hint, required, className, children }) => (
   <div className={cn('space-y-1', className)}>
     <label htmlFor={id} className="block text-sm font-medium text-text-primary">
       {label}
@@ -52,10 +44,7 @@ export const Field: React.FC<FieldProps> = ({
     )}
     {children}
     {error && (
-      <p
-        id={`${id}-error`}
-        className="flex items-start gap-1.5 text-sm font-medium text-status-danger-text"
-      >
+      <p id={`${id}-error`} className="flex items-start gap-1.5 text-sm font-medium text-status-danger-text">
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
         {error}
       </p>
@@ -72,23 +61,17 @@ export function fieldAria(id: string, error?: string, hint?: string) {
   } as const;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, ...props }, ref) => (
-    <input ref={ref} className={cn(control, className)} {...props} />
-  ),
-);
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
+  <input ref={ref} className={cn(control, className)} {...props} />
+));
 Input.displayName = 'Input';
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  ({ className, ...props }, ref) => (
-    <textarea ref={ref} className={cn(control, 'resize-y', className)} {...props} />
-  ),
-);
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...props }, ref) => (
+  <textarea ref={ref} className={cn(control, 'resize-y', className)} {...props} />
+));
 Textarea.displayName = 'Textarea';
 
-export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(
-  ({ className, ...props }, ref) => (
-    <select ref={ref} className={cn(control, 'pr-8', className)} {...props} />
-  ),
-);
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(({ className, ...props }, ref) => (
+  <select ref={ref} className={cn(control, 'pr-8', className)} {...props} />
+));
 Select.displayName = 'Select';

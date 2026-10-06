@@ -30,13 +30,7 @@ async function published() {
   const rows = await db
     .select()
     .from(schema.news)
-    .where(
-      and(
-        eq(schema.news.status, 'PUBLISHED'),
-        isNotNull(schema.news.publishedAt),
-        lte(schema.news.publishedAt, new Date()),
-      ),
-    )
+    .where(and(eq(schema.news.status, 'PUBLISHED'), isNotNull(schema.news.publishedAt), lte(schema.news.publishedAt, new Date())))
     .orderBy(desc(schema.news.publishedAt));
   return rows.map(toItem);
 }
@@ -60,9 +54,7 @@ export async function getNewsBySlug(slug: string): Promise<NewsItem | null> {
 export async function getNewsCategories(): Promise<{ value: string; label: string }[]> {
   const seen = new Map<string, string>();
   for (const n of await published()) seen.set(categorySlug(n.category), n.category);
-  return Array.from(seen, ([value, label]) => ({ value, label })).sort((a, b) =>
-    a.label.localeCompare(b.label, 'id'),
-  );
+  return Array.from(seen, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label, 'id'));
 }
 
 export async function getNewsSlugs(): Promise<string[]> {

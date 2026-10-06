@@ -50,7 +50,14 @@ const Flag: React.FC<{ x: number; y: number; s?: number }> = ({ x, y, s = 1 }) =
 );
 
 const Birds: React.FC<{ x: number; y: number }> = ({ x, y }) => (
-  <g transform={`translate(${x} ${y})`} className="stroke-ill-forest-near" fill="none" strokeWidth="2.2" strokeLinecap="round" opacity="0.55">
+  <g
+    transform={`translate(${x} ${y})`}
+    className="stroke-ill-forest-near"
+    fill="none"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    opacity="0.55"
+  >
     <path d="M0 0q8 -8 16 0q8 -8 16 0" />
     <path d="M44 -18q6 -6 12 0q6 -6 12 0" />
     <path d="M22 -34q5 -5 10 0q5 -5 10 0" />
@@ -66,7 +73,13 @@ export const HeroLandscape: React.FC<{ className?: string }> = ({ className }) =
   const W = 1440;
   const H = 720;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className={cn('h-full w-full', className)} aria-hidden="true" focusable="false">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMax slice"
+      className={cn('h-full w-full', className)}
+      aria-hidden="true"
+      focusable="false"
+    >
       <rect width={W} height={H} className="fill-ill-sky" />
       <rect y={H * 0.42} width={W} height={H * 0.3} className="fill-ill-sky-warm" opacity="0.6" />
       <circle cx="1080" cy="210" r="74" className="fill-ill-sun" />
@@ -83,8 +96,18 @@ export const HeroLandscape: React.FC<{ className?: string }> = ({ className }) =
       <rect y="536" width={W} height={H - 536} className="fill-ill-forest-far" />
       <path d={forestRow({ width: W, base: 575, minH: 90, maxH: 150, gap: 34, seed: 11 })} className="fill-ill-forest" />
       <path d={hillsPath({ width: W, height: H, base: 590, amp: 16, waves: 1.4, phase: 0.6 })} className="fill-ill-meadow" />
-      <path d={hillsPath({ width: W, height: H, base: 640, amp: 12, waves: 1.1, phase: 2.1 })} className="fill-ill-meadow-light" opacity="0.7" />
-      <path d="M560 720C600 680 690 660 760 640C820 624 880 612 940 604" className="stroke-ill-path" strokeWidth="26" fill="none" strokeLinecap="round" />
+      <path
+        d={hillsPath({ width: W, height: H, base: 640, amp: 12, waves: 1.1, phase: 2.1 })}
+        className="fill-ill-meadow-light"
+        opacity="0.7"
+      />
+      <path
+        d="M560 720C600 680 690 660 760 640C820 624 880 612 940 604"
+        className="stroke-ill-path"
+        strokeWidth="26"
+        fill="none"
+        strokeLinecap="round"
+      />
       <Tent x={860} y={640} s={1} />
       <Tent x={1010} y={626} s={0.72} tone="sand" />
       <Campfire x={940} y={668} s={0.9} />
@@ -125,8 +148,18 @@ export const TreeLine: React.FC<{ className?: string; seed?: number; flip?: bool
 
 /** Tepi bukit bergelombang lembut. Sama seperti TreeLine: warna = currentColor. */
 export const Hills: React.FC<{ className?: string; flip?: boolean; phase?: number }> = ({ className, flip, phase = 0.4 }) => (
-  <svg viewBox="0 0 1440 90" preserveAspectRatio="none" className={cn('block h-10 w-full sm:h-16', flip && 'rotate-180', className)} aria-hidden="true" focusable="false">
-    <path d={hillsPath({ width: 1440, height: 90, base: 46, amp: 18, waves: 1.3, phase: phase + 1.2 })} fill="currentColor" opacity="0.45" />
+  <svg
+    viewBox="0 0 1440 90"
+    preserveAspectRatio="none"
+    className={cn('block h-10 w-full sm:h-16', flip && 'rotate-180', className)}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path
+      d={hillsPath({ width: 1440, height: 90, base: 46, amp: 18, waves: 1.3, phase: phase + 1.2 })}
+      fill="currentColor"
+      opacity="0.45"
+    />
     <path d={hillsPath({ width: 1440, height: 90, base: 58, amp: 16, waves: 1.1, phase })} fill="currentColor" />
   </svg>
 );
@@ -143,22 +176,42 @@ export const SceneStrip: React.FC<{ variant?: SceneVariant; className?: string }
   const H = 260;
   const seed = { forest: 2, mountain: 17, camp: 29, meadow: 41, lake: 53, dusk: 67 }[variant];
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice" className={cn('h-full w-full', className)} aria-hidden="true" focusable="false">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="xMidYMax slice"
+      className={cn('h-full w-full', className)}
+      aria-hidden="true"
+      focusable="false"
+    >
       {(variant === 'mountain' || variant === 'lake' || variant === 'dusk') && (
         <>
           <path d={mountainsPath({ width: W, height: H, base: 170, peak: 140, count: 5, seed })} className="fill-ill-mountain-far" />
           <path d={mountainsPath({ width: W, height: H, base: 190, peak: 90, count: 8, seed: seed + 3 })} className="fill-ill-mountain" />
         </>
       )}
-      {variant === 'meadow' && <path d={hillsPath({ width: W, height: H, base: 170, amp: 22, waves: 1.2, phase: 1 })} className="fill-ill-mountain" />}
-      <path d={forestRow({ width: W, base: 214, minH: 50, maxH: variant === 'forest' ? 130 : 90, gap: 24, seed: seed + 5 })} className="fill-ill-forest-far" />
+      {variant === 'meadow' && (
+        <path d={hillsPath({ width: W, height: H, base: 170, amp: 22, waves: 1.2, phase: 1 })} className="fill-ill-mountain" />
+      )}
+      <path
+        d={forestRow({ width: W, base: 214, minH: 50, maxH: variant === 'forest' ? 130 : 90, gap: 24, seed: seed + 5 })}
+        className="fill-ill-forest-far"
+      />
       {variant === 'lake' ? (
         <>
           <rect y="210" width={W} height="50" className="fill-ill-water" />
-          <path d="M240 228h120M520 240h180M900 226h90M1100 244h160" className="stroke-ill-cloud" strokeWidth="3" strokeLinecap="round" opacity="0.7" />
+          <path
+            d="M240 228h120M520 240h180M900 226h90M1100 244h160"
+            className="stroke-ill-cloud"
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity="0.7"
+          />
         </>
       ) : (
-        <path d={hillsPath({ width: W, height: H, base: 222, amp: 10, waves: 1.6, phase: seed })} className={variant === 'meadow' || variant === 'camp' ? 'fill-ill-meadow' : 'fill-ill-forest'} />
+        <path
+          d={hillsPath({ width: W, height: H, base: 222, amp: 10, waves: 1.6, phase: seed })}
+          className={variant === 'meadow' || variant === 'camp' ? 'fill-ill-meadow' : 'fill-ill-forest'}
+        />
       )}
       {variant === 'camp' && (
         <>
@@ -184,7 +237,13 @@ export type GolonganArtId = 'siaga' | 'penggalang' | 'penegak' | 'pandega' | 'pe
 
 /** Ilustrasi persegi per golongan: tunas, tenda, puncak, kompas, api unggun. */
 export const GolonganArt: React.FC<{ id: GolonganArtId; className?: string }> = ({ id, className }) => (
-  <svg viewBox="0 0 200 160" preserveAspectRatio="xMidYMid slice" className={cn('h-full w-full', className)} aria-hidden="true" focusable="false">
+  <svg
+    viewBox="0 0 200 160"
+    preserveAspectRatio="xMidYMid slice"
+    className={cn('h-full w-full', className)}
+    aria-hidden="true"
+    focusable="false"
+  >
     <rect width="200" height="160" className="fill-ill-sky" />
     {id === 'siaga' && (
       <>
@@ -215,7 +274,14 @@ export const GolonganArt: React.FC<{ id: GolonganArtId; className?: string }> = 
     {id === 'pandega' && (
       <>
         <path d={hillsPath({ width: 200, height: 160, base: 116, amp: 10, waves: 1.3, phase: 0.2 })} className="fill-ill-meadow" />
-        <path d="M20 150C60 130 70 110 110 104S170 90 186 70" className="stroke-ill-path" strokeWidth="7" strokeDasharray="2 12" strokeLinecap="round" fill="none" />
+        <path
+          d="M20 150C60 130 70 110 110 104S170 90 186 70"
+          className="stroke-ill-path"
+          strokeWidth="7"
+          strokeDasharray="2 12"
+          strokeLinecap="round"
+          fill="none"
+        />
         <g transform="translate(70 62)">
           <circle r="30" className="fill-ill-cloud" />
           <circle r="30" className="stroke-ill-wood" strokeWidth="4" fill="none" />
@@ -269,6 +335,8 @@ export const CompassRose: React.FC<{ className?: string }> = ({ className }) => 
     <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 6" opacity="0.6" />
     <path d="M60 6L68 60L60 114L52 60Z" fill="currentColor" opacity="0.85" />
     <path d="M6 60L60 52L114 60L60 68Z" fill="currentColor" opacity="0.45" />
-    <text x="60" y="22" textAnchor="middle" fontSize="11" fontWeight="700" fill="currentColor">U</text>
+    <text x="60" y="22" textAnchor="middle" fontSize="11" fontWeight="700" fill="currentColor">
+      U
+    </text>
   </svg>
 );

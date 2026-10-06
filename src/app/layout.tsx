@@ -67,10 +67,7 @@ export default function RootLayout({
         <SkipToContent />
         {/* Kerangka (header/footer publik atau shell dasbor) ada di layout route group. */}
         {children}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
       </body>
     </html>
   );

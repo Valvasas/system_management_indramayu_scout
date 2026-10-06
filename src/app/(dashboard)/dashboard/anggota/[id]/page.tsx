@@ -32,7 +32,13 @@ const SAVED: Record<string, string> = {
   'mutasi-batal': 'Pengajuan mutasi dibatalkan.',
 };
 
-export default async function DetailAnggotaPage({ params, searchParams }: { params: { id: string }; searchParams?: { tersimpan?: string } }) {
+export default async function DetailAnggotaPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { tersimpan?: string };
+}) {
   const user = await requirePermission('members.read');
   const row = await getMember(user, params.id);
   if (!row) notFound();
@@ -62,7 +68,12 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
   // Melihat data sensitif anggota lintas wilayah tercatat (kebijakan audit).
   if (sensitive && (user.role === 'ADMIN_KWARCAB' || user.role === 'SUPER_ADMIN')) {
     const { audit } = await import('@/lib/auth/audit');
-    await audit(user, { action: 'member.view_sensitive', summary: `Melihat data lengkap ${m.fullName}`, entityType: 'member', entityId: m.id });
+    await audit(user, {
+      action: 'member.view_sensitive',
+      summary: `Melihat data lengkap ${m.fullName}`,
+      entityType: 'member',
+      entityId: m.id,
+    });
   }
 
   const archived = m.status === 'ARCHIVED';
@@ -93,7 +104,10 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
       {searchParams?.tersimpan && SAVED[searchParams.tersimpan] && <Notice>{SAVED[searchParams.tersimpan]}</Notice>}
 
       {m.status === 'NEEDS_FIX' && m.reviewNote && (
-        <div role="note" className="mb-6 flex gap-3 rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text">
+        <div
+          role="note"
+          className="mb-6 flex gap-3 rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text"
+        >
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">Catatan verifikator</p>
@@ -153,8 +167,24 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
               <InfoList
                 items={[
                   { label: 'Nama orang tua/wali', value: m.guardianName },
-                  { label: 'Telepon orang tua/wali', value: m.guardianPhone ? <a href={`tel:${m.guardianPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">{m.guardianPhone}</a> : null },
-                  { label: 'Persetujuan wali', value: m.guardianConsentAt ? formatDate(m.guardianConsentAt) : ageOn(m.birthDate) < 18 ? <span className="text-status-danger-text">Belum ada</span> : 'Tidak diperlukan (dewasa)' },
+                  {
+                    label: 'Telepon orang tua/wali',
+                    value: m.guardianPhone ? (
+                      <a href={`tel:${m.guardianPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">
+                        {m.guardianPhone}
+                      </a>
+                    ) : null,
+                  },
+                  {
+                    label: 'Persetujuan wali',
+                    value: m.guardianConsentAt ? (
+                      formatDate(m.guardianConsentAt)
+                    ) : ageOn(m.birthDate) < 18 ? (
+                      <span className="text-status-danger-text">Belum ada</span>
+                    ) : (
+                      'Tidak diperlukan (dewasa)'
+                    ),
+                  },
                   { label: 'Telepon anggota', value: m.phone },
                   { label: 'Alamat', value: m.address },
                 ]}
@@ -201,7 +231,9 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
                 </>
               ) : m.status === 'ACTIVE' ? (
                 <>
-                  <p className="mb-4 text-sm text-text-secondary">Peserta dapat melihat kegiatan, mendaftar, dan membaca pengumuman gudep.</p>
+                  <p className="mb-4 text-sm text-text-secondary">
+                    Peserta dapat melihat kegiatan, mendaftar, dan membaca pengumuman gudep.
+                  </p>
                   <PortalAccountForm action={createPortalAccountAction.bind(null, m.id)} />
                 </>
               ) : (
@@ -221,7 +253,11 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
                   Ke {openTransfer.toName} · diajukan {openTransfer.t.requestedByName}
                 </p>
                 <div className="mt-3">
-                  <ActionButton action={cancelTransferAction.bind(null, openTransfer.t.id)} variant="outline" confirm="Batalkan pengajuan mutasi ini?">
+                  <ActionButton
+                    action={cancelTransferAction.bind(null, openTransfer.t.id)}
+                    variant="outline"
+                    confirm="Batalkan pengajuan mutasi ini?"
+                  >
                     Batalkan pengajuan
                   </ActionButton>
                 </div>
@@ -292,7 +328,10 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
           </Panel>
 
           {can(user, 'members.archive') && (
-            <Panel title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'} description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}>
+            <Panel
+              title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'}
+              description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}
+            >
               {archived ? (
                 <ActionButton action={restoreMemberAction.bind(null, m.id)} confirm={`Pulihkan ${m.fullName} dari arsip?`}>
                   <RotateCcw className="h-4 w-4" aria-hidden="true" />

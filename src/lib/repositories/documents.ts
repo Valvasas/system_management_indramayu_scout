@@ -39,11 +39,7 @@ export const documentCategorySlug = (category: string) =>
 
 async function publishedDocuments(): Promise<DocumentEntry[]> {
   const db = await getDb();
-  const rows = await db
-    .select()
-    .from(schema.documents)
-    .where(eq(schema.documents.published, true))
-    .orderBy(desc(schema.documents.date));
+  const rows = await db.select().from(schema.documents).where(eq(schema.documents.published, true)).orderBy(desc(schema.documents.date));
   return rows.map((d) => {
     const url = d.fileUrl ?? '';
     return {
@@ -72,9 +68,7 @@ export async function getDocuments({ category, search, limit }: DocumentQuery = 
   if (category) items = items.filter((d) => documentCategorySlug(d.category) === category);
   if (search) {
     const q = search.toLowerCase();
-    items = items.filter(
-      (d) => d.title.toLowerCase().includes(q) || (d.description ?? '').toLowerCase().includes(q),
-    );
+    items = items.filter((d) => d.title.toLowerCase().includes(q) || (d.description ?? '').toLowerCase().includes(q));
   }
   return typeof limit === 'number' ? items.slice(0, limit) : items;
 }
@@ -82,7 +76,5 @@ export async function getDocuments({ category, search, limit }: DocumentQuery = 
 export async function getDocumentCategories(): Promise<{ value: string; label: string }[]> {
   const seen = new Map<string, string>();
   for (const d of await publishedDocuments()) seen.set(documentCategorySlug(d.category), d.category);
-  return Array.from(seen, ([value, label]) => ({ value, label })).sort((a, b) =>
-    a.label.localeCompare(b.label, 'id'),
-  );
+  return Array.from(seen, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label, 'id'));
 }

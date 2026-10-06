@@ -33,10 +33,18 @@ export async function saveAlbumAction(id: string | null, _prev: FormState, formD
     if (!row) return fail('Album tidak ditemukan.');
   } else {
     const slug = await uniqueSlug(schema.albums, schema.albums.slug, schema.albums.id, v.title);
-    const [row] = await db.insert(schema.albums).values({ ...v, slug }).returning({ id: schema.albums.id });
+    const [row] = await db
+      .insert(schema.albums)
+      .values({ ...v, slug })
+      .returning({ id: schema.albums.id });
     id = row.id;
   }
-  await audit(user, { action: 'content.save', summary: `Menyimpan album "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'album', entityId: id });
+  await audit(user, {
+    action: 'content.save',
+    summary: `Menyimpan album "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`,
+    entityType: 'album',
+    entityId: id,
+  });
   revalidatePath('/dashboard/konten/galeri');
   revalidatePublicSite();
   redirect(`/dashboard/konten/galeri/${id}?tersimpan=1`);
@@ -49,7 +57,12 @@ export async function deleteAlbumAction(id: string): Promise<void> {
   const [row] = await db.delete(schema.albums).where(eq(schema.albums.id, id)).returning({ title: schema.albums.title });
   if (row) {
     for (const p of photos) await deleteMedia(p.url);
-    await audit(user, { action: 'content.delete', summary: `Menghapus album "${row.title}" beserta ${photos.length} foto`, entityType: 'album', entityId: id });
+    await audit(user, {
+      action: 'content.delete',
+      summary: `Menghapus album "${row.title}" beserta ${photos.length} foto`,
+      entityType: 'album',
+      entityId: id,
+    });
   }
   revalidatePath('/dashboard/konten/galeri');
   revalidatePublicSite();
@@ -70,9 +83,14 @@ export async function uploadPhotosAction(albumId: string, _prev: FormState, form
   if (formData.get('consent') !== 'on') {
     return fail('Konfirmasi dulu bahwa foto aman dipublikasikan.', { consent: 'Wajib dicentang sebelum mengunggah.' });
   }
-  const caption = String(formData.get('caption') ?? '').trim().slice(0, 200);
+  const caption = String(formData.get('caption') ?? '')
+    .trim()
+    .slice(0, 200);
 
-  const [{ last }] = await db.select({ last: max(schema.photos.sortOrder) }).from(schema.photos).where(eq(schema.photos.albumId, albumId));
+  const [{ last }] = await db
+    .select({ last: max(schema.photos.sortOrder) })
+    .from(schema.photos)
+    .where(eq(schema.photos.albumId, albumId));
   let order = (last ?? 0) + 1;
   const failed: string[] = [];
   for (const file of files) {
@@ -93,7 +111,13 @@ export async function uploadPhotosAction(albumId: string, _prev: FormState, form
     }
   }
   const okCount = files.length - failed.length;
-  if (okCount) await audit(user, { action: 'content.upload', summary: `Mengunggah ${okCount} foto ke album "${album.title}"`, entityType: 'album', entityId: albumId });
+  if (okCount)
+    await audit(user, {
+      action: 'content.upload',
+      summary: `Mengunggah ${okCount} foto ke album "${album.title}"`,
+      entityType: 'album',
+      entityId: albumId,
+    });
   revalidatePath(`/dashboard/konten/galeri/${albumId}`);
   revalidatePublicSite();
   return failed.length
@@ -111,7 +135,11 @@ export async function updatePhotoAction(photoId: string, _prev: FormState, formD
   const parsed = parseForm(PhotoSchema, formData);
   if (parsed.error) return parsed.error;
   const db = await getDb();
-  const [row] = await db.update(schema.photos).set(parsed.data).where(eq(schema.photos.id, photoId)).returning({ albumId: schema.photos.albumId });
+  const [row] = await db
+    .update(schema.photos)
+    .set(parsed.data)
+    .where(eq(schema.photos.id, photoId))
+    .returning({ albumId: schema.photos.albumId });
   if (!row) return fail('Foto tidak ditemukan.');
   revalidatePath(`/dashboard/konten/galeri/${row.albumId}`);
   revalidatePublicSite();
@@ -136,8 +164,14 @@ export async function setCoverPhotoAction(photoId: string): Promise<void> {
   const db = await getDb();
   const [photo] = await db.select().from(schema.photos).where(eq(schema.photos.id, photoId)).limit(1);
   if (!photo) redirect('/dashboard/konten/galeri');
-  const [{ first }] = await db.select({ first: min(schema.photos.sortOrder) }).from(schema.photos).where(and(eq(schema.photos.albumId, photo.albumId)));
-  await db.update(schema.photos).set({ sortOrder: (first ?? 0) - 1 }).where(eq(schema.photos.id, photoId));
+  const [{ first }] = await db
+    .select({ first: min(schema.photos.sortOrder) })
+    .from(schema.photos)
+    .where(and(eq(schema.photos.albumId, photo.albumId)));
+  await db
+    .update(schema.photos)
+    .set({ sortOrder: (first ?? 0) - 1 })
+    .where(eq(schema.photos.id, photoId));
   revalidatePath(`/dashboard/konten/galeri/${photo.albumId}`);
   revalidatePublicSite();
   redirect(`/dashboard/konten/galeri/${photo.albumId}?foto=sampul`);

@@ -39,5 +39,4 @@ export const site = {
   ],
 } as const;
 
-export const absoluteUrl = (path: string) =>
-  `${site.url}${path.startsWith('/') ? path : `/${path}`}`;
+export const absoluteUrl = (path: string) => `${site.url}${path.startsWith('/') ? path : `/${path}`}`;

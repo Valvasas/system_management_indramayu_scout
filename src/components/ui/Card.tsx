@@ -7,25 +7,19 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   as?: 'div' | 'article' | 'li' | 'section';
 }
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, hoverable = false, as = 'div', children, ...props }, ref) => {
-    // `as` hanya mengganti tag; atribut yang diterima tetap atribut elemen blok.
-    const Tag = as as React.ElementType;
-    return (
-      <Tag
-        ref={ref}
-        className={cn(
-          'bg-surface-base rounded-xl border border-border-subtle overflow-hidden',
-          hoverable && 'lift',
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </Tag>
-    );
-  },
-);
+const Card = forwardRef<HTMLDivElement, CardProps>(({ className, hoverable = false, as = 'div', children, ...props }, ref) => {
+  // `as` hanya mengganti tag; atribut yang diterima tetap atribut elemen blok.
+  const Tag = as as React.ElementType;
+  return (
+    <Tag
+      ref={ref}
+      className={cn('bg-surface-base rounded-xl border border-border-subtle overflow-hidden', hoverable && 'lift', className)}
+      {...props}
+    >
+      {children}
+    </Tag>
+  );
+});
 
 Card.displayName = 'Card';
 
@@ -42,10 +36,7 @@ export const CardContent = ({ className, children, ...props }: HTMLAttributes<HT
 );
 
 export const CardFooter = ({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn('px-4 sm:px-6 py-4 bg-surface-subtle border-t border-border-subtle', className)}
-    {...props}
-  >
+  <div className={cn('px-4 sm:px-6 py-4 bg-surface-subtle border-t border-border-subtle', className)} {...props}>
     {children}
   </div>
 );

@@ -10,12 +10,12 @@ services:
       APP_DB_USER: rumah_pramuka_app
     ports:
       # Hanya loopback: tidak terekspos ke jaringan kantor/kampus
-      - "127.0.0.1:5432:5432"
+      - '127.0.0.1:5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d rumah_pramuka"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d rumah_pramuka']
       interval: 10s
       timeout: 5s
       retries: 5

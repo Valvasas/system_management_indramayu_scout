@@ -45,7 +45,9 @@ export default async function ImporAnggotaPage() {
             ))}
           </dl>
           {!can(user, 'members.verify') && (
-            <p className="mt-5 text-sm text-text-secondary">Data hasil impor berstatus Menunggu verifikasi sampai diperiksa staf Kwarran.</p>
+            <p className="mt-5 text-sm text-text-secondary">
+              Data hasil impor berstatus Menunggu verifikasi sampai diperiksa staf Kwarran.
+            </p>
           )}
         </Panel>
       </div>

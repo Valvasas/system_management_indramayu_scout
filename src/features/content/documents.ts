@@ -50,12 +50,23 @@ export async function saveDocumentAction(id: string | null, _prev: FormState, fo
   }
 
   if (existing) {
-    await db.update(schema.documents).set({ ...v, ...file }).where(eq(schema.documents.id, existing.id));
+    await db
+      .update(schema.documents)
+      .set({ ...v, ...file })
+      .where(eq(schema.documents.id, existing.id));
   } else {
-    const [row] = await db.insert(schema.documents).values({ ...v, ...file }).returning({ id: schema.documents.id });
+    const [row] = await db
+      .insert(schema.documents)
+      .values({ ...v, ...file })
+      .returning({ id: schema.documents.id });
     id = row.id;
   }
-  await audit(user, { action: 'content.save', summary: `Menyimpan dokumen "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'document', entityId: id! });
+  await audit(user, {
+    action: 'content.save',
+    summary: `Menyimpan dokumen "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`,
+    entityType: 'document',
+    entityId: id!,
+  });
   revalidatePath('/dashboard/konten/dokumen');
   revalidatePublicSite();
   redirect('/dashboard/konten/dokumen?tersimpan=1');

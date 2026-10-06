@@ -78,8 +78,8 @@ export default async function MasukPage() {
             <div className="mt-8 rounded-2xl bg-surface-sand p-5">
               <h3 className="font-semibold text-text-primary">Belum punya akun?</h3>
               <p className="mt-1 text-sm leading-relaxed text-text-secondary">
-                Akun tidak dibuat sendiri. Peserta mendapat akun dari pembina gudep setelah datanya diverifikasi. Staf dan pembina menghubungi
-                sekretariat Kwarcab di {site.contact.phone}.{' '}
+                Akun tidak dibuat sendiri. Peserta mendapat akun dari pembina gudep setelah datanya diverifikasi. Staf dan pembina
+                menghubungi sekretariat Kwarcab di {site.contact.phone}.{' '}
                 <Link href="/bergabung" className="font-semibold text-text-accent underline underline-offset-2">
                   Cara bergabung
                 </Link>

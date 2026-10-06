@@ -65,7 +65,10 @@ await step('pengurus: permintaan muncul & kode akses diterbitkan', async () => {
   await page.goto(`${BASE}/dashboard/akses`);
   assert((await text(page)).includes('peserta.dimas'), 'permintaan peserta.dimas tidak tampil');
   assert(!(await text(page)).includes('akun.tidak.ada'), 'akun fiktif tidak boleh membuat permintaan');
-  await page.getByRole('button', { name: /buat kode akses/i }).first().click();
+  await page
+    .getByRole('button', { name: /buat kode akses/i })
+    .first()
+    .click();
   const msg = await page.getByText(/Kode akses:/).textContent({ timeout: 15000 });
   code = (msg.match(/Kode akses: ([A-Z0-9]{4}-[A-Z0-9]{4})/) ?? [])[1] ?? '';
   assert(code, 'kode akses tidak ditemukan di pesan');
@@ -92,7 +95,10 @@ await step('kode akses hanya sekali pakai', async () => {
   await page.locator('#f-next').fill('sandi-lain-2026');
   await page.locator('#f-confirm').fill('sandi-lain-2026');
   await page.getByRole('button', { name: /simpan & masuk/i }).click();
-  await page.getByText(/tidak cocok|kedaluwarsa/i).first().waitFor();
+  await page
+    .getByText(/tidak cocok|kedaluwarsa/i)
+    .first()
+    .waitFor();
   await login(page, 'peserta.dimas', newPassword); // sandi baru tetap berlaku
   await ctx.close();
 });
@@ -131,7 +137,13 @@ await step('pengurus menyetujui; anggota berpindah & keluar dari cakupan gudep a
   await login(page, 'admin');
   await page.goto(`${BASE}/dashboard/mutasi`);
   assert((await text(page)).includes(movedName), 'pengajuan tidak tampil di antrean');
-  await Promise.all([page.waitForURL('**keputusan=setuju'), page.getByRole('button', { name: /setujui mutasi/i }).first().click()]);
+  await Promise.all([
+    page.waitForURL('**keputusan=setuju'),
+    page
+      .getByRole('button', { name: /setujui mutasi/i })
+      .first()
+      .click(),
+  ]);
   await ctx.close();
 
   const s2 = await session(browser);
@@ -195,7 +207,13 @@ await step('editor menerbitkan; berita langsung tayang publik', async () => {
 await step('setelah terbit: halaman statis lain tetap 200, slug asing tetap 404', async () => {
   // Regresi: revalidatePublicSite() + dynamicParams=false membuat seluruh /golongan/* & /wilayah/* jadi 404.
   const { ctx, page } = await session(browser);
-  for (const [p, want] of [['/golongan/siaga', 200], ['/wilayah/anjatan', 200], ['/golongan/bukan-golongan', 404], ['/wilayah/bukan-kwarran', 404], ['/berita/bukan-berita', 404]]) {
+  for (const [p, want] of [
+    ['/golongan/siaga', 200],
+    ['/wilayah/anjatan', 200],
+    ['/golongan/bukan-golongan', 404],
+    ['/wilayah/bukan-kwarran', 404],
+    ['/berita/bukan-berita', 404],
+  ]) {
     const r = await page.goto(`${BASE}${p}`);
     assert(r.status() === want, `${p} seharusnya ${want}, dapat ${r.status()}`);
   }
@@ -207,7 +225,10 @@ await step('pengurus melihat pendaftar & mengunduh CSV', async () => {
   const { ctx, page } = await session(browser);
   await login(page, 'admin');
   await page.goto(`${BASE}/dashboard/pendaftaran`);
-  await Promise.all([page.waitForURL(/\/dashboard\/pendaftaran\/[0-9a-f-]{36}$/), page.getByRole('link', { name: /latihan gabungan kwarran/i }).click()]);
+  await Promise.all([
+    page.waitForURL(/\/dashboard\/pendaftaran\/[0-9a-f-]{36}$/),
+    page.getByRole('link', { name: /latihan gabungan kwarran/i }).click(),
+  ]);
   assert((await text(page)).includes('Dimas Pratama'), 'pendaftar tidak tampil');
   const csvHref = await page.getByRole('link', { name: /unduh csv/i }).getAttribute('href');
   const res = await page.request.get(`${BASE}${csvHref}`);

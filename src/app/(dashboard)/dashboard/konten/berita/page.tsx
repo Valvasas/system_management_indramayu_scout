@@ -14,7 +14,11 @@ export const metadata: Metadata = { title: 'Berita' };
 
 const STATUS_LABEL = { PUBLISHED: 'Tayang', DRAFT: 'Draf', REVIEW: 'Menunggu review', ARCHIVED: 'Arsip' } as const;
 
-export default async function BeritaAdminPage({ searchParams = {} }: { searchParams?: { tersimpan?: string; dihapus?: string; dikembalikan?: string } }) {
+export default async function BeritaAdminPage({
+  searchParams = {},
+}: {
+  searchParams?: { tersimpan?: string; dihapus?: string; dikembalikan?: string };
+}) {
   await requirePermission('content.manage');
   // Antrean review selalu di atas: itu pekerjaan yang menunggu editor.
   const rows = (await listNewsAdmin()).sort((a, b) => Number(b.status === 'REVIEW') - Number(a.status === 'REVIEW'));
@@ -40,18 +44,32 @@ export default async function BeritaAdminPage({ searchParams = {} }: { searchPar
 
       <Panel>
         {rows.length === 0 ? (
-          <EmptyState icon={Newspaper} title="Belum ada berita" description="Tulis berita pertama. Simpan sebagai draf bila belum siap tayang." />
+          <EmptyState
+            icon={Newspaper}
+            title="Belum ada berita"
+            description="Tulis berita pertama. Simpan sebagai draf bila belum siap tayang."
+          />
         ) : (
           <TableWrap label="Daftar berita">
             <table className="w-full min-w-[40rem] text-base">
               <caption className="sr-only">Daftar berita, terbaru diubah di atas</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Judul</th>
-                  <th scope="col" className={th}>Kategori</th>
-                  <th scope="col" className={th}>Status</th>
-                  <th scope="col" className={th}>Diubah</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Judul
+                  </th>
+                  <th scope="col" className={th}>
+                    Kategori
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
+                  <th scope="col" className={th}>
+                    Diubah
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -68,7 +86,12 @@ export default async function BeritaAdminPage({ searchParams = {} }: { searchPar
                     </td>
                     <td className={td}>{formatDate(n.updatedAt.toISOString())}</td>
                     <td className={td}>
-                      <ActionButton action={deleteNewsAction.bind(null, n.id)} variant="ghost" confirm={`Hapus berita "${n.title}"? Tindakan ini tidak dapat dibatalkan.`} label={`Hapus berita ${n.title}`}>
+                      <ActionButton
+                        action={deleteNewsAction.bind(null, n.id)}
+                        variant="ghost"
+                        confirm={`Hapus berita "${n.title}"? Tindakan ini tidak dapat dibatalkan.`}
+                        label={`Hapus berita ${n.title}`}
+                      >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Hapus
                       </ActionButton>

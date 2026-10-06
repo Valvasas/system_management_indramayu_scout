@@ -18,9 +18,7 @@ const GudepSchema = z
     name: requiredText('Nama gudep', 150),
     number: optionalText(40),
     pangkalan: optionalText(150),
-    jenjang: z
-      .union([z.string(), z.undefined()])
-      .transform((v) => (v && JENJANG_OPTIONS.includes(v) ? v : null)),
+    jenjang: z.union([z.string(), z.undefined()]).transform((v) => (v && JENJANG_OPTIONS.includes(v) ? v : null)),
     address: optionalText(300),
     lat: optionalCoordinate,
     lng: optionalCoordinate,
@@ -57,7 +55,10 @@ export async function createGudepAction(_prev: FormState, formData: FormData): P
   if (await numberTaken(input.number)) return fail('Nomor gudep sudah terdaftar.', { number: 'Nomor ini sudah dipakai gudep lain.' });
 
   const db = await getDb();
-  const [created] = await db.insert(schema.gudep).values({ ...input, active: true }).returning({ id: schema.gudep.id });
+  const [created] = await db
+    .insert(schema.gudep)
+    .values({ ...input, active: true })
+    .returning({ id: schema.gudep.id });
   await audit(user, { action: 'gudep.create', summary: `Menambah gudep ${input.name}`, entityType: 'gudep', entityId: created.id });
   revalidatePath('/dashboard/gudep');
   redirect(`/dashboard/gudep/${created.id}?tersimpan=baru`);
@@ -76,11 +77,15 @@ export async function updateGudepAction(id: string, _prev: FormState, formData: 
   const canRestructure = can(user, 'gudep.create');
   const kwarranId = canRestructure ? input.kwarranId : current.g.kwarranId;
   const active = canRestructure ? input.active : current.g.active;
-  if (canRestructure && !canAccessKwarran(user, kwarranId)) return fail('Kwarran di luar wilayah Anda.', { kwarranId: 'Pilih kwarran Anda.' });
+  if (canRestructure && !canAccessKwarran(user, kwarranId))
+    return fail('Kwarran di luar wilayah Anda.', { kwarranId: 'Pilih kwarran Anda.' });
   if (await numberTaken(input.number, id)) return fail('Nomor gudep sudah terdaftar.', { number: 'Nomor ini sudah dipakai gudep lain.' });
 
   const db = await getDb();
-  await db.update(schema.gudep).set({ ...input, kwarranId, active }).where(eq(schema.gudep.id, id));
+  await db
+    .update(schema.gudep)
+    .set({ ...input, kwarranId, active })
+    .where(eq(schema.gudep.id, id));
   const moved = input.lat !== current.g.lat || input.lng !== current.g.lng;
   await audit(user, {
     action: 'gudep.update',

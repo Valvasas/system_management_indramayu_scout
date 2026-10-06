@@ -85,13 +85,22 @@ export default async function KontribusiPage({ searchParams = {} }: { searchPara
                         </Badge>
                       )}
                     </div>
-                    {returned && <p className="mt-2 rounded-xl bg-status-warning-surface px-3 py-2 text-sm text-status-warning-text">Catatan editor: {n.reviewNote}</p>}
+                    {returned && (
+                      <p className="mt-2 rounded-xl bg-status-warning-surface px-3 py-2 text-sm text-status-warning-text">
+                        Catatan editor: {n.reviewNote}
+                      </p>
+                    )}
                     <p className="mt-1 text-sm text-text-secondary">
                       {n.category} · diubah {formatDate(n.updatedAt.toISOString())}
                     </p>
                   </div>
                   {n.status === 'DRAFT' && (
-                    <ActionButton action={deleteContributionAction.bind(null, n.id)} variant="ghost" confirm={`Hapus draf "${n.title}"?`} label={`Hapus draf ${n.title}`}>
+                    <ActionButton
+                      action={deleteContributionAction.bind(null, n.id)}
+                      variant="ghost"
+                      confirm={`Hapus draf "${n.title}"?`}
+                      label={`Hapus draf ${n.title}`}
+                    >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
                       Hapus
                     </ActionButton>

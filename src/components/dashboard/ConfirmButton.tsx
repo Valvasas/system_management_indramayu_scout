@@ -4,7 +4,12 @@ import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button, type ButtonVariant } from '@/components/ui/Button';
 
-const Inner: React.FC<{ children: React.ReactNode; variant: ButtonVariant; size: 'sm' | 'md'; label?: string }> = ({ children, variant, size, label }) => {
+const Inner: React.FC<{ children: React.ReactNode; variant: ButtonVariant; size: 'sm' | 'md'; label?: string }> = ({
+  children,
+  variant,
+  size,
+  label,
+}) => {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" variant={variant} size={size} isLoading={pending} aria-label={label}>

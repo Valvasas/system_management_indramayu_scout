@@ -26,10 +26,7 @@ export async function contentCounts() {
     one(schema.boardMembers),
     one(schema.achievements),
   ]);
-  const [{ draftNews }] = await db
-    .select({ draftNews: count() })
-    .from(schema.news)
-    .where(eq(schema.news.status, 'DRAFT'));
+  const [{ draftNews }] = await db.select({ draftNews: count() }).from(schema.news).where(eq(schema.news.status, 'DRAFT'));
   const [{ inReview }] = await db.select({ inReview: count() }).from(schema.news).where(eq(schema.news.status, 'REVIEW'));
   return { news, events, albums, documents, board, achievements, draftNews, inReview };
 }

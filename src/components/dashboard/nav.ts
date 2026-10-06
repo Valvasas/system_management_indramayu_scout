@@ -75,7 +75,13 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
     title: 'Sistem',
     items: [
       { href: '/dashboard/pengguna', label: 'Pengguna & akses', icon: 'shield', permission: 'users.manage' },
-      { href: '/dashboard/akses', label: 'Permintaan akses', icon: 'key', permission: ['users.manage', 'users.create_peserta'], badgeKey: 'resetRequests' },
+      {
+        href: '/dashboard/akses',
+        label: 'Permintaan akses',
+        icon: 'key',
+        permission: ['users.manage', 'users.create_peserta'],
+        badgeKey: 'resetRequests',
+      },
       { href: '/dashboard/log', label: 'Log aktivitas', icon: 'list', permission: 'audit.view' },
     ],
   },
@@ -91,11 +97,7 @@ const PESERTA_NAV: { title?: string; items: NavDef[] }[] = [
   },
 ];
 
-export function buildNav(
-  isPeserta: boolean,
-  has: (p: Permission) => boolean,
-  badges: Partial<Record<BadgeKey, number>>,
-): NavGroup[] {
+export function buildNav(isPeserta: boolean, has: (p: Permission) => boolean, badges: Partial<Record<BadgeKey, number>>): NavGroup[] {
   const allowed = (i: NavDef) => {
     if (i.unless && has(i.unless)) return false;
     if (!i.permission) return true;

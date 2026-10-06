@@ -91,7 +91,10 @@ async function analyse(user: SessionUser, csv: string): Promise<Analysed | strin
   }
 
   const db = await getDb();
-  const gudeps = await db.select({ id: schema.gudep.id, number: schema.gudep.number, name: schema.gudep.name }).from(schema.gudep).where(gudepScope(user));
+  const gudeps = await db
+    .select({ id: schema.gudep.id, number: schema.gudep.number, name: schema.gudep.name })
+    .from(schema.gudep)
+    .where(gudepScope(user));
   const byNumber = new Map(gudeps.filter((g) => g.number).map((g) => [g.number!.trim(), g]));
   const ownGudep = user.role === 'STAFF_GUDEP' ? gudeps.find((g) => g.id === user.gudepId) : undefined;
 
@@ -113,7 +116,8 @@ async function analyse(user: SessionUser, csv: string): Promise<Analysed | strin
 
     const problems: string[] = [];
     const gudep = raw.gudepNumber ? byNumber.get(raw.gudepNumber.trim()) : ownGudep;
-    if (!gudep) problems.push(raw.gudepNumber ? `Nomor gudep "${raw.gudepNumber}" tidak dikenal / di luar wilayah` : 'Nomor gudep wajib diisi');
+    if (!gudep)
+      problems.push(raw.gudepNumber ? `Nomor gudep "${raw.gudepNumber}" tidak dikenal / di luar wilayah` : 'Nomor gudep wajib diisi');
 
     const parsed = MemberSchema.safeParse({ ...raw, gudepId: gudep?.id ?? '', confirmDuplicate: 'on' });
     if (!parsed.success) {
@@ -132,7 +136,14 @@ async function analyse(user: SessionUser, csv: string): Promise<Analysed | strin
     }
 
     const ok = problems.length === 0 && parsed.success;
-    preview.push({ line: i + 1, name: raw.fullName || '(tanpa nama)', gudep: gudep?.name ?? raw.gudepNumber ?? '-', ok, duplicate, problems });
+    preview.push({
+      line: i + 1,
+      name: raw.fullName || '(tanpa nama)',
+      gudep: gudep?.name ?? raw.gudepNumber ?? '-',
+      ok,
+      duplicate,
+      problems,
+    });
     if (ok && !duplicate) valid.push(parsed.data);
   }
   return { preview, valid };
@@ -181,7 +192,12 @@ export async function importMembersAction(prev: ImportState, formData: FormData)
   const ktas = valid.map((v) => v.kta).filter((k): k is string => !!k);
   const usedKta = new Set(
     ktas.length
-      ? (await db.select({ kta: schema.members.kta }).from(schema.members).where(and(inArray(schema.members.kta, ktas)))).map((r) => r.kta)
+      ? (
+          await db
+            .select({ kta: schema.members.kta })
+            .from(schema.members)
+            .where(and(inArray(schema.members.kta, ktas)))
+        ).map((r) => r.kta)
       : [],
   );
 

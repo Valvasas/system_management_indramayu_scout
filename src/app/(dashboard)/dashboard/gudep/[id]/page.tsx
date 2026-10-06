@@ -52,7 +52,17 @@ export default async function DetailGudepPage({ params, searchParams }: { params
               <>
                 <div className="h-80">
                   <GudepMapCanvas
-                    points={[{ id: g.id, name: g.name, number: g.number, lat: g.lat!, lng: g.lng!, kwarranName: row.kwarranName, activeMembers: row.activeMembers }]}
+                    points={[
+                      {
+                        id: g.id,
+                        name: g.name,
+                        number: g.number,
+                        lat: g.lat!,
+                        lng: g.lng!,
+                        kwarranName: row.kwarranName,
+                        activeMembers: row.activeMembers,
+                      },
+                    ]}
                     label={`Lokasi ${g.name}`}
                   />
                 </div>
@@ -92,7 +102,14 @@ export default async function DetailGudepPage({ params, searchParams }: { params
                 { label: 'Jenjang', value: g.jenjang },
                 { label: 'Alamat', value: g.address },
                 { label: 'Pembina / kontak', value: g.contactName },
-                { label: 'Telepon', value: g.contactPhone ? <a href={`tel:${g.contactPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">{g.contactPhone}</a> : null },
+                {
+                  label: 'Telepon',
+                  value: g.contactPhone ? (
+                    <a href={`tel:${g.contactPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">
+                      {g.contactPhone}
+                    </a>
+                  ) : null,
+                },
                 { label: 'Status', value: g.active ? 'Aktif' : 'Nonaktif' },
               ]}
             />
@@ -100,7 +117,10 @@ export default async function DetailGudepPage({ params, searchParams }: { params
         </div>
 
         {can(user, 'members.read') && (
-          <Panel title="Anggota" description={`${row.activeMembers} aktif${row.pendingMembers ? ` · ${row.pendingMembers} menunggu/perlu perbaikan` : ''}`}>
+          <Panel
+            title="Anggota"
+            description={`${row.activeMembers} aktif${row.pendingMembers ? ` · ${row.pendingMembers} menunggu/perlu perbaikan` : ''}`}
+          >
             <ul className="divide-y divide-border-subtle">
               {GOLONGAN_OPTIONS.map((o) => (
                 <li key={o.value} className="flex items-center justify-between py-2.5">
@@ -109,7 +129,10 @@ export default async function DetailGudepPage({ params, searchParams }: { params
                 </li>
               ))}
             </ul>
-            <Link href={`/dashboard/anggota?gudep=${g.id}`} className="mt-4 inline-flex min-h-touch items-center gap-2 font-semibold text-text-accent hover:underline">
+            <Link
+              href={`/dashboard/anggota?gudep=${g.id}`}
+              className="mt-4 inline-flex min-h-touch items-center gap-2 font-semibold text-text-accent hover:underline"
+            >
               <Users className="h-4 w-4" aria-hidden="true" />
               Lihat daftar anggota gudep ini
             </Link>
