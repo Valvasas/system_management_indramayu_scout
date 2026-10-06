@@ -1,8 +1,10 @@
 'use server';
 
-import { headers } from 'next/headers';
+import { z } from 'zod';
 import { getDb, schema } from '@/db';
 import { serverEnv } from '@/lib/env';
+import { clientIp } from '@/lib/security/request';
+import { createRateLimiter } from '@/lib/security/rate-limit';
 
 export type ContactState = {
   status: 'idle' | 'success' | 'error';
@@ -10,30 +12,23 @@ export type ContactState = {
   errors?: Partial<Record<'name' | 'email' | 'message', string>>;
 };
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_PER_WINDOW = 3;
 const MIN_FILL_MS = 3000;
-const hits = new Map<string, number[]>();
-
-// Rate limit in-memory: cukup untuk satu instance; ganti ke store bersama (Redis) saat multi-instance.
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_PER_WINDOW) {
-    hits.set(ip, recent);
-    return true;
-  }
-  recent.push(now);
-  hits.set(ip, recent);
-  return false;
-}
+// Rate limit bersama (tabel rate_limits). Fail-open: bila DB mati, penyimpanan pesan toh gagal.
+const perIp = createRateLimiter(3, 10 * 60_000, { scope: 'kontak-ip', failClosed: false });
 
 const str = (v: FormDataEntryValue | null) => (typeof v === 'string' ? v.trim() : '');
 
-export async function submitContact(_prev: ContactState, formData: FormData): Promise<ContactState> {
-  const h = headers();
-  const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'unknown';
+const ContactSchema = z.object({
+  name: z.string().trim().min(2, 'Nama 2-100 karakter.').max(100, 'Nama 2-100 karakter.'),
+  email: z.string().trim().max(254, 'Format pos-el tidak valid.').email('Format pos-el tidak valid.'),
+  organization: z
+    .string()
+    .trim()
+    .transform((v) => v.slice(0, 150)),
+  message: z.string().trim().min(10, 'Pesan 10-2000 karakter.').max(2000, 'Pesan 10-2000 karakter.'),
+});
 
+export async function submitContact(_prev: ContactState, formData: FormData): Promise<ContactState> {
   // Honeypot & time-trap: balas seolah sukses agar bot tidak belajar.
   const honeypot = str(formData.get('website'));
   const openedAt = Number(str(formData.get('openedAt')));
@@ -41,22 +36,25 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
     return { status: 'success', message: 'Pesan diterima.' };
   }
 
-  if (rateLimited(ip)) {
+  if (await perIp.limited(clientIp())) {
     return { status: 'error', message: 'Terlalu banyak pengiriman. Coba lagi dalam 10 menit.' };
   }
 
-  const name = str(formData.get('name'));
-  const email = str(formData.get('email'));
-  const organization = str(formData.get('organization')).slice(0, 150);
-  const message = str(formData.get('message'));
-
-  const errors: NonNullable<ContactState['errors']> = {};
-  if (name.length < 2 || name.length > 100) errors.name = 'Nama 2-100 karakter.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) errors.email = 'Format pos-el tidak valid.';
-  if (message.length < 10 || message.length > 2000) errors.message = 'Pesan 10-2000 karakter.';
-  if (Object.keys(errors).length) {
+  const parsed = ContactSchema.safeParse({
+    name: str(formData.get('name')),
+    email: str(formData.get('email')),
+    organization: str(formData.get('organization')),
+    message: str(formData.get('message')),
+  });
+  if (!parsed.success) {
+    const errors: NonNullable<ContactState['errors']> = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0];
+      if ((key === 'name' || key === 'email' || key === 'message') && !errors[key]) errors[key] = issue.message;
+    }
     return { status: 'error', message: 'Periksa kembali isian Anda.', errors };
   }
+  const { name, email, organization, message } = parsed.data;
 
   // Pesan tersimpan di database dan dibaca pengurus di Portal → Pesan masuk.
   try {

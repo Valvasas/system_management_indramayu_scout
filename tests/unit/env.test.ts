@@ -1,5 +1,12 @@
+import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { EnvError, parsePublicEnv, parseServerEnv } from '@/lib/env';
+
+/** Kunci enkripsi wajib di produksi (1.3); disediakan agar tes fokus pada variabel lain. */
+const KEYS = {
+  DATA_ENCRYPTION_KEYS: `k1:${randomBytes(32).toString('base64')}`,
+  BLIND_INDEX_KEY: randomBytes(32).toString('base64'),
+};
 
 const SECRET_URL = 'postgresql://app:sangat-rahasia-123@db.internal:5432/rumah';
 
@@ -22,7 +29,7 @@ describe('validasi environment (P1-2)', () => {
   });
 
   it('produksi tanpa DATABASE_URL gagal cepat dengan pesan jelas', () => {
-    const err = errorOf(() => parseServerEnv({ NODE_ENV: 'production' }));
+    const err = errorOf(() => parseServerEnv({ NODE_ENV: 'production', ...KEYS }));
     expect(err.issues.map((i) => i.variable)).toEqual(['DATABASE_URL']);
     expect(err.message).toMatch(/DATABASE_URL: wajib diisi di produksi/);
   });
@@ -34,7 +41,7 @@ describe('validasi environment (P1-2)', () => {
   });
 
   it('string kosong dari salinan .env.example dianggap tidak diisi', () => {
-    const err = errorOf(() => parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: '  ' }));
+    const err = errorOf(() => parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: '  ', ...KEYS }));
     expect(err.issues[0].variable).toBe('DATABASE_URL');
   });
 
@@ -57,7 +64,7 @@ describe('validasi environment (P1-2)', () => {
 
   it('webhook http:// ditolak di produksi tetapi boleh saat pengembangan', () => {
     expect(() =>
-      parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: SECRET_URL, CONTACT_WEBHOOK_URL: 'http://localhost:9000/x' }),
+      parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: SECRET_URL, CONTACT_WEBHOOK_URL: 'http://localhost:9000/x', ...KEYS }),
     ).toThrow(/CONTACT_WEBHOOK_URL: wajib https/);
     expect(parseServerEnv({ NODE_ENV: 'development', CONTACT_WEBHOOK_URL: 'http://localhost:9000/x' }).CONTACT_WEBHOOK_URL).toBe(
       'http://localhost:9000/x',
@@ -65,7 +72,7 @@ describe('validasi environment (P1-2)', () => {
   });
 
   it('INSECURE_COOKIES=1 mematikan cookie Secure di produksi (uji lokal via HTTP)', () => {
-    const env = parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: SECRET_URL, INSECURE_COOKIES: '1' });
+    const env = parseServerEnv({ NODE_ENV: 'production', DATABASE_URL: SECRET_URL, INSECURE_COOKIES: '1', ...KEYS });
     expect(env.secureCookies).toBe(false);
     expect(env.usePglite).toBe(false);
   });

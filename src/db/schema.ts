@@ -21,6 +21,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { aadFor, encryptedText } from './encrypted-text';
 
 /* ------------------------------------------------------------------ */
 /* Enum                                                                 */
@@ -114,11 +115,12 @@ export const members = pgTable(
       .notNull()
       .references(() => gudep.id, { onDelete: 'restrict' }),
     status: memberStatusEnum('status').notNull().default('PENDING'),
-    /* --- Sensitif / sangat sensitif: hanya peran berwenang (members.view_sensitive) --- */
-    phone: text('phone'),
-    address: text('address'),
-    guardianName: text('guardian_name'),
-    guardianPhone: text('guardian_phone'),
+    /* --- Sensitif / sangat sensitif: hanya peran berwenang (members.view_sensitive) ---
+       Dienkripsi AES-256-GCM di aplikasi (src/db/encrypted-text.ts); tidak bisa dicari/diurutkan. */
+    phone: encryptedText('phone', aadFor('members', 'phone')),
+    address: encryptedText('address', aadFor('members', 'address')),
+    guardianName: encryptedText('guardian_name', aadFor('members', 'guardian_name')),
+    guardianPhone: encryptedText('guardian_phone', aadFor('members', 'guardian_phone')),
     /** Tanggal persetujuan orang tua/wali (wajib untuk anggota di bawah 18 tahun). */
     guardianConsentAt: date('guardian_consent_at', { mode: 'string' }),
     joinedAt: date('joined_at', { mode: 'string' }),
@@ -246,6 +248,22 @@ export const passwordResetRequests = pgTable(
     resolvedById: uuid('resolved_by_id'),
   },
   (t) => [index('reset_requests_status_idx').on(t.status, t.createdAt)],
+);
+
+/**
+ * Penghitung rate limit bersama (semua instance aplikasi membaca tabel yang sama).
+ * `key` = HMAC dari cakupan + IP/nama pengguna — nilai asli tidak pernah disimpan.
+ * Jendela tetap: hitungan direset saat `window_ends_at` lewat. Baris kedaluwarsa dibersihkan
+ * oportunistik dan oleh `npm run db:retention`.
+ */
+export const rateLimits = pgTable(
+  'rate_limits',
+  {
+    key: text('key').primaryKey(),
+    count: integer('count').notNull(),
+    windowEndsAt: timestamp('window_ends_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('rate_limits_window_idx').on(t.windowEndsAt)],
 );
 
 export const auditLogs = pgTable(

@@ -8,10 +8,12 @@ import { audit } from '@/lib/auth/audit';
 import { burnPasswordCheck, hashPassword, passwordProblem, verifyPassword } from '@/lib/auth/password';
 import { createSession, destroySession, destroyUserSessions, requireUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
-import { clientIp, createRateLimiter } from '@/lib/security/request';
+import { clientIp } from '@/lib/security/request';
+import { createRateLimiter } from '@/lib/security/rate-limit';
 
-const perIp = createRateLimiter(30, 15 * 60_000);
-const perAccount = createRateLimiter(6, 15 * 60_000);
+// Bersama antar-instance (tabel rate_limits). Fail-closed: DB bermasalah → tolak percobaan masuk.
+const perIp = createRateLimiter(30, 15 * 60_000, { scope: 'login-ip', failClosed: true });
+const perAccount = createRateLimiter(6, 15 * 60_000, { scope: 'login-akun', failClosed: true });
 
 const LoginSchema = z.object({
   username: z
@@ -29,7 +31,7 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   const { username, password } = parsed.data;
 
   const ip = clientIp();
-  if (perIp.limited(ip) || perAccount.limited(username)) {
+  if ((await perIp.limited(ip)) || (await perAccount.limited(username))) {
     return fail('Terlalu banyak percobaan masuk. Tunggu 15 menit, lalu coba lagi.');
   }
 
@@ -47,7 +49,7 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     return fail(GENERIC);
   }
 
-  perAccount.reset(username);
+  await perAccount.reset(username);
   await createSession(user.id);
   await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
   await audit(user, { action: 'auth.login', summary: 'Masuk ke portal', entityType: 'user', entityId: user.id });

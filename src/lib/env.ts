@@ -48,7 +48,69 @@ const RULES: Record<string, string> = {
   STORAGE_DIR: 'harus berupa path direktori',
   INSECURE_COOKIES: 'harus 0 atau 1',
   CONTACT_WEBHOOK_URL: 'harus URL https:// (atau http:// di luar produksi)',
+  DATA_ENCRYPTION_KEYS: 'harus daftar "id:kunci" dipisah koma; id huruf kecil/angka (≤16), kunci base64 32 byte',
+  DATA_ENCRYPTION_KEY_ID: 'harus id yang ada di DATA_ENCRYPTION_KEYS',
+  BLIND_INDEX_KEY: 'harus base64 32 byte (openssl rand -base64 32)',
+  MFA_GRACE_DAYS: 'harus bilangan bulat 0–90',
+  RETENTION_CONTACT_MESSAGES_DAYS: 'harus bilangan bulat 30–3650',
+  RETENTION_AUDIT_LOG_MONTHS: 'harus bilangan bulat 6–120',
+  RETENTION_ACCESS_CODES_DAYS: 'harus bilangan bulat 1–365',
+  RETENTION_RESET_REQUESTS_DAYS: 'harus bilangan bulat 7–365',
+  SENTRY_DSN: 'harus URL https:// dari Sentry',
+  SENTRY_ENVIRONMENT: 'harus teks pendek, mis. production',
+  BACKUP_DIR: 'harus berupa path direktori',
+  BACKUP_KEEP: 'harus bilangan bulat 1–365',
 };
+
+/** Kunci 32 byte dalam base64. `null` = format salah (nilai tidak pernah ikut pesan). */
+function decodeKey(b64: string): Buffer | null {
+  if (!/^[A-Za-z0-9+/_-]+={0,2}$/.test(b64)) return null;
+  const buf = Buffer.from(b64, 'base64');
+  return buf.length === 32 ? buf : null;
+}
+
+/** "k1:BASE64,k2:BASE64" → Map. Duplikat id atau kunci cacat → gagal. */
+const keyList = z.preprocess(
+  blankToUndefined,
+  z
+    .string()
+    .transform((raw, ctx) => {
+      const keys = new Map<string, Buffer>();
+      for (const part of raw
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)) {
+        const sep = part.indexOf(':');
+        const id = part.slice(0, sep);
+        const key = sep > 0 ? decodeKey(part.slice(sep + 1)) : null;
+        if (!/^[a-z0-9]{1,16}$/.test(id) || !key || keys.has(id)) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: RULES.DATA_ENCRYPTION_KEYS });
+          return z.NEVER;
+        }
+        keys.set(id, key);
+      }
+      if (keys.size === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: RULES.DATA_ENCRYPTION_KEYS });
+        return z.NEVER;
+      }
+      return keys;
+    })
+    .optional(),
+);
+const singleKey = z.preprocess(
+  blankToUndefined,
+  z
+    .string()
+    .transform((raw, ctx) => {
+      const key = decodeKey(raw.trim());
+      if (!key) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: RULES.BLIND_INDEX_KEY });
+        return z.NEVER;
+      }
+      return key;
+    })
+    .optional(),
+);
 
 const serverSchema = z
   .object({
@@ -60,6 +122,23 @@ const serverSchema = z
     STORAGE_DIR: optionalString,
     INSECURE_COOKIES: flag,
     CONTACT_WEBHOOK_URL: optionalUrl(['https:', 'http:']),
+    /* Enkripsi kolom sensitif (AES-256-GCM) + blind index (HMAC-SHA256). Lihat src/lib/security/crypto.ts. */
+    DATA_ENCRYPTION_KEYS: keyList,
+    DATA_ENCRYPTION_KEY_ID: z.preprocess(blankToUndefined, z.string().optional()),
+    BLIND_INDEX_KEY: singleKey,
+    /* MFA pengurus: hari tenggang sebelum pendaftaran TOTP wajib. */
+    MFA_GRACE_DAYS: intInRange(0, 90, 7),
+    /* Retensi (npm run db:retention). */
+    RETENTION_CONTACT_MESSAGES_DAYS: intInRange(30, 3650, 365),
+    RETENTION_AUDIT_LOG_MONTHS: intInRange(6, 120, 24),
+    RETENTION_ACCESS_CODES_DAYS: intInRange(1, 365, 30),
+    RETENTION_RESET_REQUESTS_DAYS: intInRange(7, 365, 90),
+    /* Pemantauan galat opsional (hanya server, data pribadi disamarkan). */
+    SENTRY_DSN: optionalUrl(['https:']),
+    SENTRY_ENVIRONMENT: z.preprocess(blankToUndefined, z.string().max(40).optional()),
+    /* Backup (npm run db:backup / tombol Super Admin). */
+    BACKUP_DIR: optionalString,
+    BACKUP_KEEP: intInRange(1, 365, 14),
   })
   .superRefine((e, ctx) => {
     const prod = e.NODE_ENV === 'production';
@@ -72,6 +151,21 @@ const serverSchema = z
     }
     if (prod && e.CONTACT_WEBHOOK_URL?.startsWith('http:')) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['CONTACT_WEBHOOK_URL'], message: 'wajib https:// di produksi' });
+    }
+    // Kunci pengembangan bawaan hanya untuk data demo; produksi sungguhan wajib kunci sendiri.
+    if (prod && !e.ALLOW_PGLITE) {
+      if (!e.DATA_ENCRYPTION_KEYS)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DATA_ENCRYPTION_KEYS'], message: 'wajib diisi di produksi' });
+      if (!e.BLIND_INDEX_KEY) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['BLIND_INDEX_KEY'], message: 'wajib diisi di produksi' });
+    }
+    if (e.DATA_ENCRYPTION_KEYS) {
+      const active = e.DATA_ENCRYPTION_KEY_ID ?? (e.DATA_ENCRYPTION_KEYS.size === 1 ? [...e.DATA_ENCRYPTION_KEYS.keys()][0] : undefined);
+      if (!active || !e.DATA_ENCRYPTION_KEYS.has(active))
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['DATA_ENCRYPTION_KEY_ID'],
+          message: 'wajib menunjuk salah satu id di DATA_ENCRYPTION_KEYS (boleh kosong bila hanya satu kunci)',
+        });
     }
   });
 

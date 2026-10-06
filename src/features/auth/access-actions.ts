@@ -10,14 +10,15 @@ import { audit } from '@/lib/auth/audit';
 import { burnPasswordCheck, hashPassword, passwordProblem } from '@/lib/auth/password';
 import { createSession, destroyUserSessions, requireUser } from '@/lib/auth/session';
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
-import { clientIp, createRateLimiter } from '@/lib/security/request';
+import { clientIp } from '@/lib/security/request';
+import { createRateLimiter } from '@/lib/security/rate-limit';
 import { accessCodeMessage, canManageAccess, issueAccessCode } from './access-codes';
 
 /* ------------------------------------------------------------------ */
 /* Publik: lupa kata sandi                                              */
 /* ------------------------------------------------------------------ */
 
-const requestPerIp = createRateLimiter(5, 60 * 60_000);
+const requestPerIp = createRateLimiter(5, 60 * 60_000, { scope: 'reset-minta-ip', failClosed: true });
 
 const RequestSchema = z.object({
   username: z
@@ -37,7 +38,7 @@ const GENERIC_REQUEST =
 export async function requestPasswordResetAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(RequestSchema, formData);
   if (parsed.error) return parsed.error;
-  if (requestPerIp.limited(clientIp()))
+  if (await requestPerIp.limited(clientIp()))
     return fail('Terlalu banyak permintaan. Coba lagi dalam satu jam, atau hubungi pembina Anda langsung.');
 
   const db = await getDb();
@@ -66,8 +67,8 @@ export async function requestPasswordResetAction(_prev: FormState, formData: For
 /* Publik: tukar kode akses → buat kata sandi sendiri                   */
 /* ------------------------------------------------------------------ */
 
-const redeemPerIp = createRateLimiter(20, 15 * 60_000);
-const redeemPerAccount = createRateLimiter(6, 15 * 60_000);
+const redeemPerIp = createRateLimiter(20, 15 * 60_000, { scope: 'kode-ip', failClosed: true });
+const redeemPerAccount = createRateLimiter(6, 15 * 60_000, { scope: 'kode-akun', failClosed: true });
 
 const RedeemSchema = z
   .object({
@@ -92,7 +93,7 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
   if (parsed.error) return parsed.error;
   const { username, code, next } = parsed.data;
 
-  if (redeemPerIp.limited(clientIp()) || redeemPerAccount.limited(username)) {
+  if ((await redeemPerIp.limited(clientIp())) || (await redeemPerAccount.limited(username))) {
     return fail('Terlalu banyak percobaan. Tunggu 15 menit, lalu coba lagi.');
   }
   if (!isValidAccessCodeShape(code)) return fail(GENERIC_REDEEM, { code: 'Kode terdiri dari 8 huruf/angka, mis. ABCD-2345.' });
@@ -132,7 +133,7 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
     .set({ passwordHash: await hashPassword(next), mustChangePassword: false, lastLoginAt: new Date() })
     .where(eq(schema.users.id, user.id));
   await destroyUserSessions(user.id);
-  redeemPerAccount.reset(username);
+  await redeemPerAccount.reset(username);
   await createSession(user.id);
   await audit(user, {
     action: valid.purpose === 'ACTIVATION' ? 'auth.activated' : 'auth.password_reset',
