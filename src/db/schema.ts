@@ -193,6 +193,8 @@ export const users = pgTable('users', {
   active: boolean('active').notNull().default(true),
   mustChangePassword: boolean('must_change_password').notNull().default(true),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  /** Awal masa tenggang MFA (diisi saat masuk pertama kali setelah MFA diwajibkan untuk perannya). */
+  mfaGraceStartedAt: timestamp('mfa_grace_started_at', { withTimezone: true }),
   ...timestamps,
 });
 
@@ -207,9 +209,43 @@ export const sessions = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     ip: text('ip'),
     userAgent: text('user_agent'),
+    /** true = sandi benar, faktor kedua (TOTP/kode pemulihan) belum. Tidak memberi akses portal. */
+    mfaPending: boolean('mfa_pending').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('sessions_user_idx').on(t.userId)],
+);
+
+/**
+ * TOTP (RFC 6238) per akun. `secret` (base32) dienkripsi AES-256-GCM.
+ * `confirmedAt` null = pendaftaran belum dikonfirmasi dengan kode pertama.
+ * `lastUsedStep` = langkah waktu terakhir yang diterima → kode yang sama ditolak (anti-replay).
+ */
+export const userMfa = pgTable('user_mfa', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  secret: encryptedText('secret', aadFor('user_mfa', 'secret')).notNull(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  lastUsedStep: bigint('last_used_step', { mode: 'number' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Kode pemulihan MFA sekali pakai. Hanya SHA-256 yang disimpan; kode tampil sekali saat dibuat. */
+export const mfaRecoveryCodes = pgTable(
+  'mfa_recovery_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('mfa_recovery_user_idx').on(t.userId)],
 );
 
 /**

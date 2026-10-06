@@ -56,8 +56,8 @@ export function buildCsp({ dev, nonce }) {
  * @param {string} pathname
  */
 export function usesNonceCsp(pathname) {
-  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/masuk';
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/masuk' || pathname === '/masuk/verifikasi';
 }
 
 /** Pola `source` next.config untuk semua rute SELAIN yang ditangani middleware. */
-export const STATIC_CSP_SOURCE = '/:path((?!dashboard(?:/|$)|masuk$).*)';
+export const STATIC_CSP_SOURCE = '/:path((?!dashboard(?:/|$)|masuk$|masuk/verifikasi$).*)';

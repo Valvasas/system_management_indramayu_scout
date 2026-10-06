@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { KeyRound } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, KeyRound, ShieldAlert } from 'lucide-react';
 import { ActionForm, SubmitButton } from '@/components/forms/ActionForm';
 import { TextField } from '@/components/forms/Fields';
 import { InfoList, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
@@ -32,6 +33,27 @@ export default async function AkunPage() {
             ]}
           />
           <p className="mt-5 text-sm text-text-secondary">Perubahan nama atau peran dilakukan oleh pengurus Kwarcab.</p>
+          <div className="mt-5 border-t border-border-subtle pt-5">
+            <h3 className="font-semibold text-text-primary">Verifikasi dua langkah</h3>
+            <p className="mt-1 flex items-start gap-2 text-sm text-text-secondary">
+              {user.mfa.kind === 'enrolled' ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-status-success-text" aria-hidden="true" />
+              ) : (
+                <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-status-warning-text" aria-hidden="true" />
+              )}
+              {user.mfa.kind === 'enrolled'
+                ? 'Aktif.'
+                : user.mfa.kind === 'not-required'
+                  ? 'Belum aktif (sukarela, dianjurkan).'
+                  : 'Belum aktif — wajib untuk peran Anda.'}
+            </p>
+            <Link
+              href="/dashboard/akun/mfa"
+              className="mt-2 inline-flex min-h-touch items-center text-sm font-semibold text-text-accent underline underline-offset-2"
+            >
+              Kelola MFA
+            </Link>
+          </div>
         </Panel>
 
         <Panel title="Ganti kata sandi" className="lg:col-span-3">

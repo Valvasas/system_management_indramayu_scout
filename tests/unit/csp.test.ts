@@ -35,7 +35,7 @@ describe('Content-Security-Policy (P1-1)', () => {
   });
 
   it('nonce hanya untuk rute yang selalu dinamis', () => {
-    for (const p of ['/dashboard', '/dashboard/anggota', '/masuk']) expect(usesNonceCsp(p)).toBe(true);
+    for (const p of ['/dashboard', '/dashboard/anggota', '/masuk', '/masuk/verifikasi']) expect(usesNonceCsp(p)).toBe(true);
     for (const p of ['/', '/berita', '/masuk/kode', '/masuk/lupa-sandi', '/dashboards']) expect(usesNonceCsp(p)).toBe(false);
   });
 
@@ -45,7 +45,7 @@ describe('Content-Security-Policy (P1-1)', () => {
     const matches = (p: string) => new RegExp(`^${inner}$`).test(p.replace(/^\//, ''));
     for (const p of ['/', '/berita', '/masuk/kode', '/masuk/lupa-sandi', '/dashboards', '/media/foto/a.webp'])
       expect(matches(p), p).toBe(true);
-    for (const p of ['/dashboard', '/dashboard/anggota', '/masuk']) {
+    for (const p of ['/dashboard', '/dashboard/anggota', '/masuk', '/masuk/verifikasi']) {
       expect(matches(p), p).toBe(false);
       expect(usesNonceCsp(p)).toBe(true);
     }

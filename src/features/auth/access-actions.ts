@@ -13,6 +13,7 @@ import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { clientIp } from '@/lib/security/request';
 import { createRateLimiter } from '@/lib/security/rate-limit';
 import { accessCodeMessage, canManageAccess, issueAccessCode } from './access-codes';
+import { getMfaRecord } from './mfa';
 
 /* ------------------------------------------------------------------ */
 /* Publik: lupa kata sandi                                              */
@@ -134,13 +135,19 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
     .where(eq(schema.users.id, user.id));
   await destroyUserSessions(user.id);
   await redeemPerAccount.reset(username);
-  await createSession(user.id);
   await audit(user, {
     action: valid.purpose === 'ACTIVATION' ? 'auth.activated' : 'auth.password_reset',
     summary: valid.purpose === 'ACTIVATION' ? 'Mengaktifkan akun dengan kode akses' : 'Membuat kata sandi baru dengan kode reset',
     entityType: 'user',
     entityId: user.id,
   });
+  // Kode reset dari pembina menggantikan SANDI, bukan faktor kedua: akun ber-MFA tetap wajib kode MFA.
+  const mfa = await getMfaRecord(user.id, db);
+  if (mfa?.confirmedAt) {
+    await createSession(user.id, { mfaPending: true });
+    redirect('/masuk/verifikasi');
+  }
+  await createSession(user.id);
   redirect('/dashboard?sambutan=1');
 }
 

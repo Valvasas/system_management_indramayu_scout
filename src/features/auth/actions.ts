@@ -8,6 +8,8 @@ import { audit } from '@/lib/auth/audit';
 import { burnPasswordCheck, hashPassword, passwordProblem, verifyPassword } from '@/lib/auth/password';
 import { createSession, destroySession, destroyUserSessions, requireUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
+import { requiresMfa } from '@/lib/auth/mfa-policy';
+import { getMfaRecord } from './mfa';
 import { clientIp } from '@/lib/security/request';
 import { createRateLimiter } from '@/lib/security/rate-limit';
 
@@ -50,15 +52,31 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   }
 
   await perAccount.reset(username);
+
+  // Faktor kedua: sandi benar saja belum memberi akses portal.
+  const mfa = await getMfaRecord(user.id, db);
+  if (mfa?.confirmedAt) {
+    await createSession(user.id, { mfaPending: true });
+    await audit(user, { action: 'auth.password_ok', summary: 'Sandi benar, menunggu kode MFA', entityType: 'user', entityId: user.id });
+    redirect('/masuk/verifikasi');
+  }
+
   await createSession(user.id);
-  await db.update(schema.users).set({ lastLoginAt: new Date() }).where(eq(schema.users.id, user.id));
+  await db
+    .update(schema.users)
+    .set({
+      lastLoginAt: new Date(),
+      // Masa tenggang MFA dimulai saat pertama kali masuk sejak MFA diwajibkan untuk perannya.
+      ...(requiresMfa(user.role) && !user.mfaGraceStartedAt ? { mfaGraceStartedAt: new Date() } : {}),
+    })
+    .where(eq(schema.users.id, user.id));
   await audit(user, { action: 'auth.login', summary: 'Masuk ke portal', entityType: 'user', entityId: user.id });
 
   redirect(user.mustChangePassword ? '/dashboard/akun' : '/dashboard');
 }
 
 export async function logoutAction(): Promise<void> {
-  const user = await requireUser();
+  const user = await requireUser({ allowMfaSetup: true });
   await audit(user, { action: 'auth.logout', summary: 'Keluar dari portal', entityType: 'user', entityId: user.id });
   await destroySession();
   redirect('/masuk');

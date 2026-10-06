@@ -9,7 +9,8 @@ import { countNewsInReview } from '@/features/content/queries';
 import { transfersAwaitingDecision } from '@/features/members/transfers';
 import { ROLE_LABELS } from '@/lib/auth/permissions';
 import { memberScope } from '@/lib/auth/scope';
-import { can, requireUser, type SessionUser } from '@/lib/auth/session';
+import { can, MFA_SETUP_PATH, requireUser, type SessionUser } from '@/lib/auth/session';
+import { MfaGraceNotice } from '@/components/dashboard/MfaGraceNotice';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,8 +53,9 @@ async function badges(user: SessionUser) {
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  // Sandi sementara wajib diganti sebelum memakai fitur lain.
-  if (user.mustChangePassword && headers().get('x-pathname') !== '/dashboard/akun') redirect('/dashboard/akun');
+  const path = headers().get('x-pathname');
+  // Sandi sementara wajib diganti sebelum memakai fitur lain (halaman MFA tetap terbuka: cegah redirect bolak-balik).
+  if (user.mustChangePassword && path !== '/dashboard/akun' && path !== MFA_SETUP_PATH) redirect('/dashboard/akun');
 
   const [label, counts] = await Promise.all([scopeLabel(user), badges(user)]);
   const nav = buildNav(user.role === 'PESERTA', (p) => can(user, p), counts);
@@ -64,6 +66,7 @@ export default async function PortalLayout({ children }: { children: React.React
       portalLabel={user.role === 'PESERTA' ? 'Portal Peserta' : 'Portal Pengurus'}
       nav={nav}
     >
+      {user.mfa.kind === 'grace' && path !== MFA_SETUP_PATH && <MfaGraceNotice daysLeft={user.mfa.daysLeft} />}
       {children}
     </DashboardShell>
   );

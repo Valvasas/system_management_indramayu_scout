@@ -90,7 +90,7 @@ async function login(page, user) {
 function checkCspHeader(path, header) {
   if (!header) return 'header Content-Security-Policy tidak ada';
   const script = header.split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
-  const portal = path === '/masuk' || path === '/dashboard' || path.startsWith('/dashboard/');
+  const portal = path === '/masuk' || path === '/masuk/verifikasi' || path === '/dashboard' || path.startsWith('/dashboard/');
   if (portal && (!script.includes("'nonce-") || script.includes("'unsafe-inline'"))) return `CSP portal tanpa nonce: ${script.trim()}`;
   if (!header.includes("frame-ancestors 'none'")) return 'CSP tanpa frame-ancestors';
   return null;

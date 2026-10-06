@@ -5,12 +5,13 @@
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { and, eq, gt, lt } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import type { Role } from '@/db/schema';
 import { roleCan, type Permission } from './permissions';
+import { MFA_PENDING_MINUTES, mfaState, type MfaState } from './mfa-policy';
 import { clientIp, userAgent } from '@/lib/security/request';
 import { serverEnv } from '@/lib/env';
 
@@ -30,18 +31,28 @@ export interface SessionUser {
   gudepId: string | null;
   memberId: string | null;
   mustChangePassword: boolean;
+  /** Status MFA akun (lihat mfa-policy.ts). */
+  mfa: MfaState;
 }
 
-export async function createSession(userId: string): Promise<void> {
+/** Halaman pendaftaran MFA — satu-satunya halaman portal yang terbuka saat tenggang MFA habis. */
+export const MFA_SETUP_PATH = '/dashboard/akun/mfa';
+
+/**
+ * Buat sesi baru (token dirotasi setiap kali). `mfaPending` = sandi benar tetapi faktor kedua
+ * belum diverifikasi: sesi itu tidak memberi akses portal dan kedaluwarsa dalam 10 menit.
+ */
+export async function createSession(userId: string, opts: { mfaPending?: boolean } = {}): Promise<void> {
   const db = await getDb();
   const token = randomBytes(32).toString('base64url');
-  const expiresAt = new Date(Date.now() + SESSION_HOURS * 3600_000);
+  const expiresAt = new Date(Date.now() + (opts.mfaPending ? MFA_PENDING_MINUTES * 60_000 : SESSION_HOURS * 3600_000));
   await db.insert(schema.sessions).values({
     id: hashToken(token),
     userId,
     expiresAt,
     ip: clientIp(),
     userAgent: userAgent(),
+    mfaPending: opts.mfaPending ?? false,
   });
   // Bersihkan sesi kedaluwarsa secara oportunistik.
   await db.delete(schema.sessions).where(lt(schema.sessions.expiresAt, new Date()));
@@ -69,13 +80,13 @@ export async function destroyUserSessions(userId: string): Promise<void> {
   await db.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
 }
 
-/** Pengguna yang sedang masuk, atau null. Di-cache per request. */
-export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+async function sessionRow(pending: boolean) {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token || token.length > 100) return null;
   const db = await getDb();
   const [row] = await db
     .select({
+      sessionId: schema.sessions.id,
       id: schema.users.id,
       username: schema.users.username,
       name: schema.users.name,
@@ -85,20 +96,53 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
       memberId: schema.users.memberId,
       mustChangePassword: schema.users.mustChangePassword,
       active: schema.users.active,
+      mfaGraceStartedAt: schema.users.mfaGraceStartedAt,
+      mfaConfirmedAt: schema.userMfa.confirmedAt,
     })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
-    .where(and(eq(schema.sessions.id, hashToken(token)), gt(schema.sessions.expiresAt, new Date())))
+    .leftJoin(schema.userMfa, eq(schema.userMfa.userId, schema.users.id))
+    .where(
+      and(eq(schema.sessions.id, hashToken(token)), gt(schema.sessions.expiresAt, new Date()), eq(schema.sessions.mfaPending, pending)),
+    )
     .limit(1);
   if (!row || !row.active) return null;
-  const { active: _active, ...user } = row;
-  return user;
+  return row;
+}
+
+/** Pengguna yang sedang masuk (sesi penuh), atau null. Di-cache per request. */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const row = await sessionRow(false);
+  if (!row) return null;
+  const { sessionId: _s, active: _a, mfaGraceStartedAt, mfaConfirmedAt, ...user } = row;
+  const mfa = mfaState({
+    role: user.role,
+    enrolled: mfaConfirmedAt !== null,
+    graceStartedAt: mfaGraceStartedAt,
+    graceDays: serverEnv().MFA_GRACE_DAYS,
+    now: new Date(),
+  });
+  return { ...user, mfa };
 });
 
-/** Wajib masuk. Tanpa sesi → halaman masuk. */
-export async function requireUser(): Promise<SessionUser> {
+/** Akun yang sandinya benar tetapi belum memasukkan kode MFA (halaman /masuk/verifikasi). */
+export const getPendingMfaUser = cache(async () => {
+  const row = await sessionRow(true);
+  return row ? { id: row.id, username: row.username, name: row.name, role: row.role } : null;
+});
+
+/**
+ * Wajib masuk. Tanpa sesi → halaman masuk.
+ * Peran yang wajib MFA dan masa tenggangnya habis hanya boleh membuka halaman pendaftaran MFA
+ * (atau keluar): `allowMfaSetup` untuk aksi pendaftaran/keluar itu sendiri.
+ */
+export async function requireUser(opts: { allowMfaSetup?: boolean } = {}): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect('/masuk');
+  if (user.mfa.kind === 'expired' && !opts.allowMfaSetup) {
+    const path = headers().get('x-pathname');
+    if (path !== MFA_SETUP_PATH) redirect(`${MFA_SETUP_PATH}?wajib=1`);
+  }
   return user;
 }
 

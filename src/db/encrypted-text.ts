@@ -23,6 +23,7 @@ export const ENCRYPTED_COLUMNS = [
   { table: 'members', column: 'address', aad: 'members.address' },
   { table: 'members', column: 'guardian_name', aad: 'members.guardian_name' },
   { table: 'members', column: 'guardian_phone', aad: 'members.guardian_phone' },
+  { table: 'user_mfa', column: 'secret', aad: 'user_mfa.secret' },
 ] as const;
 
 export const aadFor = (table: string, column: string) => {

@@ -37,4 +37,4 @@ export function middleware(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ['/dashboard', '/dashboard/:path*', '/masuk'] };
+export const config = { matcher: ['/dashboard', '/dashboard/:path*', '/masuk', '/masuk/verifikasi'] };
