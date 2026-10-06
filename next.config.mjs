@@ -44,6 +44,8 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   experimental: {
+    // src/instrumentation.ts: validasi env (fail-fast) saat server start.
+    instrumentationHook: true,
     // Paket native/WASM dijalankan apa adanya di server, tidak dibundel webpack.
     serverComponentsExternalPackages: ['@electric-sql/pglite', 'pg', 'sharp', 'bcryptjs'],
     // Unggahan foto/dokumen lewat Server Action (batas per berkas dicek lagi di lib/storage.ts).

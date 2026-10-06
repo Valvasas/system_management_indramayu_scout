@@ -12,8 +12,9 @@ import { getDb, schema } from '@/db';
 import type { Role } from '@/db/schema';
 import { roleCan, type Permission } from './permissions';
 import { clientIp, userAgent } from '@/lib/security/request';
+import { serverEnv } from '@/lib/env';
 
-const isProd = process.env.NODE_ENV === 'production' && process.env.INSECURE_COOKIES !== '1';
+const isProd = serverEnv().secureCookies;
 /** Prefix __Host- mengikat cookie ke host ini saja (wajib HTTPS). */
 export const SESSION_COOKIE = isProd ? '__Host-rp_session' : 'rp_session';
 const SESSION_HOURS = 12;

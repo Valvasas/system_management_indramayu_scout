@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import { getDb, schema } from '@/db';
+import { serverEnv } from '@/lib/env';
 
 export type ContactState = {
   status: 'idle' | 'success' | 'error';
@@ -66,7 +67,7 @@ export async function submitContact(_prev: ContactState, formData: FormData): Pr
   }
 
   // Opsional: teruskan juga ke webhook (mis. grup WhatsApp/Telegram sekretariat).
-  const webhook = process.env.CONTACT_WEBHOOK_URL;
+  const webhook = serverEnv().CONTACT_WEBHOOK_URL;
   if (webhook) {
     fetch(webhook, {
       method: 'POST',

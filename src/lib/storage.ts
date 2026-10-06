@@ -7,8 +7,9 @@
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { serverEnv } from '@/lib/env';
 
-export const STORAGE_DIR = path.resolve(process.env.STORAGE_DIR ?? path.join(process.cwd(), 'storage'));
+export const STORAGE_DIR = path.resolve(serverEnv().STORAGE_DIR ?? path.join(process.cwd(), 'storage'));
 export const MEDIA_PREFIX = '/media/';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
