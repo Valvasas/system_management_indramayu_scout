@@ -1,0 +1,21 @@
+# Hasil build, dependensi, dan data lokal
+node_modules/
+.next/
+out/
+coverage/
+.data/
+storage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Dihasilkan alat lain — jangan diformat tangan
+package-lock.json
+drizzle/
+next-env.d.ts
+
+# Aset statis & dokumen prosa (tabel Markdown diratakan ulang oleh Prettier → diff berisik)
+public/
+docs/tour/
+*.md
+*.MD

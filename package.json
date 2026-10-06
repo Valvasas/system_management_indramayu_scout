@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
@@ -15,7 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "a11y": "node scripts/a11y-audit.mjs",
-    "e2e": "node scripts/e2e-portal.mjs"
+    "e2e": "node scripts/e2e-portal.mjs",
+    "prepare": "husky"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -42,11 +45,23 @@
     "axe-core": "^4.13.0",
     "drizzle-kit": "^0.31.11",
     "eslint-config-next": "14.2.35",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "playwright": "^1.56.1",
     "postcss": "^8.4.49",
+    "prettier": "^3.9.9",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.23.15",
     "typescript": "^5.7.2",
     "vitest": "^2.1.9"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "prettier --write",
+      "eslint --max-warnings=0"
+    ],
+    "*.{json,css,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }
