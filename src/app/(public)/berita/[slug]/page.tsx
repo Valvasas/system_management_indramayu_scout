@@ -12,6 +12,7 @@ import { ShareLink } from './ShareLink';
 import { getNews, getNewsBySlug, getNewsSlugs } from '@/lib/repositories';
 import { formatDate } from '@/lib/format';
 import { absoluteUrl, site } from '@/lib/site';
+import { jsonLdHtml } from '@/lib/json-ld';
 
 interface Params {
   params: { slug: string };
@@ -189,7 +190,7 @@ export default async function DetailBeritaPage({ params }: Params) {
         )}
       </div>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
     </div>
   );
 }

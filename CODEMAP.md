@@ -24,16 +24,17 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 | File | Isi | Catatan |
 |---|---|---|
-| `package.json` | Next 14.2.35, React 18, Tailwind 3.4, Drizzle, zod, bcryptjs, sharp, leaflet. Script: dev/build/start/lint/typecheck/test/a11y/db:* | Dev: vitest, playwright, axe-core |
+| `package.json` | Next 14.2.35, React 18, Tailwind 3.4, Drizzle, zod, bcryptjs, sharp, leaflet. Script: dev/build/start/lint/format/format:check/typecheck/test/a11y/e2e/db:* | Dev: vitest, playwright, axe-core, prettier, husky, lint-staged |
 | `tsconfig.json` | strict, alias `@/*` → `src/*` | |
-| `next.config.mjs` | CSP enforce, HSTS, X-Frame-Options, Permissions-Policy, COOP; `remotePatterns: []` | [P1-6] audit dependensi Next 14 |
+| `next.config.mjs` | Header keamanan semua rute (HSTS, XFO, Permissions-Policy, COOP) + CSP statis (kecuali `/dashboard`, `/masuk`); `instrumentationHook`; `remotePatterns: []` | Kebijakan CSP di `src/lib/security/csp.mjs`. [P1-6] audit dependensi Next 14 |
 | `tailwind.config.ts` | Warna → CSS var (surface/text/action/border(+inverse)/focus/status/brand/tag/neutral), spacing `touch` 44px | Kelas warna literal dilarang ESLint (termasuk `neutral-*`) |
 | `.eslintrc.json` | `next/core-web-vitals` + `jsx-a11y` + aturan kustom | Larang warna literal, emoji, `<img>`, impor `mock-data` di luar repository |
 | `vitest.config.ts` | Alias `@`, `tests/unit/**` | |
-| `.github/workflows/ci.yml` | lint → typecheck → test → seed demo → build (PGlite) → axe audit → e2e | Belum pernah dijalankan di GitHub; dibuktikan secara lokal |
+| `.github/workflows/ci.yml` | format:check → lint → typecheck → test → seed demo → build (PGlite) → server → axe+CSP audit → e2e | Belum pernah dijalankan di GitHub; dibuktikan secara lokal |
+| `.prettierrc.json`, `.prettierignore`, `.husky/pre-commit`, `.git-blame-ignore-revs` | Prettier (lebar 140, kutip tunggal); pre-commit = lint-staged (prettier + eslint) | Markdown & `drizzle/` tidak diformat |
 | `drizzle.config.ts`, `drizzle/` | Konfigurasi & migrasi SQL (`0000_init.sql`, `0001_portal_features.sql` = kode akses, permintaan reset, mutasi, status REVIEW) | Migrasi PGlite otomatis; Postgres lewat `npm run db:migrate` |
 | `docker-compose.yml`, `docker/db-init/` | PostgreSQL 16 + PostGIS, user aplikasi non-superuser | Belum dites di mesin ini |
-| `.env.example` | Variabel yang dibaca kode | Jangan baca `.env.local`. Validasi Zod `src/lib/env.ts` belum ada [P1-2] |
+| `.env.example` | Semua variabel yang dibaca kode + penjelasan | Jangan baca `.env.local`. Divalidasi `src/lib/env.ts` |
 | `components.json` | Konfigurasi shadcn | Menunjuk `src/styles/globals.css` |
 
 ## Skrip (`scripts/`)
@@ -42,8 +43,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 |---|---|
 | `seed.ts` | `npm run db:seed` (Kwarran + super admin dari env) · `-- --demo` data FIKTIF + 6 akun demo (sandi `demo-pramuka-2026`) |
 | `migrate.ts` | Migrasi ke `DATABASE_URL` |
-| `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal, 1280 & 390px. Butuh server jalan + data demo |
-| `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar. **Mengubah data**, pakai data demo segar |
+| `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal + header CSP & pelanggaran CSP runtime, 1280 & 390px. Butuh server jalan + data demo |
+| `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar, CSP ber-nonce portal. **Mengubah data**, pakai data demo segar |
 | `make-icons.mjs` | Membuat ikon PWA PNG + menyelaraskan warna `logo.svg` |
 
 ## Dokumentasi
@@ -95,7 +96,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | **`konten`** (hub) + `konten/{berita,agenda,galeri,dokumen,pengurus,prestasi}` | `content.manage` | **CMS.** Tiap bagian: `page.tsx` daftar + `[id]/page.tsx` editor (`baru` = buat). Galeri `[id]` memuat unggah foto & keterangan |
 | **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan; profil tanpa alamat/telepon/wali |
 | `/media/[...path]` (di `app/`) | publik | Menyajikan berkas unggahan dari `STORAGE_DIR` |
-| `middleware.ts` | — | Penyaring awal (cookie ada?). **Bukan** kontrol akses |
+| `middleware.ts` | — | Penyaring awal (cookie ada?) — **bukan** kontrol akses — + CSP ber-nonce untuk `/dashboard/*` & `/masuk` (wajib dinamis) |
+| `instrumentation.ts` | — | Saat server start: validasi env (fail-fast) |
 
 `not-found.tsx`, `error.tsx`, `sitemap.ts`, `robots.ts` ada di `src/app/`.
 
@@ -123,7 +125,10 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 |---|---|
 | `db/index.ts`, `db/schema.ts` | Drizzle. `DATABASE_URL` → Postgres; kosong → PGlite di `.data/pglite` (ditolak di produksi kecuali `ALLOW_PGLITE=1`). Koneksi malas |
 | `lib/auth/` | `permissions.ts` (matriks 6 peran, + `content.contribute`), `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`), `audit.ts`, `password.ts`, `access-code.ts` (bentuk/hash/cocok kode) |
+| `lib/env.ts` | **Satu-satunya pembaca `process.env`.** `publicEnv` (aman di klien) · `serverEnv()` Zod, di-cache; galat tanpa nilai |
 | `lib/security/request.ts` | `clientIp`, `createRateLimiter` (in-memory, satu instance) |
+| `lib/security/csp.mjs` | `buildCsp({dev, nonce})`, `usesNonceCsp`, `STATIC_CSP_SOURCE` — dipakai `next.config.mjs` & middleware |
+| `lib/json-ld.ts` | `jsonLdHtml()` — JSON-LD aman di `<script>` (escape `<>&`). Wajib untuk semua JSON-LD |
 | `lib/storage.ts` | Unggah: validasi magic-bytes, sharp→WebP (membuang EXIF/GPS), simpan ke `STORAGE_DIR` |
 | `lib/forms.ts`, `lib/csv.ts`, `lib/domain.ts` | Util formulir Zod · CSV aman injeksi · label & konstanta kepramukaan |
 | `lib/repositories/` | Baca konten **tayang** untuk situs publik. Satu-satunya yang boleh impor `lib/data/mock-data` |
@@ -134,7 +139,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 ## `tests/`
 
-`tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi & rate limit, validasi anggota (UU PDP), waktu WIB, iCalendar, pencarian, kode akses. Alur portal: `npm run e2e`. Jalankan `npm test`.
+`tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi & rate limit, validasi anggota (UU PDP), waktu WIB, iCalendar, pencarian, kode akses, env, CSP & JSON-LD. Alur portal: `npm run e2e`. Jalankan `npm test`.
 
 ## `public/`
 

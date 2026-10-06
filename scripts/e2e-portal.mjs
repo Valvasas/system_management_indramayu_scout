@@ -238,6 +238,32 @@ await step('pengurus melihat pendaftar & mengunduh CSV', async () => {
   await ctx.close();
 });
 
+/* ---------- 5. CSP ber-nonce di portal (P1-1) ---------- */
+await step('CSP portal: nonce baru tiap permintaan, peta & formulir jalan tanpa pelanggaran', async () => {
+  const { ctx, page } = await session(browser);
+  await ctx.addInitScript(() => {
+    window.__csp = [];
+    document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.effectiveDirective} ${e.blockedURI}`));
+  });
+  await login(page, 'admin');
+  const nonces = [];
+  for (const p of ['/dashboard/gudep', '/dashboard/gudep/baru']) {
+    const r = await page.goto(`${BASE}${p}`, { waitUntil: 'networkidle' });
+    const csp = r.headers()['content-security-policy'] ?? '';
+    const script = csp.split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
+    assert(!script.includes('unsafe-inline'), `${p}: script-src masih unsafe-inline`);
+    const nonce = script.match(/'nonce-([^']+)'/)?.[1];
+    assert(nonce, `${p}: CSP tanpa nonce`);
+    nonces.push(nonce);
+    // Leaflet (dimuat dinamis lewat strict-dynamic) harus benar-benar tampil.
+    await page.locator('.leaflet-container').first().waitFor({ timeout: 15_000 });
+    const violations = await page.evaluate(() => window.__csp);
+    assert(violations.length === 0, `${p}: pelanggaran CSP ${violations.join(', ')}`);
+  }
+  assert(nonces[0] !== nonces[1], 'nonce dipakai ulang antar-permintaan');
+  await ctx.close();
+});
+
 await browser.close();
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} langkah lulus.`);

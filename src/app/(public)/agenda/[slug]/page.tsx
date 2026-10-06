@@ -10,6 +10,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { getAgendaBySlug, getAgendaSlugs } from '@/lib/repositories';
 import { formatDateRange, formatDayMonth, formatTime } from '@/lib/format';
 import { absoluteUrl } from '@/lib/site';
+import { jsonLdHtml } from '@/lib/json-ld';
 
 interface Params {
   params: { slug: string };
@@ -173,7 +174,7 @@ export default async function AgendaDetailPage({ params }: Params) {
         </aside>
       </div>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
     </div>
   );
 }

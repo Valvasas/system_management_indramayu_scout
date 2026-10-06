@@ -9,14 +9,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   quality:
-    name: Lint, typecheck, tes, build
+    name: Format, lint, typecheck, tes, build, a11y, e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       NEXT_TELEMETRY_DISABLED: '1'
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       # Basis data tertanam (PGlite) khusus CI: build butuh data untuk generateStaticParams.
       ALLOW_PGLITE: '1'
     steps:
@@ -25,20 +27,47 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+
+      - name: Pasang dependensi
+        run: npm ci
+        env:
+          # Browser dipasang terpisah di langkah audit (dengan dependensi sistemnya).
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+          # Hook git tidak dibutuhkan di runner.
+          HUSKY: '0'
+
+      - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
       - name: Isi data demo (fiktif) untuk build & audit
         run: npm run db:seed -- --demo
       - run: npm run build
 
-      - name: Audit aksesibilitas (axe-core, WCAG 2.2 AA)
+      - name: Cache browser Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Pasang Chromium + dependensi sistem
+        run: npx playwright install --with-deps chromium
+
+      - name: Jalankan server produksi
         run: |
-          npx playwright install --with-deps chromium
-          npx next start -p 3000 &
-          npx --yes wait-on http://localhost:3000 --timeout 60000
-          npm run a11y
+          nohup npx next start -p 3000 > server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS -o /dev/null http://localhost:3000/; then echo "server siap"; exit 0; fi
+            sleep 1
+          done
+          echo "server tidak merespons dalam 60 detik"; cat server.log; exit 1
+
+      - name: Audit aksesibilitas (axe-core, WCAG 2.2 AA)
+        run: npm run a11y
 
       - name: Uji end-to-end alur portal (mengubah data demo, jadi dijalankan terakhir)
         run: npm run e2e
+
+      - name: Log server (hanya saat gagal)
+        if: failure()
+        run: tail -n 200 server.log || true

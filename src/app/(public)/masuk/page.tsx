@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Wajib dinamis: middleware memberi CSP ber-nonce (src/lib/security/csp.mjs); HTML statis tak membawa nonce.
+export const dynamic = 'force-dynamic';
+
 export default async function MasukPage() {
   if (await getSessionUser()) redirect('/dashboard');
 

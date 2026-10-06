@@ -1,5 +1,6 @@
 /**
- * Audit aksesibilitas otomatis (axe-core, WCAG 2.2 AA) + deteksi overflow horizontal.
+ * Audit aksesibilitas otomatis (axe-core, WCAG 2.2 AA) + deteksi overflow horizontal
+ * + audit CSP (header per rute & pelanggaran runtime `securitypolicyviolation`).
  * Memindai semua rute publik dan dasbor pada lebar 1280 dan 390 piksel.
  *
  *   npm run a11y                       → menyasar http://localhost:3000
@@ -85,8 +86,20 @@ async function login(page, user) {
   await Promise.all([page.waitForURL('**/dashboard**'), page.getByRole('button', { name: /masuk/i }).last().click()]);
 }
 
+/** Kebijakan CSP yang diharapkan per rute (lihat src/lib/security/csp.mjs). */
+function checkCspHeader(path, header) {
+  if (!header) return 'header Content-Security-Policy tidak ada';
+  const script = header.split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
+  const portal = path === '/masuk' || path === '/dashboard' || path.startsWith('/dashboard/');
+  if (portal && (!script.includes("'nonce-") || script.includes("'unsafe-inline'"))) return `CSP portal tanpa nonce: ${script.trim()}`;
+  if (!header.includes("frame-ancestors 'none'")) return 'CSP tanpa frame-ancestors';
+  return null;
+}
+
 async function scan(page, path, width, findings) {
-  await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 60_000 });
+  const res = await page.goto(`${BASE}${path}`, { waitUntil: 'networkidle', timeout: 60_000 });
+  const cspProblem = checkCspHeader(path.split('?')[0], res?.headers()['content-security-policy']);
+  if (cspProblem) findings.push(`[${width}px] ${path} :: ${cspProblem}`);
   // Picu animasi muncul-saat-gulir lalu kembali ke atas, supaya axe memeriksa keadaan akhir yang terlihat pengguna.
   await page.evaluate(async () => {
     for (let y = 0; y < document.body.scrollHeight; y += 600) {
@@ -110,6 +123,19 @@ async function scan(page, path, width, findings) {
   for (const v of violations) findings.push(`[${width}px] ${path} :: ${v.id} (${v.impact}) x${v.count}\n    ${v.target}\n    ${v.html}`);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (overflow > 0) findings.push(`[${width}px] ${path} :: overflow horizontal ${overflow}px`);
+  // Pelanggaran CSP yang terjadi selama halaman dimuat & digulir (skrip, gaya, gambar, ubin peta).
+  const csp = await page.evaluate(() => window.__cspViolations.splice(0));
+  for (const v of csp) findings.push(`[${width}px] ${path} :: pelanggaran CSP ${v}`);
+}
+
+/** Dipasang sebelum skrip halaman mana pun berjalan, di setiap navigasi. */
+function collectCspViolations() {
+  window.__cspViolations = [];
+  document.addEventListener('securitypolicyviolation', (e) => {
+    window.__cspViolations.push(
+      `${e.effectiveDirective} diblokir: ${e.blockedURI || '(inline)'} ${e.sourceFile ?? ''}:${e.lineNumber ?? ''}`,
+    );
+  });
 }
 
 const browser = await chromium.launch();
@@ -122,6 +148,7 @@ for (const [user, paths] of [
 ]) {
   for (const width of [1280, 390]) {
     const context = await browser.newContext({ viewport: { width, height: width === 390 ? 844 : 800 } });
+    await context.addInitScript(collectCspViolations);
     const page = await context.newPage();
     if (user) await login(page, user);
     for (const path of paths) {
@@ -137,4 +164,4 @@ if (findings.length) {
   console.error(`\n${findings.length} temuan dari ${pages} pemindaian:\n\n${findings.join('\n')}`);
   process.exit(1);
 }
-console.log(`Lolos: ${pages} pemindaian (rute × lebar), nol pelanggaran axe, nol overflow horizontal.`);
+console.log(`Lolos: ${pages} pemindaian (rute × lebar), nol pelanggaran axe, nol overflow horizontal, nol pelanggaran CSP.`);

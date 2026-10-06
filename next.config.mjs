@@ -1,31 +1,15 @@
+import { buildCsp, STATIC_CSP_SOURCE } from './src/lib/security/csp.mjs';
+
 const isDev = process.env.NODE_ENV !== 'production';
 
 /**
- * CSP kini di-*enforce* (P1-1). Seluruh aset disajikan sendiri:
- * - font: next/font mengunduh & menyajikan dari origin sendiri saat build
- * - style: Tailwind + CSS Leaflet ikut terbundel
- * - script: 'unsafe-inline' masih dibutuhkan runtime inline Next 14 (bootstrap
- *   & data flight). Hapus begitu pindah ke strategi nonce.
- * - img: ubin peta OpenStreetMap adalah satu-satunya host luar.
+ * CSP di-*enforce* (P1-1). Kebijakan & alasannya: src/lib/security/csp.mjs.
+ * Rute statis memakai kebijakan di bawah; /dashboard dan /masuk mendapat CSP
+ * ber-nonce dari src/middleware.ts (tidak boleh dobel, jadi dikecualikan di sini).
  */
-const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
-  "font-src 'self' data:",
-  `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
-  "frame-ancestors 'none'",
-  "frame-src 'none'",
-  "worker-src 'self' blob:",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "object-src 'none'",
-  'upgrade-insecure-requests',
-].join('; ');
+const csp = buildCsp({ dev: isDev });
 
 const securityHeaders = [
-  { key: 'Content-Security-Policy', value: csp },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -58,7 +42,10 @@ const nextConfig = {
     remotePatterns: [],
   },
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }];
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      { source: STATIC_CSP_SOURCE, headers: [{ key: 'Content-Security-Policy', value: csp }] },
+    ];
   },
 };
 

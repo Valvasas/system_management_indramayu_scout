@@ -7,7 +7,22 @@
 
 ---
 
-## Status Eksekusi (diperbarui 5 Okt 2026)
+## Status Eksekusi (diperbarui 6 Okt 2026)
+
+### Marathon 6 Okt 2026
+
+**Baseline (sebelum perubahan):** `tsc` 0 · `next lint` bersih · `vitest` 54/54 · `next build` 94 halaman · `npm run a11y` 118 pemindaian nol pelanggaran · `npm run e2e` 12/12.
+
+**Blok 0 — Kebersihan & Fondasi.** Gerbang: `tsc` 0 · lint bersih · `format:check` bersih · `vitest` 69/69 · build 94 halaman · a11y 118 pemindaian, nol pelanggaran axe, nol pelanggaran CSP · e2e 13/13.
+
+| Task | Status | Catatan |
+|---|---|---|
+| 0.1 Hapus generator usang (P5-1) | SELESAI | `generate_pages.js`, `create_components.js` dihapus; referensi aktif dibersihkan (AGENTS, CODEMAP, AI_CONTEXT, `.eslintrc`). Sisa hanya di catatan riwayat dokumen ini |
+| 0.2 Validasi env Zod (P1-2) | SELESAI | `src/lib/env.ts` (`publicEnv` aman klien + `serverEnv()` di-cache), fail-fast di `src/instrumentation.ts`. Galat hanya nama variabel (pesan bawaan Zod membocorkan nilai, tidak dipakai). `.env.example` diselaraskan: `NEXTAUTH_*`/`NEXT_PUBLIC_APP_URL` tidak pernah dibaca kode. Dokumen setup & deployment ditulis ulang (menyebut Prisma/pnpm/Vercel). 8 tes |
+| 0.3 Prettier + Husky + lint-staged (P6-1) | SELESAI | Lebar 140 dipilih dari pengukuran diff. Commit format murni terpisah (`.git-blame-ignore-revs`). Markdown tidak diformat (perataan tabel = diff berisik) |
+| 0.4 CI (P6-3) | SELESAI, **belum diverifikasi di GitHub Actions** | Diperbaiki: `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` hanya di `npm ci`; `npx --yes wait-on` (unduh saat runtime) → loop `curl`; `HUSKY=0`; cache browser; log server saat gagal; `permissions: contents: read`; `format:check`; timeout 35 mnt |
+| 0.5 CSP (P1-1) | SELESAI (sebagian sesuai batas Next 14) | Sudah enforce sejak sesi lalu. Kini **portal `/dashboard/*` + `/masuk` memakai nonce per permintaan + `strict-dynamic`, tanpa `unsafe-inline` untuk skrip & elemen style**. Halaman publik pra-render tetap `unsafe-inline` untuk skrip: nonce mustahil di HTML statis, hash tak stabil (payload RSC berubah tiap revalidasi). **Temuan:** JSON-LD berita/agenda memakai `JSON.stringify` mentah → judul CMS `</script><script>` = stored XSS; diperbaiki `jsonLdHtml()`. Audit CSP runtime kini bagian dari `npm run a11y` (terbukti bisa gagal: 35 pelanggaran saat nonce dirusak) + langkah e2e + 7 tes unit header |
+
 
 **Checkpoint P0 tercapai:** `tsc --noEmit` exit 0 · `next build` exit 0 · 15/15 halaman ter-generate.
 

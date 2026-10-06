@@ -3,6 +3,7 @@ import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { SkipToContent } from '@/components/ui/SkipToContent';
 import { site, absoluteUrl } from '@/lib/site';
+import { jsonLdHtml } from '@/lib/json-ld';
 
 // UI & teks isi: Plus Jakarta Sans. Judul: Fraunces (sumbu SOFT memberi lengkung hangat ala papan nama perkemahan).
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta', display: 'swap' });
@@ -67,7 +68,7 @@ export default function RootLayout({
         <SkipToContent />
         {/* Kerangka (header/footer publik atau shell dasbor) ada di layout route group. */}
         {children}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationJsonLd) }} />
       </body>
     </html>
   );

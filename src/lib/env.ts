@@ -133,6 +133,9 @@ export function serverEnv(): ServerEnv {
 /** Runtime Next yang sedang berjalan (`nodejs` | `edge`), di-inline saat build. */
 export const nextRuntime = process.env.NEXT_RUNTIME;
 
+/** Build pengembangan (`next dev`)? Di-inline saat build; aman di edge & klien. */
+export const isDevBuild = process.env.NODE_ENV !== 'production';
+
 const publicSchema = z.object({
   NEXT_PUBLIC_SITE_URL: optionalUrl(['https:', 'http:']),
 });
