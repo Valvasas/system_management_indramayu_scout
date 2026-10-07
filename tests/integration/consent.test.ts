@@ -6,10 +6,12 @@ import { schema } from '@/db';
 import {
   issueConsentRequest,
   lookupConsentCode,
+  consentStatusesFor,
   memberConsentSummary,
   recordStaffRevocation,
   submitGuardianDecision,
 } from '@/features/consent/consent';
+import { CONSENT_TEXT_VERSION } from '@/features/consent/texts';
 import { createTestDb, type TestDb } from '../helpers/test-db';
 import { actor } from '../helpers/actors';
 
@@ -81,9 +83,9 @@ describe('persetujuan wali terverifikasi (1.5)', () => {
     expect(saved).toEqual({ memberId: childId, childFirstName: 'Rara' });
     const { statuses, history } = await memberConsentSummary(childId, NOW, t.db);
     expect([statuses.DATA.kind, statuses.PHOTO.kind, statuses.ACTIVITY.kind]).toEqual(['GRANTED', 'DECLINED', 'GRANTED']);
-    expect(history.every((h) => h.method === 'GUARDIAN_CODE' && h.textVersion === '2026-10-v1' && h.guardianName === 'Siti Aminah')).toBe(
-      true,
-    );
+    expect(
+      history.every((h) => h.method === 'GUARDIAN_CODE' && h.textVersion === CONSENT_TEXT_VERSION && h.guardianName === 'Siti Aminah'),
+    ).toBe(true);
     const raw = (await t.db.execute(sql`SELECT guardian_name FROM guardian_consents`)) as unknown as { rows: { guardian_name: string }[] };
     expect(raw.rows.every((x) => x.guardian_name.startsWith('enc:v1:'))).toBe(true);
     expect(await submitGuardianDecision({ code: r.code, guardianName: 'Siti', decisions: yes, ipHash: null }, NOW, t.db)).toBeNull();
@@ -131,5 +133,31 @@ describe('persetujuan wali terverifikasi (1.5)', () => {
     const { statuses, history } = await memberConsentSummary(childId, NOW, t.db);
     expect(history).toHaveLength(1);
     expect(statuses.DATA.kind).toBe('LEGACY');
+  });
+
+  it('anggota diarsipkan/dianonimkan tidak bisa dimintakan kode; anonim juga tidak bisa dicatat pencabutannya', async () => {
+    await t.db.update(schema.members).set({ status: 'ARCHIVED' }).where(eq(schema.members.id, childId));
+    expect(await issueConsentRequest(staffA(), childId, NOW, t.db)).toEqual({ ok: false, reason: 'nonaktif' });
+    await t.db.update(schema.members).set({ anonymizedAt: NOW }).where(eq(schema.members.id, childId));
+    expect(await issueConsentRequest(staffA(), childId, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+    expect(await recordStaffRevocation(staffA(), childId, 'DATA', 'Diminta wali', NOW, t.db)).toBeNull();
+  });
+
+  it('keputusan dari jaringan yang sama dengan pembina peminta ditandai', async () => {
+    const r = await issueConsentRequest(staffA(), childId, NOW, t.db, 'ip-pembina');
+    if (!r.ok) throw new Error('harus ok');
+    await submitGuardianDecision({ code: r.code, guardianName: 'Siti', decisions: yes, ipHash: 'ip-pembina' }, NOW, t.db);
+    const r2 = await issueConsentRequest(staffA(), childId, NOW, t.db, 'ip-pembina');
+    if (!r2.ok) throw new Error('harus ok');
+    await submitGuardianDecision({ code: r2.code, guardianName: 'Siti', decisions: yes, ipHash: 'ip-rumah-wali' }, NOW, t.db);
+    const flags = (await t.db.select().from(schema.guardianConsents)).map((c) => `${c.requestId === null}:${c.sameNetworkAsRequester}`);
+    expect(flags.filter((f) => f.endsWith('true'))).toHaveLength(3);
+    expect(flags.filter((f) => f.endsWith('false'))).toHaveLength(3);
+  });
+
+  it('ekspor tingkat kabupaten: ribuan id dipecah per batch (batas 65.535 parameter)', async () => {
+    const ids = Array.from({ length: 12_000 }, (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`);
+    const map = await consentStatusesFor([...ids, childId], t.db);
+    expect(map.size).toBe(12_001);
   });
 });

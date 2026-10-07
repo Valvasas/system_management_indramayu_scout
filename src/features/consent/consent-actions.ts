@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { consentScopeEnum } from '@/db/schema';
 import { audit } from '@/lib/auth/audit';
-import { requirePermission } from '@/lib/auth/session';
+import { getSessionUser, requirePermission } from '@/lib/auth/session';
 import { fail, ok, parseForm, type FormState } from '@/lib/forms';
 import { formatDate } from '@/lib/format';
 import { blindIndex } from '@/lib/security/crypto';
@@ -21,12 +21,15 @@ import { CONSENT_SCOPE_LABELS } from './texts';
 /** Buat kode persetujuan untuk wali. Kode tampil sekali di tempat (tidak di URL/log). */
 export async function requestConsentAction(memberId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   const user = await requirePermission('members.update');
-  const result = await issueConsentRequest(user, memberId);
+  // HMAC IP pembina disimpan bersama kode: keputusan yang dikirim dari jaringan yang sama ditandai.
+  const result = await issueConsentRequest(user, memberId, new Date(), undefined, blindIndex(clientIp(), 'persetujuan-ip'));
   if (!result.ok) {
     return fail(
       result.reason === 'dewasa'
         ? 'Anggota berusia 18 tahun ke atas memberi persetujuan sendiri.'
-        : 'Data anggota tidak ditemukan atau di luar wilayah Anda.',
+        : result.reason === 'nonaktif'
+          ? 'Anggota yang diarsipkan tidak dapat dimintakan persetujuan. Pulihkan dulu bila masih aktif.'
+          : 'Data anggota tidak ditemukan atau di luar wilayah Anda.',
     );
   }
   await audit(user, { action: 'consent.requested', summary: 'Membuat kode persetujuan wali', entityType: 'member', entityId: memberId });
@@ -71,7 +74,15 @@ export type GuardianState = FormState & { stage?: 'decide' | 'done'; code?: stri
 const GENERIC = 'Kode tidak dikenal, sudah dipakai, atau kedaluwarsa. Minta kode baru kepada pembina.';
 const LookupSchema = z.object({ code: z.string().trim().min(1, 'Masukkan kode dari pembina.').max(20) });
 
+/**
+ * Formulir wali tidak boleh diisi dari browser yang sedang masuk ke portal (pembina/staf/peserta).
+ * Ini tidak membuktikan identitas wali, tetapi menutup jalan termudah pembina "menyetujui sendiri".
+ */
+const LOGGED_IN =
+  'Perangkat ini sedang masuk ke portal Rumah Pramuka. Formulir ini hanya untuk orang tua/wali: keluar dari portal terlebih dahulu, atau buka di perangkat wali.';
+
 export async function lookupConsentAction(_prev: GuardianState, formData: FormData): Promise<GuardianState> {
+  if (await getSessionUser()) return fail(LOGGED_IN);
   const parsed = parseForm(LookupSchema, formData);
   if (parsed.error) return parsed.error;
   if (await codePerIp.limited(clientIp())) return fail('Terlalu banyak percobaan. Tunggu 15 menit, lalu coba lagi.');
@@ -91,6 +102,7 @@ const DecisionSchema = z.object({
 });
 
 export async function submitConsentAction(prev: GuardianState, formData: FormData): Promise<GuardianState> {
+  if (await getSessionUser()) return { ...prev, ...fail(LOGGED_IN) };
   const parsed = parseForm(DecisionSchema, formData);
   if (parsed.error) return { ...prev, ...parsed.error, stage: 'decide' };
   if (await codePerIp.limited(clientIp())) return { ...prev, ...fail('Terlalu banyak percobaan. Tunggu 15 menit, lalu coba lagi.') };

@@ -1,12 +1,12 @@
 import { templateGudepNumber } from '@/features/members/import';
-import { can, getSessionUser } from '@/lib/auth/session';
+import { authorizedUser } from '@/lib/auth/session';
 import { toCsv } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const user = await getSessionUser();
-  if (!user || !can(user, 'members.import')) return new Response('Tidak diizinkan', { status: 403 });
+  const user = await authorizedUser('members.import');
+  if (!user) return new Response('Tidak diizinkan', { status: 403 });
 
   const header = [
     'nama_lengkap',

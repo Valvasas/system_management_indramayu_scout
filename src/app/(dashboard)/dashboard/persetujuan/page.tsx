@@ -21,7 +21,7 @@ const PAGE = 50;
 /** Persetujuan wali terverifikasi untuk satu cakupan (keputusan terbaru: setuju lewat kode wali). */
 const verified = (scope: string) =>
   sql`coalesce((SELECT c.granted AND c.method = 'GUARDIAN_CODE' FROM guardian_consents c
-      WHERE c.member_id = ${schema.members.id} AND c.scope = ${scope} ORDER BY c.decided_at DESC LIMIT 1), false)`;
+      WHERE c.member_id = ${schema.members.id} AND c.scope = ${scope} AND c.method <> 'LEGACY_MANUAL' ORDER BY c.decided_at DESC LIMIT 1), false)`;
 
 export default async function PersetujuanPage({ searchParams = {} }: { searchParams?: { status?: string; q?: string; page?: string } }) {
   const user = await requirePermission('members.read');

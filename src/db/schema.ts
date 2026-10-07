@@ -194,6 +194,8 @@ export const guardianConsentRequests = pgTable(
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     requestedById: uuid('requested_by_id'),
     requestedByName: text('requested_by_name').notNull(),
+    /** HMAC IP pembina saat membuat kode — pembanding untuk menandai bila wali "mengirim dari jaringan yang sama". */
+    requesterIpHash: text('requester_ip_hash'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('consent_requests_member_idx').on(t.memberId)],
@@ -220,6 +222,8 @@ export const guardianConsents = pgTable(
     guardianName: encryptedText('guardian_name', aadFor('guardian_consents', 'guardian_name')),
     /** HMAC IP pengirim — bukti tanpa menyimpan IP mentah. */
     ipHash: text('ip_hash'),
+    /** Dikirim dari jaringan yang sama dengan pembina peminta kode → tanda untuk diperiksa (bukan bukti). */
+    sameNetworkAsRequester: boolean('same_network_as_requester').notNull().default(false),
     recordedById: uuid('recorded_by_id'),
     recordedByName: text('recorded_by_name'),
     note: text('note'),

@@ -11,6 +11,7 @@ import { GOLONGAN_OPTIONS } from '@/lib/domain';
 import { isFile } from '@/lib/storage';
 import { findDuplicates } from './queries';
 import { MemberSchema, type MemberInput } from './validation';
+import { initialMemberStatus } from '@/features/consent/status';
 
 const MAX_ROWS = 1000;
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -186,7 +187,9 @@ export async function importMembersAction(prev: ImportState, formData: FormData)
 
   if (valid.length === 0) return { ...prev, error: true, message: 'Tidak ada baris yang siap disimpan.' };
 
-  const verifyNow = can(user, 'members.verify');
+  const canVerify = can(user, 'members.verify');
+  // Anak (< 18) tidak pernah langsung aktif: verifikasinya menunggu persetujuan wali.
+  const verifyNow = (birthDate: string) => initialMemberStatus(canVerify, birthDate) === 'ACTIVE';
   const db = await getDb();
   // KTA yang sudah terpakai di database dikosongkan agar impor tidak gagal seluruhnya.
   const ktas = valid.map((v) => v.kta).filter((k): k is string => !!k);
@@ -210,9 +213,9 @@ export async function importMembersAction(prev: ImportState, formData: FormData)
       await tx.insert(schema.members).values({
         ...row,
         kta,
-        status: verifyNow ? 'ACTIVE' : 'PENDING',
-        verifiedById: verifyNow ? user.id : null,
-        verifiedAt: verifyNow ? new Date() : null,
+        status: verifyNow(row.birthDate) ? 'ACTIVE' : 'PENDING',
+        verifiedById: verifyNow(row.birthDate) ? user.id : null,
+        verifiedAt: verifyNow(row.birthDate) ? new Date() : null,
         createdById: user.id,
       });
     }
@@ -222,7 +225,7 @@ export async function importMembersAction(prev: ImportState, formData: FormData)
   revalidatePath('/dashboard/anggota');
   return {
     step: 'done',
-    message: `${valid.length} anggota tersimpan${verifyNow ? ' dan langsung aktif' : ' dan menunggu verifikasi kwarran'}. ${invalidCount + duplicateCount ? `${invalidCount + duplicateCount} baris dilewati.` : ''}`,
+    message: `${valid.length} anggota tersimpan${canVerify ? ' (dewasa langsung aktif; anak menunggu persetujuan wali)' : ' dan menunggu verifikasi kwarran'}. ${invalidCount + duplicateCount ? `${invalidCount + duplicateCount} baris dilewati.` : ''}`,
   };
 }
 

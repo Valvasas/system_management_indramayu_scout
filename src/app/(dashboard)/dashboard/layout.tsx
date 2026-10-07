@@ -54,8 +54,12 @@ async function badges(user: SessionUser) {
 }
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
+  // allowMfaSetup: layout juga membungkus halaman pendaftaran MFA. Setiap halaman lain tetap
+  // memanggil requireUser()/requirePermission() yang mengunci akun bertenggang habis tanpa
+  // bergantung pada header; pengalihan di bawah hanya kenyamanan navigasi.
+  const user = await requireUser({ allowMfaSetup: true });
   const path = headers().get('x-pathname');
+  if (user.mfa.kind === 'expired' && path !== MFA_SETUP_PATH) redirect(`${MFA_SETUP_PATH}?wajib=1`);
   // Sandi sementara wajib diganti sebelum memakai fitur lain (halaman MFA tetap terbuka: cegah redirect bolak-balik).
   if (user.mustChangePassword && path !== '/dashboard/akun' && path !== MFA_SETUP_PATH) redirect('/dashboard/akun');
 

@@ -6,26 +6,30 @@
  * - Staf HANYA bisa mencatat pencabutan; memberi persetujuan hanya bisa lewat kode wali.
  * Pemanggil (consent-actions.ts) menegakkan izin; fungsi di sini menegakkan cakupan & aturan.
  */
-import { createHash } from 'node:crypto';
 import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { getDb, schema, type Database } from '@/db';
 import type { ConsentScope } from '@/db/schema';
 import { generateAccessCode, isValidAccessCodeShape, normalizeAccessCode } from '@/lib/auth/access-code';
 import type { SessionUser } from '@/lib/auth/session';
 import { memberScope } from '@/lib/auth/scope';
+import { blindIndex } from '@/lib/security/crypto';
 import { consentStatuses, firstNameOf, needsGuardianConsent, type ConsentDecision } from './status';
 import { CONSENT_CODE_TTL_DAYS, CONSENT_SCOPES, CONSENT_TEXT_VERSION } from './texts';
 
-export const hashConsentCode = (code: string) =>
-  createHash('sha256')
-    .update(`rp-consent:${normalizeAccessCode(code)}`)
-    .digest('hex');
+/** HMAC berkunci server (lihat hashAccessCode): hash di DB tidak bisa ditebak offline. */
+export const hashConsentCode = (code: string) => blindIndex(normalizeAccessCode(code), 'consent-code');
 
 /** Anggota dalam cakupan aktor (null bila tidak ada / di luar cakupan — tidak dibedakan). */
 async function memberInScope(d: Database, actor: SessionUser, memberId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(memberId)) return null;
   const [row] = await d
-    .select({ id: schema.members.id, fullName: schema.members.fullName, birthDate: schema.members.birthDate })
+    .select({
+      id: schema.members.id,
+      fullName: schema.members.fullName,
+      birthDate: schema.members.birthDate,
+      status: schema.members.status,
+      anonymizedAt: schema.members.anonymizedAt,
+    })
     .from(schema.members)
     .innerJoin(schema.gudep, eq(schema.gudep.id, schema.members.gudepId))
     .where(and(eq(schema.members.id, memberId), memberScope(actor)))
@@ -33,13 +37,24 @@ async function memberInScope(d: Database, actor: SessionUser, memberId: string) 
   return row ?? null;
 }
 
-export type IssueResult = { ok: true; code: string; expiresAt: Date } | { ok: false; reason: 'tidak-ditemukan' | 'dewasa' };
+export type IssueResult = { ok: true; code: string; expiresAt: Date } | { ok: false; reason: 'tidak-ditemukan' | 'dewasa' | 'nonaktif' };
 
-/** Kode baru untuk wali; kode lama yang masih terbuka dibatalkan. */
-export async function issueConsentRequest(actor: SessionUser, memberId: string, now = new Date(), db?: Database): Promise<IssueResult> {
+/**
+ * Kode baru untuk wali; kode lama yang masih terbuka dibatalkan. Anggota yang diarsipkan atau
+ * dianonimkan ditolak (bukan hanya disembunyikan tombolnya). `requesterIpHash` = HMAC IP pembina,
+ * dipakai untuk menandai bila keputusan "wali" dikirim dari jaringan yang sama.
+ */
+export async function issueConsentRequest(
+  actor: SessionUser,
+  memberId: string,
+  now = new Date(),
+  db?: Database,
+  requesterIpHash: string | null = null,
+): Promise<IssueResult> {
   const d = db ?? (await getDb());
   const member = await memberInScope(d, actor, memberId);
-  if (!member) return { ok: false, reason: 'tidak-ditemukan' };
+  if (!member || member.anonymizedAt) return { ok: false, reason: 'tidak-ditemukan' };
+  if (member.status === 'ARCHIVED') return { ok: false, reason: 'nonaktif' };
   if (!needsGuardianConsent(member.birthDate, now)) return { ok: false, reason: 'dewasa' };
   const code = generateAccessCode();
   const expiresAt = new Date(now.getTime() + CONSENT_CODE_TTL_DAYS * 86_400_000);
@@ -49,9 +64,14 @@ export async function issueConsentRequest(actor: SessionUser, memberId: string, 
       .update(t)
       .set({ cancelledAt: now })
       .where(and(eq(t.memberId, member.id), isNull(t.usedAt), isNull(t.cancelledAt)));
-    await tx
-      .insert(t)
-      .values({ memberId: member.id, codeHash: hashConsentCode(code), expiresAt, requestedById: actor.id, requestedByName: actor.name });
+    await tx.insert(t).values({
+      memberId: member.id,
+      codeHash: hashConsentCode(code),
+      expiresAt,
+      requestedById: actor.id,
+      requestedByName: actor.name,
+      requesterIpHash,
+    });
   });
   return { ok: true, code, expiresAt };
 }
@@ -63,6 +83,7 @@ async function openRequestByCode(d: Database, code: string, now: Date) {
     .select({
       id: t.id,
       memberId: t.memberId,
+      requesterIpHash: t.requesterIpHash,
       fullName: schema.members.fullName,
       gudepName: schema.gudep.name,
     })
@@ -111,6 +132,7 @@ export async function submitGuardianDecision(input: GuardianSubmission, now = ne
         method: 'GUARDIAN_CODE' as const,
         guardianName: input.guardianName,
         ipHash: input.ipHash,
+        sameNetworkAsRequester: Boolean(input.ipHash && req.requesterIpHash && input.ipHash === req.requesterIpHash),
         decidedAt: now,
       })),
     );
@@ -132,7 +154,7 @@ export async function recordStaffRevocation(
 ) {
   const d = db ?? (await getDb());
   const member = await memberInScope(d, actor, memberId);
-  if (!member) return null;
+  if (!member || member.anonymizedAt) return null;
   await d.insert(schema.guardianConsents).values({
     memberId: member.id,
     scope,
@@ -166,19 +188,28 @@ export async function memberConsentSummary(memberId: string, now = new Date(), d
 }
 
 /** Status terkini untuk banyak anggota sekaligus (daftar pusat persetujuan, ekspor). */
+/** PostgreSQL membatasi 65.535 parameter per kueri; ekspor tingkat kabupaten bisa melewatinya. */
+const CHUNK = 5000;
+const chunks = <T>(xs: T[]) => Array.from({ length: Math.ceil(xs.length / CHUNK) }, (_, i) => xs.slice(i * CHUNK, (i + 1) * CHUNK));
+
 export async function consentStatusesFor(memberIds: string[], db?: Database) {
   const d = db ?? (await getDb());
   if (memberIds.length === 0) return new Map<string, ReturnType<typeof consentStatuses>>();
-  const rows = await d
-    .select({
-      memberId: schema.guardianConsents.memberId,
-      scope: schema.guardianConsents.scope,
-      granted: schema.guardianConsents.granted,
-      method: schema.guardianConsents.method,
-      decidedAt: schema.guardianConsents.decidedAt,
-    })
-    .from(schema.guardianConsents)
-    .where(inArray(schema.guardianConsents.memberId, memberIds));
+  const rows = [];
+  for (const part of chunks(memberIds)) {
+    rows.push(
+      ...(await d
+        .select({
+          memberId: schema.guardianConsents.memberId,
+          scope: schema.guardianConsents.scope,
+          granted: schema.guardianConsents.granted,
+          method: schema.guardianConsents.method,
+          decidedAt: schema.guardianConsents.decidedAt,
+        })
+        .from(schema.guardianConsents)
+        .where(inArray(schema.guardianConsents.memberId, part))),
+    );
+  }
   const grouped = new Map<string, ConsentDecision[]>();
   for (const r of rows) grouped.set(r.memberId, [...(grouped.get(r.memberId) ?? []), r]);
   return new Map(memberIds.map((id) => [id, consentStatuses(grouped.get(id) ?? [])]));
@@ -189,15 +220,30 @@ export async function openRequestsFor(memberIds: string[], now = new Date(), db?
   const d = db ?? (await getDb());
   if (memberIds.length === 0) return new Set<string>();
   const t = schema.guardianConsentRequests;
-  const rows = await d
-    .select({ memberId: t.memberId })
-    .from(t)
-    .where(and(inArray(t.memberId, memberIds), isNull(t.usedAt), isNull(t.cancelledAt), gt(t.expiresAt, now)));
-  return new Set(rows.map((r) => r.memberId));
+  const open = new Set<string>();
+  for (const part of chunks(memberIds)) {
+    const rows = await d
+      .select({ memberId: t.memberId })
+      .from(t)
+      .where(and(inArray(t.memberId, part), isNull(t.usedAt), isNull(t.cancelledAt), gt(t.expiresAt, now)));
+    rows.forEach((r) => open.add(r.memberId));
+  }
+  return open;
+}
+
+/**
+ * Tanggal "hari ini dikurangi 18 tahun" (YYYY-MM-DD, kalender lokal): lahir SETELAH tanggal ini
+ * = di bawah 18. 29 Februari dipangkas ke 28 Februari pada tahun bukan kabisat — orang yang lahir
+ * 28 Feb sudah 18 tahun, yang lahir 1 Mar belum. Tanpa pemangkasan, "2010-02-29" membuat kueri gagal.
+ */
+export function minorBirthCutoffDate(now = new Date()): string {
+  const year = now.getFullYear() - 18;
+  const month = now.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const day = Math.min(now.getDate(), lastDay);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${year}-${pad(month + 1)}-${pad(day)}`;
 }
 
 /** Batas tanggal lahir untuk "di bawah 18 tahun" (untuk filter SQL). */
-export const minorBirthCutoff = (now = new Date()) => {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return sql`${`${now.getFullYear() - 18}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`}::date`;
-};
+export const minorBirthCutoff = (now = new Date()) => sql`${minorBirthCutoffDate(now)}::date`;

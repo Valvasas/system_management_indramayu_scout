@@ -1,4 +1,4 @@
-import { Ban, KeyRound } from 'lucide-react';
+import { AlertTriangle, Ban, KeyRound } from 'lucide-react';
 import { ActionForm, SubmitButton } from '@/components/forms/ActionForm';
 import { SelectField, TextAreaField } from '@/components/forms/Fields';
 import { Panel } from '@/components/dashboard/ui';
@@ -107,6 +107,12 @@ export async function ConsentPanel({
                   {h.recordedByName ? ` · ${h.recordedByName}` : ''} · teks {h.textVersion}
                 </p>
                 {h.note && <p className="text-text-secondary">{h.note}</p>}
+                {h.sameNetworkAsRequester && (
+                  <p className="mt-1 flex items-start gap-1.5 font-medium text-status-warning-text">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    Dikirim dari jaringan yang sama dengan pembina peminta kode. Pastikan langsung ke wali bila meragukan.
+                  </p>
+                )}
               </li>
             ))}
           </ol>

@@ -44,6 +44,7 @@ const RULES: Record<string, string> = {
   DATABASE_URL: 'harus URL postgres:// atau postgresql://',
   DATABASE_POOL_MAX: 'harus bilangan bulat 1–100',
   ALLOW_PGLITE: 'harus 0 atau 1',
+  ALLOW_DEV_KEYS: 'harus 0 atau 1',
   PGLITE_DIR: 'harus berupa path direktori',
   STORAGE_DIR: 'harus berupa path direktori',
   INSECURE_COOKIES: 'harus 0 atau 1',
@@ -118,6 +119,8 @@ const serverSchema = z
     DATABASE_URL: optionalUrl(['postgres:', 'postgresql:']),
     DATABASE_POOL_MAX: intInRange(1, 100, 10),
     ALLOW_PGLITE: flag,
+    /** 1 = boleh memakai kunci enkripsi pengembangan publik dengan DATABASE_URL (lokal saja). */
+    ALLOW_DEV_KEYS: flag,
     PGLITE_DIR: optionalString,
     STORAGE_DIR: optionalString,
     INSECURE_COOKIES: flag,
@@ -152,11 +155,20 @@ const serverSchema = z
     if (prod && e.CONTACT_WEBHOOK_URL?.startsWith('http:')) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['CONTACT_WEBHOOK_URL'], message: 'wajib https:// di produksi' });
     }
-    // Kunci pengembangan bawaan hanya untuk data demo; produksi sungguhan wajib kunci sendiri.
-    if (prod && !e.ALLOW_PGLITE) {
-      if (!e.DATA_ENCRYPTION_KEYS)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DATA_ENCRYPTION_KEYS'], message: 'wajib diisi di produksi' });
-      if (!e.BLIND_INDEX_KEY) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['BLIND_INDEX_KEY'], message: 'wajib diisi di produksi' });
+    // Kunci pengembangan bawaan (publik) hanya untuk PGlite berisi data demo. Setiap basis data
+    // sungguhan (DATABASE_URL terisi) wajib kunci sendiri — juga untuk skrip tsx yang berjalan
+    // tanpa NODE_ENV=production dan untuk ALLOW_PGLITE=1 yang tertinggal di server produksi.
+    // Satu-satunya pengecualian: ALLOW_DEV_KEYS=1 di luar produksi (PostgreSQL lokal, data demo).
+    if (prod && e.ALLOW_DEV_KEYS) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['ALLOW_DEV_KEYS'], message: 'tidak boleh aktif di produksi' });
+    }
+    const devKeysOk = !e.DATABASE_URL ? true : !prod && e.ALLOW_DEV_KEYS;
+    if (!devKeysOk) {
+      const why = prod
+        ? 'wajib diisi di produksi'
+        : 'wajib diisi bila DATABASE_URL terisi (ALLOW_DEV_KEYS=1 hanya untuk PostgreSQL lokal berisi data demo)';
+      if (!e.DATA_ENCRYPTION_KEYS) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['DATA_ENCRYPTION_KEYS'], message: why });
+      if (!e.BLIND_INDEX_KEY) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['BLIND_INDEX_KEY'], message: why });
     }
     if (e.DATA_ENCRYPTION_KEYS) {
       const active = e.DATA_ENCRYPTION_KEY_ID ?? (e.DATA_ENCRYPTION_KEYS.size === 1 ? [...e.DATA_ENCRYPTION_KEYS.keys()][0] : undefined);

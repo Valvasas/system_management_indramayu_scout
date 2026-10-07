@@ -3,11 +3,12 @@
  *
  * - Format "ABCD-2345": 8 karakter dari alfabet tanpa huruf/angka mirip (0/O, 1/I/L),
  *   mudah dibacakan pembina lewat telepon atau ditulis di kertas.
- * - Yang disimpan hanya SHA-256 dari kode ternormalisasi; kode asli tampil sekali.
+ * - Yang disimpan hanya HMAC (kunci server) dari kode ternormalisasi; kode asli tampil sekali.
  * - Keamanan bertumpu pada: masa berlaku pendek, sekali pakai, dan rate limit percobaan
  *   per akun & per IP (features/auth/access.ts). Ruang kode 31^8 ≈ 8,5 × 10^11.
  */
-import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
+import { randomInt, timingSafeEqual } from 'node:crypto';
+import { blindIndex } from '@/lib/security/crypto';
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
@@ -24,10 +25,12 @@ export function normalizeAccessCode(input: string): string {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
+/**
+ * HMAC dengan kunci server (BLIND_INDEX_KEY), bukan SHA-256 polos: ruang kode hanya ~2^40,
+ * sehingga hash tanpa kunci dari dump basis data/backup bisa ditebak habis secara offline.
+ */
 export function hashAccessCode(code: string): string {
-  return createHash('sha256')
-    .update(`rp-access:${normalizeAccessCode(code)}`)
-    .digest('hex');
+  return blindIndex(normalizeAccessCode(code), 'access-code');
 }
 
 /** Bandingkan hash secara waktu-konstan. */

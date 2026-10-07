@@ -2,17 +2,19 @@
  * SERVER-ONLY. Penyimpanan & verifikasi MFA (TOTP + kode pemulihan). Tanpa cek izin:
  * pemanggil (mfa-actions.ts) yang menegakkan siapa boleh melakukan apa.
  */
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual } from 'node:crypto';
 import { and, count, eq, isNull, lt, or } from 'drizzle-orm';
 import { getDb, schema, type Database } from '@/db';
 import { generateAccessCode, isValidAccessCodeShape, normalizeAccessCode } from '@/lib/auth/access-code';
 import { RECOVERY_CODE_COUNT } from '@/lib/auth/mfa-policy';
 import { generateTotpSecret, verifyTotp } from '@/lib/auth/totp';
+import { blindIndex } from '@/lib/security/crypto';
 
-export const hashRecoveryCode = (code: string) =>
-  createHash('sha256')
-    .update(`rp-recovery:${normalizeAccessCode(code)}`)
-    .digest('hex');
+/**
+ * HMAC berkunci server + terikat akun: dump basis data saja tidak cukup untuk menebak kode
+ * pemulihan (ruang kode ~2^40), dan hash yang sama tidak berlaku untuk akun lain.
+ */
+export const hashRecoveryCode = (userId: string, code: string) => blindIndex(`${userId}:${normalizeAccessCode(code)}`, 'mfa-recovery');
 
 const sameHex = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
 
@@ -37,7 +39,7 @@ export async function startEnrollment(userId: string, db?: Database): Promise<{ 
 async function issueRecoveryCodes(d: Database, userId: string): Promise<string[]> {
   const codes = Array.from({ length: RECOVERY_CODE_COUNT }, generateAccessCode);
   await d.delete(schema.mfaRecoveryCodes).where(eq(schema.mfaRecoveryCodes.userId, userId));
-  await d.insert(schema.mfaRecoveryCodes).values(codes.map((c) => ({ userId, codeHash: hashRecoveryCode(c) })));
+  await d.insert(schema.mfaRecoveryCodes).values(codes.map((c) => ({ userId, codeHash: hashRecoveryCode(userId, c) })));
   return codes;
 }
 
@@ -78,7 +80,7 @@ export async function verifySecondFactor(userId: string, input: string, now = Da
     return step !== null && (await claimStep(d, userId, step, false)) ? 'totp' : null;
   }
   if (!isValidAccessCodeShape(input)) return null;
-  const hash = hashRecoveryCode(input);
+  const hash = hashRecoveryCode(userId, input);
   const unused = await d
     .select()
     .from(schema.mfaRecoveryCodes)

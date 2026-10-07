@@ -5,7 +5,7 @@
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { cache } from 'react';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { and, eq, gt, lt } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
@@ -133,16 +133,26 @@ export const getPendingMfaUser = cache(async () => {
 
 /**
  * Wajib masuk. Tanpa sesi → halaman masuk.
- * Peran yang wajib MFA dan masa tenggangnya habis hanya boleh membuka halaman pendaftaran MFA
- * (atau keluar): `allowMfaSetup` untuk aksi pendaftaran/keluar itu sendiri.
+ * Peran yang wajib MFA dan masa tenggangnya habis SELALU dialihkan ke halaman pendaftaran MFA,
+ * kecuali pemanggil yang memang bagian dari pendaftaran/keluar (`allowMfaSetup`).
+ * Keputusan ini sengaja TIDAK memakai header permintaan (mis. x-pathname): header bisa dikirim
+ * klien sendiri pada rute yang tidak dilewati middleware.
  */
 export async function requireUser(opts: { allowMfaSetup?: boolean } = {}): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect('/masuk');
-  if (user.mfa.kind === 'expired' && !opts.allowMfaSetup) {
-    const path = headers().get('x-pathname');
-    if (path !== MFA_SETUP_PATH) redirect(`${MFA_SETUP_PATH}?wajib=1`);
-  }
+  if (user.mfa.kind === 'expired' && !opts.allowMfaSetup) redirect(`${MFA_SETUP_PATH}?wajib=1`);
+  return user;
+}
+
+/**
+ * Untuk route handler (ekspor/unduhan) yang menjawab dengan status HTTP, bukan redirect:
+ * null bila tidak masuk, masa tenggang MFA habis, atau tidak punya izin.
+ */
+export async function authorizedUser(permission?: Permission): Promise<SessionUser | null> {
+  const user = await getSessionUser();
+  if (!user || user.mfa.kind === 'expired') return null;
+  if (permission && !roleCan(user.role, permission)) return null;
   return user;
 }
 

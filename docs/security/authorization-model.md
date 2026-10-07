@@ -82,7 +82,9 @@ mendapat semua izin lain kecuali `self.portal`.
 | Sesi "sandi benar, MFA belum" (`sessions.mfa_pending`) tidak memberi akses portal; kode akses dari pembina tidak melewati MFA | `session.ts`, `access-actions.ts` | e2e |
 | Reset MFA hanya `users.reset_mfa`, tidak untuk diri sendiri, memutus semua sesi target, tercatat | `canResetMfa()`, `resetUserMfaAction` | `tests/unit/mfa.test.ts` |
 | Percobaan kode MFA ≤ 5/15 menit per akun (+ per IP), dicek **sebelum** kode diperiksa, fail-closed | `guardedSecondFactor()` | `tests/integration/mfa.test.ts` |
-| **Persetujuan wali**: staf (`members.update`, dalam cakupan) hanya bisa *meminta* kode & *mencatat pencabutan*; memberi persetujuan hanya lewat kode wali | `features/consent/consent.ts` | `tests/integration/consent.test.ts` |
+| **Persetujuan wali**: staf (`members.update`, dalam cakupan) hanya bisa *meminta* kode & *mencatat pencabutan*; memberi persetujuan hanya lewat kode wali; formulir wali menolak browser yang sedang login portal; kiriman dari jaringan pembina peminta ditandai; anggota arsip/anonim ditolak | `features/consent/consent.ts`, `consent-actions.ts` | `tests/integration/consent.test.ts` |
+| Pilihan wali ditegakkan: pendaftaran kegiatan anak butuh `ACTIVITY`; DATA ditolak/dicabut → tak bisa verifikasi, daftar kegiatan, atau akun portal; anak yang dibuat/diimpor verifikator tetap PENDING | `features/portal/actions.ts`, `features/members/*` | `tests/unit/consent.test.ts` |
+| Kunci tenggang MFA tidak bergantung header klien; route handler (ekspor) memakai `authorizedUser()` yang juga menolak tenggang habis | `session.ts` | — (dibaca review) |
 | Verifikasi anggota < 18 tahun mensyaratkan persetujuan DATA dari wali (bukan tanggal manual) | `verifyMemberAction` | `tests/unit/consent.test.ts` |
 | Anonimisasi hanya `members.anonymize` (Kwarcab), hanya anggota diarsipkan, dalam cakupan, tidak bisa dibatalkan | `features/members/anonymize.ts` | `tests/integration/anonymize.test.ts` |
 | Log audit INSERT-only: trigger + `REVOKE` untuk user aplikasi; integritas dicek `audit.verify` | `drizzle/0004_…`, `audit-chain.ts` | `tests/integration/audit-chain.test.ts`, `retention.test.ts` |

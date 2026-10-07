@@ -1,0 +1,2 @@
+ALTER TABLE "guardian_consent_requests" ADD COLUMN "requester_ip_hash" text;--> statement-breakpoint
+ALTER TABLE "guardian_consents" ADD COLUMN "same_network_as_requester" boolean DEFAULT false NOT NULL;

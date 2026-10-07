@@ -116,3 +116,33 @@ describe('kunci enkripsi dari env', () => {
     }
   });
 });
+
+describe('kunci pengembangan publik tidak pernah dipakai untuk basis data sungguhan', () => {
+  const pg = 'postgresql://u:p@h/db';
+  const issuesOf = (src: Record<string, string>) => {
+    try {
+      parseServerEnv(src);
+      return [];
+    } catch (e) {
+      return (e as EnvError).issues.map((i) => i.variable).sort();
+    }
+  };
+
+  it('skrip tsx (NODE_ENV kosong) dengan DATABASE_URL tanpa kunci → ditolak', () => {
+    expect(issuesOf({ DATABASE_URL: pg })).toEqual(['BLIND_INDEX_KEY', 'DATA_ENCRYPTION_KEYS']);
+  });
+
+  it('ALLOW_PGLITE=1 yang tertinggal di produksi tidak melonggarkan kewajiban kunci', () => {
+    expect(issuesOf({ NODE_ENV: 'production', DATABASE_URL: pg, ALLOW_PGLITE: '1' })).toEqual(['BLIND_INDEX_KEY', 'DATA_ENCRYPTION_KEYS']);
+  });
+
+  it('ALLOW_DEV_KEYS hanya untuk PostgreSQL lokal, ditolak di produksi', () => {
+    expect(issuesOf({ DATABASE_URL: pg, ALLOW_DEV_KEYS: '1' })).toEqual([]);
+    expect(issuesOf({ NODE_ENV: 'production', DATABASE_URL: pg, ALLOW_DEV_KEYS: '1' })).toContain('ALLOW_DEV_KEYS');
+  });
+
+  it('PGlite tanpa DATABASE_URL tetap boleh memakai kunci pengembangan (dev & CI)', () => {
+    expect(issuesOf({})).toEqual([]);
+    expect(issuesOf({ NODE_ENV: 'production', ALLOW_PGLITE: '1' })).toEqual([]);
+  });
+});

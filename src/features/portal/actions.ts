@@ -7,6 +7,8 @@ import { getDb, schema } from '@/db';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { getOwnMember } from './peserta';
+import { memberConsentSummary } from '@/features/consent/consent';
+import { dataConsentWithdrawn, needsGuardianConsent } from '@/features/consent/status';
 
 /** Peserta mendaftar kegiatan. Syarat: anggota aktif, kegiatan tayang, pendaftaran dibuka, belum lewat. */
 export async function registerEventAction(eventId: string): Promise<void> {
@@ -18,6 +20,11 @@ export async function registerEventAction(eventId: string): Promise<void> {
   const [event] = await db.select().from(schema.events).where(eq(schema.events.id, eventId)).limit(1);
   if (!event || !event.published || event.cancelled || !event.registrationOpen || event.dateStart < new Date()) {
     redirect('/dashboard/kegiatan?gagal=tutup');
+  }
+  // Anak (< 18): pilihan wali untuk "keikutsertaan kegiatan" ditegakkan di sini, bukan hanya dicatat.
+  if (needsGuardianConsent(own.m.birthDate)) {
+    const { statuses } = await memberConsentSummary(own.m.id);
+    if (statuses.ACTIVITY.kind !== 'GRANTED' || dataConsentWithdrawn(statuses)) redirect('/dashboard/kegiatan?gagal=persetujuan');
   }
   await db.insert(schema.eventRegistrations).values({ eventId, memberId: own.m.id }).onConflictDoNothing();
   await audit(user, { action: 'event.register', summary: `Mendaftar kegiatan "${event.title}"`, entityType: 'event', entityId: eventId });

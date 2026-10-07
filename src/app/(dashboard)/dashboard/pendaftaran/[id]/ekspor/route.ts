@@ -1,6 +1,6 @@
 import { getEvent, registrantsFor } from '@/features/portal/registrations';
 import { audit } from '@/lib/auth/audit';
-import { can, getSessionUser } from '@/lib/auth/session';
+import { authorizedUser, can } from '@/lib/auth/session';
 import { toCsv } from '@/lib/csv';
 import { GENDER_LABELS, golonganLabel } from '@/lib/domain';
 
@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 
 /** CSV pendaftar (dibatasi cakupan, tanpa kolom sensitif). Tercatat di log audit. */
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const user = await getSessionUser();
-  if (!user || !can(user, 'members.export') || !can(user, 'members.read')) return new Response('Tidak diizinkan', { status: 403 });
+  const user = await authorizedUser('members.export');
+  if (!user || !can(user, 'members.read')) return new Response('Tidak diizinkan', { status: 403 });
   const event = await getEvent(params.id);
   if (!event || !event.published) return new Response('Kegiatan tidak ditemukan', { status: 404 });
   const rows = await registrantsFor(user, event.id);

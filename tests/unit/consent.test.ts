@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { consentStatuses, dataConsentSatisfied, firstNameOf, needsGuardianConsent, type ConsentDecision } from '@/features/consent/status';
+import {
+  consentStatuses,
+  dataConsentSatisfied,
+  dataConsentWithdrawn,
+  firstNameOf,
+  initialMemberStatus,
+  needsGuardianConsent,
+  type ConsentDecision,
+} from '@/features/consent/status';
+import { minorBirthCutoffDate } from '@/features/consent/consent';
 import { CONSENT_SCOPES, CONSENT_TEXT_VERSION, CONSENT_TEXTS } from '@/features/consent/texts';
 
 const d = (day: number) => new Date(Date.UTC(2026, 9, day));
@@ -51,5 +60,29 @@ describe('status persetujuan wali (1.5)', () => {
   it('setiap cakupan punya teks; versi teks tercatat', () => {
     expect(CONSENT_TEXT_VERSION).toMatch(/^\d{4}-\d{2}-v\d+$/);
     for (const scope of CONSENT_SCOPES) expect(CONSENT_TEXTS[scope].body.length).toBeGreaterThan(0);
+  });
+});
+
+describe('perbaikan hasil review persetujuan', () => {
+  it('tanggal manual lama (bahkan di masa depan) tidak mengalahkan keputusan wali/pencabutan', () => {
+    const s = consentStatuses([
+      dec({ method: 'LEGACY_MANUAL', decidedAt: new Date(Date.UTC(2030, 0, 1)) }),
+      dec({ granted: false, method: 'STAFF_REVOCATION', decidedAt: d(3) }),
+    ]);
+    expect(s.DATA.kind).toBe('REVOKED');
+    expect(dataConsentWithdrawn(s)).toBe(true);
+  });
+
+  it('batas usia tidak gagal di 29 Februari (dipangkas ke 28 Februari tahun bukan kabisat)', () => {
+    expect(minorBirthCutoffDate(new Date(2028, 1, 29))).toBe('2010-02-28');
+    expect(minorBirthCutoffDate(new Date(2026, 9, 6))).toBe('2008-10-06');
+    expect(minorBirthCutoffDate(new Date(2024, 0, 31))).toBe('2006-01-31');
+  });
+
+  it('verifikator membuat anggota: dewasa langsung aktif, anak tetap menunggu persetujuan wali', () => {
+    const now = new Date(2026, 9, 6);
+    expect(initialMemberStatus(true, '1990-01-01', now)).toBe('ACTIVE');
+    expect(initialMemberStatus(true, '2012-05-01', now)).toBe('PENDING');
+    expect(initialMemberStatus(false, '1990-01-01', now)).toBe('PENDING');
   });
 });

@@ -14,6 +14,7 @@ export const metadata: Metadata = { title: 'Kegiatan' };
 type Search = { daftar?: string; batal?: string; gagal?: string };
 
 const FAIL_MESSAGES: Record<string, string> = {
+  persetujuan: 'Orang tua/wali belum menyetujui keikutsertaan kegiatan. Minta pembina membuat kode persetujuan untuk wali Anda.',
   status: 'Pendaftaran hanya untuk anggota berstatus Aktif. Hubungi pembina gudep bila data Anda belum diverifikasi.',
   tutup: 'Pendaftaran kegiatan ini sudah ditutup atau kegiatan telah dimulai.',
   lewat: 'Pendaftaran tidak dapat dibatalkan karena kegiatan sudah dimulai.',

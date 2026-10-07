@@ -13,7 +13,7 @@ import { can, destroyUserSessions, requirePermission } from '@/lib/auth/session'
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { findDuplicates, getMember } from './queries';
 import { memberConsentSummary } from '@/features/consent/consent';
-import { dataConsentSatisfied, needsGuardianConsent } from '@/features/consent/status';
+import { dataConsentSatisfied, dataConsentWithdrawn, initialMemberStatus, needsGuardianConsent } from '@/features/consent/status';
 import { MemberSchema, type MemberInput } from './validation';
 import { anonymizeMember } from './anonymize';
 
@@ -68,7 +68,9 @@ export async function createMemberAction(_prev: FormState, formData: FormData): 
   if (dup) return dup;
 
   // Pengisi yang berwenang memverifikasi langsung mengaktifkan; selainnya menunggu verifikasi kwarran.
-  const verifyNow = can(user, 'members.verify');
+  // Anak (< 18) SELALU menunggu: persetujuan wali baru bisa diminta setelah datanya tersimpan,
+  // dan verifikasi mensyaratkan persetujuan itu (verifyMemberAction).
+  const verifyNow = initialMemberStatus(can(user, 'members.verify'), input.birthDate) === 'ACTIVE';
   const db = await getDb();
   const [created] = await db
     .insert(schema.members)
@@ -276,6 +278,9 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
   if (!current) return fail('Data anggota tidak ditemukan atau di luar wilayah Anda.');
   if (current.m.status !== 'ACTIVE') return fail('Akun portal hanya untuk anggota berstatus Aktif (sudah diverifikasi).');
   if (current.portalUserId) return fail('Anggota ini sudah memiliki akun portal.');
+  if (needsGuardianConsent(current.m.birthDate) && dataConsentWithdrawn((await memberConsentSummary(id)).statuses)) {
+    return fail('Orang tua/wali menolak atau mencabut persetujuan pengelolaan data anak ini. Akun portal tidak dapat dibuat.');
+  }
 
   const username = await uniqueUsername(current.m.fullName);
   const db = await getDb();

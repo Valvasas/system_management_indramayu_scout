@@ -29,7 +29,7 @@ const memberData = [
 ];
 
 const protections = [
-  'Telepon, alamat, dan data wali anggota, nama wali pada catatan persetujuan, serta rahasia verifikasi dua langkah disimpan terenkripsi (AES-256-GCM) di basis data. Kuncinya berada di server aplikasi, terpisah dari basis data dan dari berkas cadangan.',
+  'Telepon, alamat, dan data wali anggota, nama wali pada catatan persetujuan, serta rahasia verifikasi dua langkah disimpan terenkripsi (AES-256-GCM) di basis data. Kuncinya berada di server aplikasi, terpisah dari basis data dan dari berkas cadangan. Data yang tercatat sebelum enkripsi berlaku ikut dienkripsi setiap kali migrasi basis data dijalankan.',
   'Log aktivitas hanya bisa ditambah: basis data menolak pengubahan dan penghapusan, dan setiap entri terkunci dengan hash entri sebelumnya sehingga perubahan dapat dideteksi lewat pemeriksaan integritas.',
   'Akun Super Admin, pengurus kwarcab, dan admin website wajib memakai verifikasi dua langkah (kode dari aplikasi autentikator) setelah masa tenggang. Akun lain boleh mengaktifkannya sukarela.',
   'Percobaan masuk, kode akses, kode verifikasi, dan formulir publik dibatasi jumlahnya. Penghitungnya menyimpan sidik HMAC alamat IP atau nama pengguna, bukan nilai aslinya, dan dihapus oleh pembersihan otomatis setelah jangka pembatasan lewat.',
@@ -53,8 +53,9 @@ const accessData = [
 const consentFlow = [
   'Pembina membuat kode persetujuan sekali pakai (berlaku 14 hari) dan menyerahkannya kepada orang tua/wali. Yang disimpan hanya hash kodenya.',
   'Orang tua/wali membuka halaman Persetujuan wali, memasukkan kode, lalu memilih setuju atau tidak untuk setiap bagian: pengelolaan data pribadi, foto dan dokumentasi, serta keikutsertaan kegiatan. Pemegang kode hanya melihat nama depan anak dan nama gugus depannya.',
-  'Pembina tidak bisa memberikan persetujuan atas nama wali. Pembina hanya dapat mencatat pencabutan yang diminta wali; wali juga dapat mengubah pilihan dengan kode baru kapan saja.',
-  'Data anak di bawah 18 tahun baru dapat diverifikasi setelah wali menyetujui pengelolaan data pribadinya. Tanggal persetujuan yang dulu diketik pengurus tetap terlihat sebagai catatan lama yang belum terverifikasi.',
+  'Portal tidak menyediakan cara bagi pembina untuk mencatat persetujuan atas nama wali. Persetujuan hanya tercatat lewat halaman wali dengan kode sekali pakai, halaman itu menolak perangkat yang sedang masuk ke portal, dan keputusan yang dikirim dari jaringan yang sama dengan pembina peminta kode ditandai untuk diperiksa. Pembina dapat mencatat pencabutan yang diminta wali; wali juga dapat mengubah pilihan dengan kode baru kapan saja.',
+  'Data anak di bawah 18 tahun baru dapat diverifikasi setelah wali menyetujui pengelolaan data pribadinya; anak yang didata pengurus berwenang verifikasi pun tetap menunggu persetujuan itu. Tanggal persetujuan yang dulu diketik pengurus tetap terlihat sebagai catatan lama yang belum terverifikasi.',
+  'Pilihan wali ditegakkan: tanpa persetujuan kegiatan, anak tidak dapat mendaftar kegiatan lewat portal. Bila persetujuan data pribadi ditolak atau dicabut, anak tidak dapat diverifikasi ulang, didaftarkan ke kegiatan baru, atau dibuatkan akun portal sampai wali menyetujui kembali.',
 ];
 
 const retention = [
@@ -66,7 +67,7 @@ const retention = [
 ];
 
 const notYetInEffect = [
-  'Verifikasi identitas wali. Sistem memastikan persetujuan datang dari pemegang kode yang diberikan pembina, tetapi tidak memeriksa dokumen identitas orang tua/wali.',
+  'Verifikasi identitas wali. Sistem memastikan persetujuan datang dari pemegang kode yang diberikan pembina, tetapi tidak memeriksa dokumen identitas orang tua/wali. Karena kode diserahkan lewat pembina, pembina secara teknis masih bisa mengisinya sendiri dari perangkat lain; sistem hanya menolak perangkat yang sedang masuk ke portal dan menandai pengiriman dari jaringan yang sama.',
   'Enkripsi nama dan tanggal lahir anggota. Kedua data ini dilindungi kontrol akses dan koneksi terenkripsi, belum dienkripsi per kolom.',
   'Deteksi pemotongan entri log terbaru. Rantai hash mendeteksi perubahan di tengah, tetapi entri paling akhir yang dihapus hanya ketahuan bila pengurus mencatat kepala rantai secara berkala di luar sistem.',
   'Penghapusan nama di log lama. Log aktivitas tidak dapat diubah, sehingga ringkasan log yang menyebut nama anggota baru hilang ketika masa simpan log (24 bulan) lewat, termasuk setelah anggota dianonimkan.',

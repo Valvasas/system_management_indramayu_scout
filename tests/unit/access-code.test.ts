@@ -38,3 +38,19 @@ describe('kode akses sekali pakai', () => {
     expect(new Set(Array.from({ length: 500 }, generateAccessCode)).size).toBe(500);
   });
 });
+
+describe('hash kode berkunci server (hasil review keamanan)', () => {
+  it('bukan SHA-256 polos: dump DB saja tidak cukup untuk menebak kode secara offline', async () => {
+    const { createHash } = await import('node:crypto');
+    const plain = createHash('sha256')
+      .update(`rp-access:${normalizeAccessCode('ABCD-2345')}`)
+      .digest('hex');
+    expect(hashAccessCode('ABCD-2345')).not.toBe(plain);
+  });
+
+  it('kode pemulihan MFA terikat akun: kode sama di akun lain menghasilkan hash berbeda', async () => {
+    const { hashRecoveryCode } = await import('@/features/auth/mfa');
+    expect(hashRecoveryCode('akun-a', 'ABCD-2345')).not.toBe(hashRecoveryCode('akun-b', 'ABCD-2345'));
+    expect(hashRecoveryCode('akun-a', 'abcd 2345')).toBe(hashRecoveryCode('akun-a', 'ABCD-2345'));
+  });
+});

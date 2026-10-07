@@ -1,7 +1,7 @@
 import { golonganEnum, memberStatusEnum, type Golongan, type MemberStatus } from '@/db/schema';
 import { listMembersForExport } from '@/features/members/queries';
 import { audit } from '@/lib/auth/audit';
-import { can, getSessionUser } from '@/lib/auth/session';
+import { authorizedUser, can } from '@/lib/auth/session';
 import { toCsv } from '@/lib/csv';
 import { GENDER_LABELS, MEMBER_STATUS_LABELS, golonganLabel } from '@/lib/domain';
 import { CONSENT_KIND_LABELS } from '@/components/dashboard/consent/ConsentBadge';
@@ -12,8 +12,9 @@ export const dynamic = 'force-dynamic';
 
 /** Ekspor CSV anggota sesuai filter & cakupan. Kolom sensitif hanya bagi yang berhak. Tercatat di log audit. */
 export async function GET(req: Request) {
-  const user = await getSessionUser();
-  if (!user || !can(user, 'members.export')) return new Response('Tidak diizinkan', { status: 403 });
+  // authorizedUser: juga menolak akun yang masa tenggang MFA-nya habis.
+  const user = await authorizedUser('members.export');
+  if (!user) return new Response('Tidak diizinkan', { status: 403 });
 
   const p = new URL(req.url).searchParams;
   const golongan = p.get('golongan');
