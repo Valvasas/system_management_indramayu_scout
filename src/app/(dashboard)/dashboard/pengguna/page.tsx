@@ -34,7 +34,12 @@ export default async function PenggunaPage({ searchParams = {} }: { searchParams
       {searchParams.tersimpan && <Notice>Perubahan akun tersimpan.</Notice>}
 
       <Panel bodyClassName="p-0 sm:p-0">
-        <form role="search" method="get" action="/dashboard/pengguna" className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12">
+        <form
+          role="search"
+          method="get"
+          action="/dashboard/pengguna"
+          className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12"
+        >
           <div className="relative md:col-span-6">
             <label htmlFor="cari-akun" className="sr-only">
               Cari nama atau nama pengguna
@@ -65,10 +70,18 @@ export default async function PenggunaPage({ searchParams = {} }: { searchParams
               <caption className="sr-only">Daftar akun</caption>
               <thead>
                 <tr className="border-b border-border-subtle">
-                  <th scope="col" className={th}>Nama</th>
-                  <th scope="col" className={th}>Peran & cakupan</th>
-                  <th scope="col" className={th}>Terakhir masuk</th>
-                  <th scope="col" className={th}>Status</th>
+                  <th scope="col" className={th}>
+                    Nama
+                  </th>
+                  <th scope="col" className={th}>
+                    Peran & cakupan
+                  </th>
+                  <th scope="col" className={th}>
+                    Terakhir masuk
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -78,7 +91,10 @@ export default async function PenggunaPage({ searchParams = {} }: { searchParams
                       {u.role === 'PESERTA' ? (
                         <span className="font-semibold text-text-primary">{u.name}</span>
                       ) : (
-                        <Link href={`/dashboard/pengguna/${u.id}`} className="font-semibold text-text-primary hover:text-text-accent hover:underline">
+                        <Link
+                          href={`/dashboard/pengguna/${u.id}`}
+                          className="font-semibold text-text-primary hover:text-text-accent hover:underline"
+                        >
                           {u.name}
                         </Link>
                       )}
@@ -86,14 +102,24 @@ export default async function PenggunaPage({ searchParams = {} }: { searchParams
                     </td>
                     <td className={td}>
                       <p className="text-text-primary">{ROLE_LABELS[u.role]}</p>
-                      <p className="text-sm text-text-secondary">{u.kwarranName ? `Kwarran ${u.kwarranName}` : u.gudepName ?? (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN_KWARCAB' ? 'Seluruh kabupaten' : '—')}</p>
+                      <p className="text-sm text-text-secondary">
+                        {u.kwarranName
+                          ? `Kwarran ${u.kwarranName}`
+                          : (u.gudepName ?? (u.role === 'SUPER_ADMIN' || u.role === 'ADMIN_KWARCAB' ? 'Seluruh kabupaten' : '—'))}
+                      </p>
                     </td>
-                    <td className={`${td} whitespace-nowrap text-text-secondary`}>{u.lastLoginAt ? formatDate(u.lastLoginAt.toISOString()) : 'Belum pernah'}</td>
+                    <td className={`${td} whitespace-nowrap text-text-secondary`}>
+                      {u.lastLoginAt ? formatDate(u.lastLoginAt.toISOString()) : 'Belum pernah'}
+                    </td>
                     <td className={td}>
                       {u.active ? (
-                        <Badge tone="success" icon={CheckCircle2}>Aktif</Badge>
+                        <Badge tone="success" icon={CheckCircle2}>
+                          Aktif
+                        </Badge>
                       ) : (
-                        <Badge tone="neutral" icon={XCircle}>Nonaktif</Badge>
+                        <Badge tone="neutral" icon={XCircle}>
+                          Nonaktif
+                        </Badge>
                       )}
                     </td>
                   </tr>

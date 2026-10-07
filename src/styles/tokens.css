@@ -10,64 +10,64 @@
 
 :root {
   /* ---------- Primitive: Forest (brand utama) ---------- */
-  --forest-50: #EDF5EF;
-  --forest-100: #D5E8DB;
-  --forest-200: #AFD0BA;
-  --forest-300: #7FB292;
-  --forest-400: #4F906C;
-  --forest-500: #2F7350;
-  --forest-600: #1F5C3E;
-  --forest-700: #184A32;
+  --forest-50: #edf5ef;
+  --forest-100: #d5e8db;
+  --forest-200: #afd0ba;
+  --forest-300: #7fb292;
+  --forest-400: #4f906c;
+  --forest-500: #2f7350;
+  --forest-600: #1f5c3e;
+  --forest-700: #184a32;
   --forest-800: #123927;
-  --forest-900: #0E2A1E;
+  --forest-900: #0e2a1e;
 
   /* ---------- Primitive: Moss (rumput & lumut) ---------- */
-  --moss-100: #EEF0D9;
-  --moss-200: #DCE2B3;
-  --moss-400: #A8B465;
-  --moss-500: #8A9A47;
-  --moss-700: #55611F;
+  --moss-100: #eef0d9;
+  --moss-200: #dce2b3;
+  --moss-400: #a8b465;
+  --moss-500: #8a9a47;
+  --moss-700: #55611f;
 
   /* ---------- Primitive: Bark (cokelat kayu, warisan Pramuka) ---------- */
-  --bark-50: #F7F2EC;
-  --bark-100: #EDE3D6;
-  --bark-200: #DBC7AE;
-  --bark-400: #A57F58;
-  --bark-600: #6B4E31;
-  --bark-700: #573F27;
-  --bark-800: #3F2D1C;
+  --bark-50: #f7f2ec;
+  --bark-100: #ede3d6;
+  --bark-200: #dbc7ae;
+  --bark-400: #a57f58;
+  --bark-600: #6b4e31;
+  --bark-700: #573f27;
+  --bark-800: #3f2d1c;
 
   /* ---------- Primitive: Sand (kanvas tenda) ---------- */
-  --sand-50: #FAF7F0;
-  --sand-100: #F4EAD8;
-  --sand-200: #E9DBC2;
-  --sand-300: #DCC59E;
-  --sand-400: #D4A373;
+  --sand-50: #faf7f0;
+  --sand-100: #f4ead8;
+  --sand-200: #e9dbc2;
+  --sand-300: #dcc59e;
+  --sand-400: #d4a373;
 
   /* ---------- Primitive: Sky (langit pagi) ---------- */
-  --sky-100: #E2EEF3;
-  --sky-200: #C3DCE7;
-  --sky-400: #7FB2C9;
-  --sky-800: #21536A;
+  --sky-100: #e2eef3;
+  --sky-200: #c3dce7;
+  --sky-400: #7fb2c9;
+  --sky-800: #21536a;
 
   /* ---------- Primitive: Ember (api unggun) ---------- */
-  --ember-100: #FCE9DA;
-  --ember-200: #F8CFAE;
-  --ember-400: #F08A4B;
-  --ember-600: #C2541B;
-  --ember-700: #A2441A;
-  --ember-800: #7D3212;
+  --ember-100: #fce9da;
+  --ember-200: #f8cfae;
+  --ember-400: #f08a4b;
+  --ember-600: #c2541b;
+  --ember-700: #a2441a;
+  --ember-800: #7d3212;
 
   /* ---------- Primitive: Stone (netral hangat) ----------
      Nama --neutral-* dipertahankan sebagai alias agar kode lama tetap konsisten. */
-  --stone-50: #FAF9F6;
-  --stone-100: #F2EEE4;
-  --stone-200: #E4DED2;
-  --stone-300: #CFC9BE;
-  --stone-400: #A39B8E;
-  --stone-500: #6E675D;
-  --stone-600: #55504A;
-  --stone-700: #3D3934;
+  --stone-50: #faf9f6;
+  --stone-100: #f2eee4;
+  --stone-200: #e4ded2;
+  --stone-300: #cfc9be;
+  --stone-400: #a39b8e;
+  --stone-500: #6e675d;
+  --stone-600: #55504a;
+  --stone-700: #3d3934;
   --stone-800: #262420;
   --stone-900: #171512;
 
@@ -83,17 +83,17 @@
   --neutral-900: var(--stone-900);
 
   /* ---------- Primitive: Status ---------- */
-  --green-50: #EFF7F1;
-  --green-200: #BFDFC8;
-  --green-800: #1D5B33;
-  --amber-50: #FEF8E7;
-  --amber-200: #F6DE9C;
-  --amber-800: #7A4A0B;
-  --red-50: #FDF1EF;
-  --red-200: #F5C6BE;
-  --red-600: #C8372D;
-  --red-700: #A92B22;
-  --red-800: #85211A;
+  --green-50: #eff7f1;
+  --green-200: #bfdfc8;
+  --green-800: #1d5b33;
+  --amber-50: #fef8e7;
+  --amber-200: #f6de9c;
+  --amber-800: #7a4a0b;
+  --red-50: #fdf1ef;
+  --red-200: #f5c6be;
+  --red-600: #c8372d;
+  --red-700: #a92b22;
+  --red-800: #85211a;
   --blue-50: var(--sky-100);
   --blue-200: var(--sky-200);
   --blue-800: var(--sky-800);
@@ -102,8 +102,8 @@
      canvas  = kanvas tenda (krem hangat), base/raised = kertas putih.
      forest  = blok gelap berhutan (footer, pita ajakan). meadow/sand/sky = pita lembut bergantian. */
   --surface-canvas: var(--sand-50);
-  --surface-base: #FFFFFF;
-  --surface-raised: #FFFFFF;
+  --surface-base: #ffffff;
+  --surface-raised: #ffffff;
   --surface-subtle: var(--stone-100);
   --surface-sunken: var(--stone-200);
   --surface-inverse: var(--forest-900);
@@ -124,9 +124,9 @@
   --text-primary: var(--stone-800);
   --text-secondary: var(--stone-600);
   --text-muted: var(--stone-500);
-  --text-inverse: #FFFFFF;
-  --text-inverse-muted: #C9D6CD;
-  --text-on-brand: #FFFFFF;
+  --text-inverse: #ffffff;
+  --text-inverse-muted: #c9d6cd;
+  --text-on-brand: #ffffff;
 
   /* ---------- Semantic: Action ----------
      Putih di atas forest-600 = 7.9:1, hover forest-700 = 10.2:1. */
@@ -156,13 +156,13 @@
   --border-subtle: var(--stone-200);
   --border-strong: var(--stone-300);
   --border-brand: var(--forest-200);
-  --border-inverse: #355C48;
-  --border-inverse-subtle: #22473A;
-  --border-inverse-hover: #7FB292;
+  --border-inverse: #355c48;
+  --border-inverse-subtle: #22473a;
+  --border-inverse-hover: #7fb292;
 
   /* ---------- Semantic: Focus ---------- */
   --focus-ring: var(--ember-600);
-  --focus-ring-inverse: #FFFFFF;
+  --focus-ring-inverse: #ffffff;
 
   /* ---------- Semantic: Status ----------
      Warna TIDAK PERNAH jadi satu-satunya pembeda: Badge selalu ikon + teks (WCAG 1.4.1). */
@@ -184,28 +184,28 @@
 
   /* ---------- Ilustrasi (dekoratif, tidak membawa informasi) ----------
      Lapisan lanskap dari jauh ke dekat. Dipakai komponen di src/components/illustrations. */
-  --ill-sky: #DCEBEF;
-  --ill-sky-warm: #F6E7CF;
-  --ill-sun: #F4C77A;
-  --ill-cloud: #FFFFFF;
-  --ill-mountain-far: #B9CFC6;
-  --ill-mountain: #8DB09F;
-  --ill-forest-far: #5D8C72;
-  --ill-forest: #2F6B4B;
-  --ill-forest-near: #1C4D35;
+  --ill-sky: #dcebef;
+  --ill-sky-warm: #f6e7cf;
+  --ill-sun: #f4c77a;
+  --ill-cloud: #ffffff;
+  --ill-mountain-far: #b9cfc6;
+  --ill-mountain: #8db09f;
+  --ill-forest-far: #5d8c72;
+  --ill-forest: #2f6b4b;
+  --ill-forest-near: #1c4d35;
   --ill-forest-deep: #123927;
-  --ill-meadow: #A8B465;
-  --ill-meadow-light: #C9D18F;
-  --ill-ground: #8C6B45;
-  --ill-path: #E3CFA6;
-  --ill-tent: #E06A2A;
-  --ill-tent-shade: #A2441A;
-  --ill-tent-alt: #D4A373;
-  --ill-flag: #C8372D;
-  --ill-wood: #6B4E31;
-  --ill-fire: #F08A4B;
-  --ill-fire-core: #F4C77A;
-  --ill-water: #7FB2C9;
+  --ill-meadow: #a8b465;
+  --ill-meadow-light: #c9d18f;
+  --ill-ground: #8c6b45;
+  --ill-path: #e3cfa6;
+  --ill-tent: #e06a2a;
+  --ill-tent-shade: #a2441a;
+  --ill-tent-alt: #d4a373;
+  --ill-flag: #c8372d;
+  --ill-wood: #6b4e31;
+  --ill-fire: #f08a4b;
+  --ill-fire-core: #f4c77a;
+  --ill-water: #7fb2c9;
   --ill-contour: rgb(31 92 62 / 0.09);
   --ill-contour-inverse: rgb(255 255 255 / 0.07);
 
@@ -223,7 +223,7 @@
 
   /* ---------- Elevation: bayangan hangat, bukan abu dingin ---------- */
   --shadow-sm: 0 1px 2px 0 rgb(38 36 32 / 0.06);
-  --shadow-md: 0 6px 16px -4px rgb(38 36 32 / 0.10), 0 2px 4px -2px rgb(38 36 32 / 0.06);
+  --shadow-md: 0 6px 16px -4px rgb(38 36 32 / 0.1), 0 2px 4px -2px rgb(38 36 32 / 0.06);
   --shadow-lg: 0 18px 40px -12px rgb(14 42 30 / 0.22);
   --shadow-dialog: 0 24px 48px -12px rgb(14 42 30 / 0.28);
 

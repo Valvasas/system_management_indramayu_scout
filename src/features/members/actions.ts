@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { and, eq, like } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb, schema } from '@/db';
@@ -12,7 +12,10 @@ import { canAccessGudep } from '@/lib/auth/scope';
 import { can, destroyUserSessions, requirePermission } from '@/lib/auth/session';
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { findDuplicates, getMember } from './queries';
+import { memberConsentSummary } from '@/features/consent/consent';
+import { dataConsentSatisfied, needsGuardianConsent } from '@/features/consent/status';
 import { MemberSchema, type MemberInput } from './validation';
+import { anonymizeMember } from './anonymize';
 
 const LABELS: Partial<Record<keyof MemberRow, string>> = {
   fullName: 'nama',
@@ -25,7 +28,6 @@ const LABELS: Partial<Record<keyof MemberRow, string>> = {
   address: 'alamat',
   guardianName: 'nama wali',
   guardianPhone: 'telepon wali',
-  guardianConsentAt: 'persetujuan wali',
   joinedAt: 'tanggal bergabung',
   notes: 'catatan',
 };
@@ -46,10 +48,7 @@ async function duplicateError(user: Awaited<ReturnType<typeof requirePermission>
   if (input.confirmDuplicate) return null;
   const { visible, hiddenCount } = await findDuplicates(user, input.fullName, input.birthDate, excludeId);
   if (visible.length === 0 && hiddenCount === 0) return null;
-  const where = [
-    ...visible.map((d) => d.gudepName),
-    ...(hiddenCount ? [`${hiddenCount} data di luar wilayah Anda`] : []),
-  ].join(', ');
+  const where = [...visible.map((d) => d.gudepName), ...(hiddenCount ? [`${hiddenCount} data di luar wilayah Anda`] : [])].join(', ');
   return fail(
     `Kemungkinan data ganda: anggota dengan nama dan tanggal lahir yang sama sudah ada (${where}).\nBila memang orang yang berbeda, centang "Saya sudah memeriksa" lalu simpan lagi.`,
     { confirmDuplicate: 'Centang bila Anda yakin ini anggota yang berbeda.' },
@@ -62,7 +61,8 @@ export async function createMemberAction(_prev: FormState, formData: FormData): 
   if (parsed.error) return parsed.error;
   const input = parsed.data;
 
-  if (!(await canAccessGudep(user, input.gudepId))) return fail('Gudep di luar wilayah Anda.', { gudepId: 'Pilih gudep dalam wilayah Anda.' });
+  if (!(await canAccessGudep(user, input.gudepId)))
+    return fail('Gudep di luar wilayah Anda.', { gudepId: 'Pilih gudep dalam wilayah Anda.' });
   if (await ktaTaken(input.kta)) return fail('Nomor KTA sudah dipakai anggota lain.', { kta: 'Nomor KTA sudah terdaftar.' });
   const dup = await duplicateError(user, input);
   if (dup) return dup;
@@ -101,7 +101,8 @@ export async function updateMemberAction(id: string, _prev: FormState, formData:
   if (parsed.error) return parsed.error;
   const input = parsed.data;
 
-  if (!(await canAccessGudep(user, input.gudepId))) return fail('Gudep di luar wilayah Anda.', { gudepId: 'Pilih gudep dalam wilayah Anda.' });
+  if (!(await canAccessGudep(user, input.gudepId)))
+    return fail('Gudep di luar wilayah Anda.', { gudepId: 'Pilih gudep dalam wilayah Anda.' });
   if (await ktaTaken(input.kta, id)) return fail('Nomor KTA sudah dipakai anggota lain.', { kta: 'Nomor KTA sudah terdaftar.' });
   const identityChanged = input.fullName !== current.m.fullName || input.birthDate !== current.m.birthDate;
   if (identityChanged) {
@@ -169,6 +170,15 @@ export async function verifyMemberAction(id: string, _prev: FormState, formData:
   const db = await getDb();
 
   if (decision === 'approve') {
+    // UU PDP: data anak baru boleh diverifikasi setelah wali sendiri menyetujui pengelolaan datanya.
+    if (needsGuardianConsent(current.m.birthDate)) {
+      const { statuses } = await memberConsentSummary(id);
+      if (!dataConsentSatisfied(statuses)) {
+        return fail(
+          'Belum ada persetujuan wali (data pribadi) yang terverifikasi. Buat kode untuk wali di bagian Persetujuan wali, lalu verifikasi setelah wali menyetujui.',
+        );
+      }
+    }
     const newKta = kta ?? current.m.kta;
     if (await ktaTaken(newKta, id)) return fail('Nomor KTA sudah dipakai anggota lain.', { kta: 'Nomor KTA sudah terdaftar.' });
     await db
@@ -178,7 +188,12 @@ export async function verifyMemberAction(id: string, _prev: FormState, formData:
     await audit(user, { action: 'member.verify', summary: `Menyetujui data ${current.m.fullName}`, entityType: 'member', entityId: id });
   } else {
     await db.update(schema.members).set({ status: 'NEEDS_FIX', reviewNote }).where(eq(schema.members.id, id));
-    await audit(user, { action: 'member.return', summary: `Mengembalikan data ${current.m.fullName}: ${reviewNote}`, entityType: 'member', entityId: id });
+    await audit(user, {
+      action: 'member.return',
+      summary: `Mengembalikan data ${current.m.fullName}: ${reviewNote}`,
+      entityType: 'member',
+      entityId: id,
+    });
   }
   revalidatePath('/dashboard/anggota');
   redirect(`/dashboard/anggota/${id}?tersimpan=${decision === 'approve' ? 'setuju' : 'kembali'}`);
@@ -203,7 +218,12 @@ export async function archiveMemberAction(id: string, _prev: FormState, formData
     await db.update(schema.users).set({ active: false }).where(eq(schema.users.id, current.portalUserId));
     await destroyUserSessions(current.portalUserId);
   }
-  await audit(user, { action: 'member.archive', summary: `Mengarsipkan ${current.m.fullName}: ${parsed.data.reason}`, entityType: 'member', entityId: id });
+  await audit(user, {
+    action: 'member.archive',
+    summary: `Mengarsipkan ${current.m.fullName}: ${parsed.data.reason}`,
+    entityType: 'member',
+    entityId: id,
+  });
   revalidatePath('/dashboard/anggota');
   redirect(`/dashboard/anggota/${id}?tersimpan=arsip`);
 }
@@ -211,10 +231,16 @@ export async function archiveMemberAction(id: string, _prev: FormState, formData
 export async function restoreMemberAction(id: string): Promise<void> {
   const user = await requirePermission('members.archive');
   const current = await getMember(user, id);
-  if (!current || current.m.status !== 'ARCHIVED') redirect(`/dashboard/anggota/${id}`);
+  // Data yang sudah dianonimkan tidak bisa dihidupkan lagi (identitasnya sudah tidak ada).
+  if (!current || current.m.status !== 'ARCHIVED' || current.m.anonymizedAt) redirect(`/dashboard/anggota/${id}`);
   const db = await getDb();
   await db.update(schema.members).set({ status: 'PENDING' }).where(eq(schema.members.id, id));
-  await audit(user, { action: 'member.restore', summary: `Memulihkan ${current.m.fullName} dari arsip`, entityType: 'member', entityId: id });
+  await audit(user, {
+    action: 'member.restore',
+    summary: `Memulihkan ${current.m.fullName} dari arsip`,
+    entityType: 'member',
+    entityId: id,
+  });
   revalidatePath('/dashboard/anggota');
   redirect(`/dashboard/anggota/${id}?tersimpan=pulih`);
 }
@@ -232,7 +258,12 @@ async function uniqueUsername(fullName: string): Promise<string> {
       .join('.') || 'peserta';
   const db = await getDb();
   const taken = new Set(
-    (await db.select({ u: schema.users.username }).from(schema.users).where(like(schema.users.username, `${base}%`))).map((r) => r.u),
+    (
+      await db
+        .select({ u: schema.users.username })
+        .from(schema.users)
+        .where(like(schema.users.username, `${base}%`))
+    ).map((r) => r.u),
   );
   if (!taken.has(base)) return base;
   for (let i = 2; i < 1000; i++) if (!taken.has(`${base}${i}`)) return `${base}${i}`;
@@ -248,7 +279,11 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
 
   const username = await uniqueUsername(current.m.fullName);
   const db = await getDb();
-  const [existing] = await db.select({ id: schema.users.id }).from(schema.users).where(and(eq(schema.users.memberId, id))).limit(1);
+  const [existing] = await db
+    .select({ id: schema.users.id })
+    .from(schema.users)
+    .where(and(eq(schema.users.memberId, id)))
+    .limit(1);
   if (existing) return fail('Anggota ini sudah memiliki akun portal.');
 
   const [created] = await db
@@ -265,8 +300,26 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
     })
     .returning({ id: schema.users.id });
 
-  await audit(user, { action: 'user.create', summary: `Membuat akun portal peserta untuk ${current.m.fullName}`, entityType: 'user', entityId: created.id });
+  await audit(user, {
+    action: 'user.create',
+    summary: `Membuat akun portal peserta untuk ${current.m.fullName}`,
+    entityType: 'user',
+    entityId: created.id,
+  });
   const { code, expiresAt } = await issueAccessCode(user, { id: created.id, username }, 'ACTIVATION');
   revalidatePath(`/dashboard/anggota/${id}`);
   return ok(accessCodeMessage(username, code, expiresAt, 'ACTIVATION'));
+}
+
+/** Hapus identitas anggota nonaktif (hak subjek data). Tidak dapat dibatalkan; tercatat tanpa nama. */
+export async function anonymizeMemberAction(id: string): Promise<void> {
+  const user = await requirePermission('members.anonymize');
+  const result = await anonymizeMember(user, id);
+  if (!result.ok) {
+    if (result.reason === 'tidak-ditemukan') notFound();
+    redirect(`/dashboard/anggota/${id}?anonim=${result.reason}`);
+  }
+  await audit(user, { action: 'member.anonymized', summary: `Menganonimkan data: ${result.label}`, entityType: 'member', entityId: id });
+  revalidatePath('/dashboard/anggota');
+  redirect(`/dashboard/anggota/${id}?anonim=ok`);
 }

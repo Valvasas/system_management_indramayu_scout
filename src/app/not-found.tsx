@@ -35,7 +35,8 @@ export default function NotFound() {
             <p className="eyebrow mt-6">Galat 404</p>
             <h1 className="mt-3 font-display text-display-lg font-semibold text-text-primary">Sepertinya kita tersesat di hutan</h1>
             <p className="mt-4 max-w-prose text-lg text-text-secondary">
-              Alamat yang Anda tuju tidak tersedia, sudah dipindahkan, atau tautannya keliru. Coba cari, atau ambil salah satu jalur di bawah.
+              Alamat yang Anda tuju tidak tersedia, sudah dipindahkan, atau tautannya keliru. Coba cari, atau ambil salah satu jalur di
+              bawah.
             </p>
             <form action="/cari" role="search" className="relative mt-8 w-full max-w-md">
               <label htmlFor="nf-search" className="sr-only">

@@ -51,10 +51,20 @@ export const VerifyForm: React.FC<{ action: Action; currentKta: string | null }>
       {mode === 'approve' ? (
         <TextField name="kta" label="Nomor KTA" defaultValue={currentKta ?? ''} hint="Opsional. Isi bila kartu sudah terbit." />
       ) : (
-        <TextAreaField name="reviewNote" label="Apa yang perlu diperbaiki?" rows={3} hint="Catatan ini terlihat oleh pengisi data." required />
+        <TextAreaField
+          name="reviewNote"
+          label="Apa yang perlu diperbaiki?"
+          rows={3}
+          hint="Catatan ini terlihat oleh pengisi data."
+          required
+        />
       )}
       <SubmitButton variant={mode === 'approve' ? 'primary' : 'outline'}>
-        {mode === 'approve' ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : <RotateCcw className="h-4 w-4" aria-hidden="true" />}
+        {mode === 'approve' ? (
+          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <RotateCcw className="h-4 w-4" aria-hidden="true" />
+        )}
         {mode === 'approve' ? 'Setujui data' : 'Kembalikan untuk diperbaiki'}
       </SubmitButton>
     </ActionForm>

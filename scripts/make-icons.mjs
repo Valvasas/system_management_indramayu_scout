@@ -44,6 +44,9 @@ for (const [name, size, scale] of targets) {
 // Logo horizontal ikut warna merek.
 const logoPath = path.join(out, 'logo.svg');
 let logo = await fs.readFile(logoPath, 'utf8');
-logo = logo.replace('fill="#16A34A"', `fill="${BRAND}"`).replace('fill="#1E293B"', 'fill="#1F2937"').replace('fill="#64748B"', 'fill="#4B5563"');
+logo = logo
+  .replace('fill="#16A34A"', `fill="${BRAND}"`)
+  .replace('fill="#1E293B"', 'fill="#1F2937"')
+  .replace('fill="#64748B"', 'fill="#4B5563"');
 await fs.writeFile(logoPath, logo);
 console.log('logo.svg diselaraskan dengan warna merek');

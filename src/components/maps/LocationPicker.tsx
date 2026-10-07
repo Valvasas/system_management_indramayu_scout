@@ -33,9 +33,13 @@ export const LocationPicker: React.FC<{ defaultLat: number | null; defaultLng: n
     let cancelled = false;
     import('leaflet').then((L) => {
       if (cancelled || !mapRef.current) return;
-      const start: [number, number] = defaultLat !== null && defaultLng !== null ? [defaultLat, defaultLng] : [INDRAMAYU_CENTER.lat, INDRAMAYU_CENTER.lng];
+      const start: [number, number] =
+        defaultLat !== null && defaultLng !== null ? [defaultLat, defaultLng] : [INDRAMAYU_CENTER.lat, INDRAMAYU_CENTER.lng];
       const map = L.map(mapRef.current, { scrollWheelZoom: false }).setView(start, defaultLat !== null ? 16 : 10);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; Kontributor OpenStreetMap' }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; Kontributor OpenStreetMap',
+      }).addTo(map);
       map.on('click', (e: import('leaflet').LeafletMouseEvent) => {
         setLat(String(round(e.latlng.lat)));
         setLng(String(round(e.latlng.lng)));
@@ -87,7 +91,12 @@ export const LocationPicker: React.FC<{ defaultLat: number | null; defaultLng: n
   return (
     <div className="space-y-3">
       <div className="h-80 overflow-hidden rounded-lg border border-border-subtle">
-        <div ref={mapRef} role="application" aria-label="Peta pemilih lokasi. Klik peta untuk menaruh titik gudep." className="h-full w-full" />
+        <div
+          ref={mapRef}
+          role="application"
+          aria-label="Peta pemilih lokasi. Klik peta untuk menaruh titik gudep."
+          className="h-full w-full"
+        />
       </div>
       <p className="text-sm text-text-secondary">Klik/ketuk peta tepat di lokasi pangkalan, atau isi koordinat dari Google Maps.</p>
       <div className="flex flex-wrap gap-2">
@@ -115,10 +124,24 @@ export const LocationPicker: React.FC<{ defaultLat: number | null; defaultLng: n
       )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="f-lat" label="Lintang (latitude)" error={latError} hint={LAT_HINT}>
-          <Input id="f-lat" name="lat" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} {...fieldAria('f-lat', latError, LAT_HINT)} />
+          <Input
+            id="f-lat"
+            name="lat"
+            inputMode="decimal"
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            {...fieldAria('f-lat', latError, LAT_HINT)}
+          />
         </Field>
         <Field id="f-lng" label="Bujur (longitude)" error={lngError} hint={LNG_HINT}>
-          <Input id="f-lng" name="lng" inputMode="decimal" value={lng} onChange={(e) => setLng(e.target.value)} {...fieldAria('f-lng', lngError, LNG_HINT)} />
+          <Input
+            id="f-lng"
+            name="lng"
+            inputMode="decimal"
+            value={lng}
+            onChange={(e) => setLng(e.target.value)}
+            {...fieldAria('f-lng', lngError, LNG_HINT)}
+          />
         </Field>
       </div>
     </div>

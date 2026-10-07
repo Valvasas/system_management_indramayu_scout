@@ -38,7 +38,9 @@ export async function PesertaHome({ user, notice }: { user: SessionUser; notice?
             <h2 id="buka-title" className="font-display text-lg font-semibold text-text-primary">
               {open.length} kegiatan membuka pendaftaran
             </h2>
-            <p className="text-text-secondary">Terdekat: {open[0].title}, {formatDate(open[0].dateStart.toISOString())}.</p>
+            <p className="text-text-secondary">
+              Terdekat: {open[0].title}, {formatDate(open[0].dateStart.toISOString())}.
+            </p>
           </div>
           <Link
             href="/dashboard/kegiatan"
@@ -73,7 +75,10 @@ export async function PesertaHome({ user, notice }: { user: SessionUser; notice?
               ))}
             </ul>
           )}
-          <Link href="/dashboard/kegiatan" className="mt-4 inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline">
+          <Link
+            href="/dashboard/kegiatan"
+            className="mt-4 inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline"
+          >
             Semua kegiatan
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
@@ -107,7 +112,10 @@ export async function PesertaHome({ user, notice }: { user: SessionUser; notice?
           ) : (
             <p className="text-text-secondary">Data keanggotaan tidak ditemukan. Hubungi pembina gudep Anda.</p>
           )}
-          <Link href="/dashboard/profil" className="mt-4 inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline">
+          <Link
+            href="/dashboard/profil"
+            className="mt-4 inline-flex min-h-touch items-center gap-1 text-sm font-semibold text-text-accent hover:underline"
+          >
             Lihat profil lengkap
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>

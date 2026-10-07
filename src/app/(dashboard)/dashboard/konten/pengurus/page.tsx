@@ -40,11 +40,21 @@ export default async function PengurusAdminPage({ searchParams = {} }: { searchP
               <caption className="sr-only">Daftar pengurus Kwarcab</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Nama</th>
-                  <th scope="col" className={th}>Jabatan</th>
-                  <th scope="col" className={th}>Bidang</th>
-                  <th scope="col" className={th}>Masa bakti</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Nama
+                  </th>
+                  <th scope="col" className={th}>
+                    Jabatan
+                  </th>
+                  <th scope="col" className={th}>
+                    Bidang
+                  </th>
+                  <th scope="col" className={th}>
+                    Masa bakti
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -59,7 +69,12 @@ export default async function PengurusAdminPage({ searchParams = {} }: { searchP
                     <td className={td}>{b.department}</td>
                     <td className={td}>{b.period}</td>
                     <td className={td}>
-                      <ActionButton action={deleteBoardMemberAction.bind(null, b.id)} variant="ghost" confirm={`Hapus ${b.name} dari daftar pengurus?`} label={`Hapus pengurus ${b.name}`}>
+                      <ActionButton
+                        action={deleteBoardMemberAction.bind(null, b.id)}
+                        variant="ghost"
+                        confirm={`Hapus ${b.name} dari daftar pengurus?`}
+                        label={`Hapus pengurus ${b.name}`}
+                      >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Hapus
                       </ActionButton>

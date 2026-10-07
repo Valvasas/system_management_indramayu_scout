@@ -27,13 +27,22 @@ export async function saveBoardMemberAction(id: string | null, _prev: FormState,
   if (parsed.error) return parsed.error;
   const db = await getDb();
   if (id) {
-    const [row] = await db.update(schema.boardMembers).set(parsed.data).where(eq(schema.boardMembers.id, id)).returning({ id: schema.boardMembers.id });
+    const [row] = await db
+      .update(schema.boardMembers)
+      .set(parsed.data)
+      .where(eq(schema.boardMembers.id, id))
+      .returning({ id: schema.boardMembers.id });
     if (!row) return fail('Data pengurus tidak ditemukan.');
   } else {
     const [row] = await db.insert(schema.boardMembers).values(parsed.data).returning({ id: schema.boardMembers.id });
     id = row.id;
   }
-  await audit(user, { action: 'content.save', summary: `Menyimpan pengurus ${parsed.data.name} (${parsed.data.position})`, entityType: 'board', entityId: id });
+  await audit(user, {
+    action: 'content.save',
+    summary: `Menyimpan pengurus ${parsed.data.name} (${parsed.data.position})`,
+    entityType: 'board',
+    entityId: id,
+  });
   revalidatePath('/dashboard/konten/pengurus');
   revalidatePublicSite();
   redirect('/dashboard/konten/pengurus?tersimpan=1');
@@ -54,7 +63,11 @@ export async function deleteBoardMemberAction(id: string): Promise<void> {
 const AchievementSchema = z.object({
   title: requiredText('Nama prestasi', 200),
   level: z.string().refine((v) => ACHIEVEMENT_LEVEL_OPTIONS.includes(v), 'Tingkat wajib dipilih.'),
-  year: z.coerce.number({ invalid_type_error: 'Tahun harus angka.' }).int().min(1961, 'Tahun tidak valid.').max(new Date().getFullYear() + 1, 'Tahun tidak valid.'),
+  year: z.coerce
+    .number({ invalid_type_error: 'Tahun harus angka.' })
+    .int()
+    .min(1961, 'Tahun tidak valid.')
+    .max(new Date().getFullYear() + 1, 'Tahun tidak valid.'),
   recipient: requiredText('Penerima', 200),
   description: optionalText(1000).transform((s) => s ?? ''),
   published: checkbox,
@@ -66,13 +79,22 @@ export async function saveAchievementAction(id: string | null, _prev: FormState,
   if (parsed.error) return parsed.error;
   const db = await getDb();
   if (id) {
-    const [row] = await db.update(schema.achievements).set(parsed.data).where(eq(schema.achievements.id, id)).returning({ id: schema.achievements.id });
+    const [row] = await db
+      .update(schema.achievements)
+      .set(parsed.data)
+      .where(eq(schema.achievements.id, id))
+      .returning({ id: schema.achievements.id });
     if (!row) return fail('Prestasi tidak ditemukan.');
   } else {
     const [row] = await db.insert(schema.achievements).values(parsed.data).returning({ id: schema.achievements.id });
     id = row.id;
   }
-  await audit(user, { action: 'content.save', summary: `Menyimpan prestasi "${parsed.data.title}"`, entityType: 'achievement', entityId: id });
+  await audit(user, {
+    action: 'content.save',
+    summary: `Menyimpan prestasi "${parsed.data.title}"`,
+    entityType: 'achievement',
+    entityId: id,
+  });
   revalidatePath('/dashboard/konten/prestasi');
   revalidatePublicSite();
   redirect('/dashboard/konten/prestasi?tersimpan=1');
@@ -82,7 +104,8 @@ export async function deleteAchievementAction(id: string): Promise<void> {
   const user = await requirePermission('content.manage');
   const db = await getDb();
   const [row] = await db.delete(schema.achievements).where(eq(schema.achievements.id, id)).returning({ title: schema.achievements.title });
-  if (row) await audit(user, { action: 'content.delete', summary: `Menghapus prestasi "${row.title}"`, entityType: 'achievement', entityId: id });
+  if (row)
+    await audit(user, { action: 'content.delete', summary: `Menghapus prestasi "${row.title}"`, entityType: 'achievement', entityId: id });
   revalidatePath('/dashboard/konten/prestasi');
   revalidatePublicSite();
   redirect('/dashboard/konten/prestasi?dihapus=1');

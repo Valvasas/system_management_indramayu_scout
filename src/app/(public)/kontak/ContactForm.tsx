@@ -66,22 +66,10 @@ export function ContactForm() {
       </Field>
 
       <Field id="email" label="Alamat pos-el (email)" required error={err.email}>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          required
-          maxLength={254}
-          autoComplete="email"
-          {...fieldAria('email', err.email)}
-        />
+        <Input id="email" name="email" type="email" required maxLength={254} autoComplete="email" {...fieldAria('email', err.email)} />
       </Field>
 
-      <Field
-        id="organization"
-        label="Gugus depan / kwartir ranting"
-        hint="Opsional — membantu kami mengarahkan pesan Anda."
-      >
+      <Field id="organization" label="Gugus depan / kwartir ranting" hint="Opsional — membantu kami mengarahkan pesan Anda.">
         <Input
           id="organization"
           name="organization"
@@ -93,20 +81,11 @@ export function ContactForm() {
       </Field>
 
       <Field id="message" label="Isi pesan" required error={err.message}>
-        <Textarea
-          id="message"
-          name="message"
-          required
-          minLength={10}
-          maxLength={2000}
-          rows={5}
-          {...fieldAria('message', err.message)}
-        />
+        <Textarea id="message" name="message" required minLength={10} maxLength={2000} rows={5} {...fieldAria('message', err.message)} />
       </Field>
 
       <p className="text-xs leading-relaxed text-text-secondary">
-        Data yang Anda isi hanya dipakai sekretariat kwarcab untuk menanggapi pesan ini dan tidak
-        dibagikan ke pihak lain. Lihat{' '}
+        Data yang Anda isi hanya dipakai sekretariat kwarcab untuk menanggapi pesan ini dan tidak dibagikan ke pihak lain. Lihat{' '}
         <Link href="/kebijakan-privasi" className="text-text-accent underline">
           kebijakan privasi
         </Link>

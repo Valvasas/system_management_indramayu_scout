@@ -63,8 +63,7 @@ export const checkbox = z
   .union([z.literal('on'), z.literal('true'), z.undefined(), z.string()])
   .transform((v) => v === 'on' || v === 'true');
 
-export const isoDate = (label: string) =>
-  trimmed.pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${label} wajib diisi (tanggal).`));
+export const isoDate = (label: string) => trimmed.pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, `${label} wajib diisi (tanggal).`));
 
 export const optionalIsoDate = z
   .union([z.string(), z.undefined()])

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { and, count, desc, gte, ilike, or, type SQL } from 'drizzle-orm';
-import { Search } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { Pagination, Panel, PortalHeader, TableWrap, td, th, withQuery } from '@/components/dashboard/ui';
-import { requirePermission } from '@/lib/auth/session';
+import { ButtonLink } from '@/components/ui/Button';
+import { can, requirePermission } from '@/lib/auth/session';
 import { formatDate, formatTime } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Log aktivitas' };
@@ -18,7 +19,7 @@ const RANGES: Record<string, { label: string; days: number }> = {
 };
 
 export default async function LogPage({ searchParams = {} }: { searchParams?: { q?: string; rentang?: string; page?: string } }) {
-  await requirePermission('audit.view');
+  const user = await requirePermission('audit.view');
   const q = (searchParams.q ?? '').trim().slice(0, 80) || undefined;
   const rentang = RANGES[searchParams.rentang ?? ''] ? searchParams.rentang! : '30';
   const page = Math.max(1, Number(searchParams.page) || 1);
@@ -31,7 +32,13 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
   const where = and(...conds);
   const db = await getDb();
   const [rows, [{ total }]] = await Promise.all([
-    db.select().from(schema.auditLogs).where(where).orderBy(desc(schema.auditLogs.at)).limit(PAGE).offset((page - 1) * PAGE),
+    db
+      .select()
+      .from(schema.auditLogs)
+      .where(where)
+      .orderBy(desc(schema.auditLogs.at))
+      .limit(PAGE)
+      .offset((page - 1) * PAGE),
     db.select({ total: count() }).from(schema.auditLogs).where(where),
   ]);
 
@@ -39,16 +46,36 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
     <>
       <PortalHeader
         title="Log aktivitas"
-        description="Catatan otomatis: siapa melakukan apa dan kapan. Tidak dapat diubah atau dihapus dari portal."
+        description="Catatan otomatis: siapa melakukan apa dan kapan. Terkunci rantai hash dan tidak dapat diubah atau dihapus, bahkan oleh basis data aplikasi."
+        actions={
+          can(user, 'audit.verify') ? (
+            <ButtonLink href="/dashboard/log/integritas" variant="secondary">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              Periksa integritas
+            </ButtonLink>
+          ) : undefined
+        }
       />
       <Panel bodyClassName="p-0 sm:p-0">
-        <form role="search" method="get" action="/dashboard/log" className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12">
+        <form
+          role="search"
+          method="get"
+          action="/dashboard/log"
+          className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12"
+        >
           <div className="relative md:col-span-6">
             <label htmlFor="cari-log" className="sr-only">
               Cari pelaku atau aktivitas
             </label>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-            <Input id="cari-log" name="q" type="search" defaultValue={q} placeholder="Cari pelaku atau aktivitas, mis. ekspor" className="pl-9" />
+            <Input
+              id="cari-log"
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder="Cari pelaku atau aktivitas, mis. ekspor"
+              className="pl-9"
+            />
           </div>
           <div className="md:col-span-4">
             <label htmlFor="f-rentang" className="sr-only">
@@ -72,10 +99,18 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
               <caption className="sr-only">Log aktivitas</caption>
               <thead>
                 <tr className="border-b border-border-subtle">
-                  <th scope="col" className={th}>Waktu</th>
-                  <th scope="col" className={th}>Pelaku</th>
-                  <th scope="col" className={th}>Aktivitas</th>
-                  <th scope="col" className={th}>IP</th>
+                  <th scope="col" className={th}>
+                    Waktu
+                  </th>
+                  <th scope="col" className={th}>
+                    Pelaku
+                  </th>
+                  <th scope="col" className={th}>
+                    Aktivitas
+                  </th>
+                  <th scope="col" className={th}>
+                    IP
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -97,7 +132,13 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
               </tbody>
             </table>
           </TableWrap>
-          <Pagination page={page} pageCount={Math.max(1, Math.ceil(total / PAGE))} total={total} unit="catatan" hrefFor={(p) => withQuery('/dashboard/log', { q, rentang }, { page: p })} />
+          <Pagination
+            page={page}
+            pageCount={Math.max(1, Math.ceil(total / PAGE))}
+            total={total}
+            unit="catatan"
+            hrefFor={(p) => withQuery('/dashboard/log', { q, rentang }, { page: p })}
+          />
         </div>
       </Panel>
     </>

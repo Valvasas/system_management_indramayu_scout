@@ -66,7 +66,10 @@ export default async function DetailGaleriPage({ params }: Params) {
             { icon: Users, text: album.organizer },
             { icon: Images, text: `${album.photos.length} foto` },
           ].map(({ icon: Icon, text }) => (
-            <li key={text} className="inline-flex items-center gap-1.5 rounded-pill bg-surface-base px-3 py-1.5 font-medium text-text-secondary shadow-sm">
+            <li
+              key={text}
+              className="inline-flex items-center gap-1.5 rounded-pill bg-surface-base px-3 py-1.5 font-medium text-text-secondary shadow-sm"
+            >
               <Icon className="h-4 w-4 text-text-accent" aria-hidden="true" />
               {text}
             </li>
@@ -75,11 +78,14 @@ export default async function DetailGaleriPage({ params }: Params) {
       </PageHero>
 
       <div className="civic-container pb-16 pt-6 sm:pb-24">
-      <PhotoGallery photos={photos} albumTitle={album.title} />
-      <Link href="/galeri" className="mt-10 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Semua album
-      </Link>
+        <PhotoGallery photos={photos} albumTitle={album.title} />
+        <Link
+          href="/galeri"
+          className="mt-10 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Semua album
+        </Link>
       </div>
     </div>
   );

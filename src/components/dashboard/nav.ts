@@ -20,7 +20,14 @@ export type NavIcon =
   | 'swap'
   | 'clipboard'
   | 'pen'
-  | 'key';
+  | 'key'
+  | 'consent'
+  | 'backup'
+  | 'bell'
+  | 'chart'
+  | 'award'
+  | 'folder'
+  | 'compass';
 
 export interface NavItem {
   href: string;
@@ -34,7 +41,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export type BadgeKey = 'pendingMembers' | 'unreadMessages' | 'pendingTransfers' | 'resetRequests' | 'reviewNews';
+export type BadgeKey = 'pendingMembers' | 'unreadMessages' | 'pendingTransfers' | 'resetRequests' | 'reviewNews' | 'unreadNotifications';
 
 interface NavDef extends Omit<NavItem, 'badge'> {
   /** Satu izin, atau daftar izin (cukup salah satu). */
@@ -45,7 +52,12 @@ interface NavDef extends Omit<NavItem, 'badge'> {
 }
 
 const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
-  { items: [{ href: '/dashboard', label: 'Ringkasan', icon: 'home' }] },
+  {
+    items: [
+      { href: '/dashboard', label: 'Ringkasan', icon: 'home' },
+      { href: '/dashboard/notifikasi', label: 'Notifikasi', icon: 'bell', badgeKey: 'unreadNotifications' },
+    ],
+  },
   {
     title: 'Data organisasi',
     items: [
@@ -54,6 +66,11 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
       { href: '/dashboard/kwarran', label: 'Kwarran', icon: 'building', permission: 'kwarran.manage' },
       { href: '/dashboard/mutasi', label: 'Mutasi anggota', icon: 'swap', permission: 'members.update', badgeKey: 'pendingTransfers' },
       { href: '/dashboard/pendaftaran', label: 'Pendaftaran kegiatan', icon: 'clipboard', permission: 'members.read' },
+      { href: '/dashboard/persetujuan', label: 'Persetujuan wali', icon: 'consent', permission: 'members.read' },
+      { href: '/dashboard/sku', label: 'Syarat SKU/SKK', icon: 'award', permission: 'competency.manage' },
+      { href: '/dashboard/peta', label: 'Peta internal', icon: 'compass', permission: 'gudep.read' },
+      { href: '/dashboard/laporan', label: 'Laporan', icon: 'chart', permission: 'reports.view' },
+      { href: '/dashboard/dokumen-internal', label: 'Dokumen internal', icon: 'folder', permission: 'internal_docs.view' },
     ],
   },
   {
@@ -75,8 +92,15 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
     title: 'Sistem',
     items: [
       { href: '/dashboard/pengguna', label: 'Pengguna & akses', icon: 'shield', permission: 'users.manage' },
-      { href: '/dashboard/akses', label: 'Permintaan akses', icon: 'key', permission: ['users.manage', 'users.create_peserta'], badgeKey: 'resetRequests' },
+      {
+        href: '/dashboard/akses',
+        label: 'Permintaan akses',
+        icon: 'key',
+        permission: ['users.manage', 'users.create_peserta'],
+        badgeKey: 'resetRequests',
+      },
       { href: '/dashboard/log', label: 'Log aktivitas', icon: 'list', permission: 'audit.view' },
+      { href: '/dashboard/backup', label: 'Backup', icon: 'backup', permission: 'system.backup' },
     ],
   },
 ];
@@ -85,17 +109,14 @@ const PESERTA_NAV: { title?: string; items: NavDef[] }[] = [
   {
     items: [
       { href: '/dashboard', label: 'Ringkasan', icon: 'home' },
+      { href: '/dashboard/notifikasi', label: 'Notifikasi', icon: 'bell', badgeKey: 'unreadNotifications' },
       { href: '/dashboard/kegiatan', label: 'Kegiatan', icon: 'calendar' },
       { href: '/dashboard/profil', label: 'Profil saya', icon: 'user' },
     ],
   },
 ];
 
-export function buildNav(
-  isPeserta: boolean,
-  has: (p: Permission) => boolean,
-  badges: Partial<Record<BadgeKey, number>>,
-): NavGroup[] {
+export function buildNav(isPeserta: boolean, has: (p: Permission) => boolean, badges: Partial<Record<BadgeKey, number>>): NavGroup[] {
   const allowed = (i: NavDef) => {
     if (i.unless && has(i.unless)) return false;
     if (!i.permission) return true;

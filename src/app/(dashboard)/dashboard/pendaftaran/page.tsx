@@ -21,11 +21,20 @@ export default async function PendaftaranPage() {
     <>
       <PortalHeader
         title="Pendaftaran kegiatan"
-        description={wide ? 'Rekap peserta yang mendaftar lewat portal, seluruh kabupaten.' : 'Rekap anggota di wilayah Anda yang mendaftar kegiatan lewat portal.'}
+        description={
+          wide
+            ? 'Rekap peserta yang mendaftar lewat portal, seluruh kabupaten.'
+            : 'Rekap anggota di wilayah Anda yang mendaftar kegiatan lewat portal.'
+        }
       />
       <Panel>
         {events.length === 0 ? (
-          <EmptyState variant="icon" icon={CalendarDays} title="Belum ada kegiatan" description="Kegiatan yang tayang akan muncul di sini beserta jumlah pendaftarnya." />
+          <EmptyState
+            variant="icon"
+            icon={CalendarDays}
+            title="Belum ada kegiatan"
+            description="Kegiatan yang tayang akan muncul di sini beserta jumlah pendaftarnya."
+          />
         ) : (
           <ul className="divide-y divide-border-subtle">
             {events.map((e) => {
@@ -33,7 +42,10 @@ export default async function PendaftaranPage() {
               const past = e.dateStart.getTime() < now;
               return (
                 <li key={e.id}>
-                  <Link href={`/dashboard/pendaftaran/${e.id}`} className="group flex items-center gap-4 rounded-xl py-4 hover:bg-surface-subtle sm:px-2">
+                  <Link
+                    href={`/dashboard/pendaftaran/${e.id}`}
+                    className="group flex items-center gap-4 rounded-xl py-4 hover:bg-surface-subtle sm:px-2"
+                  >
                     <span className="flex w-14 shrink-0 flex-col items-center rounded-xl border border-border-subtle bg-surface-base py-1 text-center">
                       <span className="text-[0.7rem] font-bold uppercase text-text-warm">{d.month}</span>
                       <span className="font-display text-xl font-semibold leading-none text-text-primary">{d.day}</span>

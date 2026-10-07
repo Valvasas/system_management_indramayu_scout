@@ -19,7 +19,6 @@ export interface MemberFormValues {
   address?: string | null;
   guardianName?: string | null;
   guardianPhone?: string | null;
-  guardianConsentAt?: string | null;
   joinedAt?: string | null;
   notes?: string | null;
 }
@@ -50,7 +49,14 @@ export const MemberForm: React.FC<{
       )}
 
       <FieldGroup title="Identitas">
-        <TextField name="fullName" label="Nama lengkap" defaultValue={defaults.fullName} autoComplete="off" hint="Sesuai akta kelahiran / kartu pelajar." required />
+        <TextField
+          name="fullName"
+          label="Nama lengkap"
+          defaultValue={defaults.fullName}
+          autoComplete="off"
+          hint="Sesuai akta kelahiran / kartu pelajar."
+          required
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             name="gender"
@@ -89,27 +95,39 @@ export const MemberForm: React.FC<{
 
       <FieldGroup title="Keanggotaan">
         <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField name="gudepId" label="Gugus depan" placeholder="Pilih gudep…" defaultValue={defaults.gudepId ?? (gudepOptions.length === 1 ? gudepOptions[0].value : undefined)} options={gudepOptions} required />
+          <SelectField
+            name="gudepId"
+            label="Gugus depan"
+            placeholder="Pilih gudep…"
+            defaultValue={defaults.gudepId ?? (gudepOptions.length === 1 ? gudepOptions[0].value : undefined)}
+            options={gudepOptions}
+            required
+          />
           <TextField name="joinedAt" label="Tanggal bergabung" type="date" defaultValue={defaults.joinedAt ?? ''} />
         </div>
       </FieldGroup>
 
       <FieldGroup
         title="Orang tua / wali"
-        description={minor ? 'Wajib diisi: anggota di bawah 18 tahun (UU Pelindungan Data Pribadi).' : 'Wajib untuk anggota di bawah 18 tahun.'}
+        description={
+          minor ? 'Wajib diisi: anggota di bawah 18 tahun (UU Pelindungan Data Pribadi).' : 'Wajib untuk anggota di bawah 18 tahun.'
+        }
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField name="guardianName" label="Nama orang tua/wali" defaultValue={defaults.guardianName ?? ''} required={minor} />
-          <TextField name="guardianPhone" label="Telepon orang tua/wali" type="tel" inputMode="tel" defaultValue={defaults.guardianPhone ?? ''} required={minor} />
+          <TextField
+            name="guardianPhone"
+            label="Telepon orang tua/wali"
+            type="tel"
+            inputMode="tel"
+            defaultValue={defaults.guardianPhone ?? ''}
+            required={minor}
+          />
         </div>
-        <TextField
-          name="guardianConsentAt"
-          label="Tanggal persetujuan orang tua/wali"
-          type="date"
-          defaultValue={defaults.guardianConsentAt ?? ''}
-          hint="Tanggal surat/formulir persetujuan pendataan ditandatangani. Simpan dokumennya di gudep."
-          required={minor}
-        />
+        <p className="text-sm text-text-secondary">
+          Persetujuan diberikan orang tua/wali sendiri memakai kode sekali pakai. Setelah data disimpan, buat kodenya di halaman anggota
+          (bagian Persetujuan wali).
+        </p>
       </FieldGroup>
 
       {showSensitive && (
@@ -120,7 +138,13 @@ export const MemberForm: React.FC<{
       )}
 
       <FieldGroup title="Catatan">
-        <TextAreaField name="notes" label="Catatan internal" rows={3} defaultValue={defaults.notes ?? ''} hint="Mis. riwayat pindah gudep. Jangan tulis data kesehatan." />
+        <TextAreaField
+          name="notes"
+          label="Catatan internal"
+          rows={3}
+          defaultValue={defaults.notes ?? ''}
+          hint="Mis. riwayat pindah gudep. Jangan tulis data kesehatan."
+        />
         <CheckboxField
           name="confirmDuplicate"
           label="Saya sudah memeriksa: ini bukan data ganda"

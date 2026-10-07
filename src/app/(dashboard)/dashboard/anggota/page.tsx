@@ -17,8 +17,12 @@ type Search = { q?: string; status?: string; golongan?: string; gudep?: string; 
 
 export default async function AnggotaPage({ searchParams = {} }: { searchParams?: Search }) {
   const user = await requirePermission('members.read');
-  const status = (memberStatusEnum.enumValues as string[]).includes(searchParams.status ?? '') ? (searchParams.status as MemberStatus) : undefined;
-  const golongan = (golonganEnum.enumValues as string[]).includes(searchParams.golongan ?? '') ? (searchParams.golongan as Golongan) : undefined;
+  const status = (memberStatusEnum.enumValues as string[]).includes(searchParams.status ?? '')
+    ? (searchParams.status as MemberStatus)
+    : undefined;
+  const golongan = (golonganEnum.enumValues as string[]).includes(searchParams.golongan ?? '')
+    ? (searchParams.golongan as Golongan)
+    : undefined;
   const q = (searchParams.q ?? '').trim().slice(0, 80) || undefined;
   const gudepId = /^[0-9a-f-]{36}$/i.test(searchParams.gudep ?? '') ? searchParams.gudep : undefined;
   const page = Math.max(1, Number(searchParams.page) || 1);
@@ -82,11 +86,18 @@ export default async function AnggotaPage({ searchParams = {} }: { searchParams?
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'inline-flex min-h-touch items-center gap-2 rounded-lg border px-4 text-sm font-medium transition-colors',
-                    active ? 'border-action-primary bg-action-primary text-text-on-brand' : 'border-border-subtle bg-surface-base text-text-secondary hover:text-text-primary',
+                    active
+                      ? 'border-action-primary bg-action-primary text-text-on-brand'
+                      : 'border-border-subtle bg-surface-base text-text-secondary hover:text-text-primary',
                   )}
                 >
                   {t.label}
-                  <span className={cn('rounded-pill px-2 text-xs font-bold', active ? 'bg-surface-base text-text-accent' : 'bg-surface-subtle text-text-secondary')}>
+                  <span
+                    className={cn(
+                      'rounded-pill px-2 text-xs font-bold',
+                      active ? 'bg-surface-base text-text-accent' : 'bg-surface-subtle text-text-secondary',
+                    )}
+                  >
                     {t.count.toLocaleString('id-ID')}
                   </span>
                 </Link>
@@ -97,14 +108,27 @@ export default async function AnggotaPage({ searchParams = {} }: { searchParams?
       </nav>
 
       <Panel bodyClassName="p-0 sm:p-0">
-        <form role="search" method="get" action="/dashboard/anggota" className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12">
+        <form
+          role="search"
+          method="get"
+          action="/dashboard/anggota"
+          className="grid gap-3 border-b border-border-subtle p-4 sm:p-5 md:grid-cols-12"
+        >
           {status && <input type="hidden" name="status" value={status} />}
           <div className="relative md:col-span-5">
             <label htmlFor="cari" className="sr-only">
               Cari nama atau nomor KTA
             </label>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-            <Input id="cari" name="q" type="search" defaultValue={q} placeholder="Cari nama atau nomor KTA" className="pl-9" maxLength={80} />
+            <Input
+              id="cari"
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder="Cari nama atau nomor KTA"
+              className="pl-9"
+              maxLength={80}
+            />
           </div>
           <div className="md:col-span-3">
             <label htmlFor="f-golongan" className="sr-only">
@@ -156,7 +180,13 @@ export default async function AnggotaPage({ searchParams = {} }: { searchParams?
             <div className="pt-4">
               <EmptyState
                 icon={Users}
-                title={filtered ? 'Tidak ada anggota yang cocok' : status ? `Tidak ada data berstatus "${MEMBER_STATUS_LABELS[status]}"` : 'Belum ada data anggota'}
+                title={
+                  filtered
+                    ? 'Tidak ada anggota yang cocok'
+                    : status
+                      ? `Tidak ada data berstatus "${MEMBER_STATUS_LABELS[status]}"`
+                      : 'Belum ada data anggota'
+                }
                 description={filtered ? 'Periksa ejaan atau hapus filter.' : 'Tambahkan anggota satu per satu atau impor dari Excel.'}
                 action={can(user, 'members.create') && !filtered ? { label: 'Tambah anggota', href: '/dashboard/anggota/baru' } : undefined}
               />
@@ -170,21 +200,33 @@ export default async function AnggotaPage({ searchParams = {} }: { searchParams?
                     <caption className="sr-only">Daftar anggota</caption>
                     <thead>
                       <tr className="border-b border-border-subtle">
-                        <th scope="col" className={th}>Nama</th>
-                        <th scope="col" className={th}>Golongan</th>
-                        <th scope="col" className={th}>Gudep</th>
-                        <th scope="col" className={th}>Status</th>
+                        <th scope="col" className={th}>
+                          Nama
+                        </th>
+                        <th scope="col" className={th}>
+                          Golongan
+                        </th>
+                        <th scope="col" className={th}>
+                          Gudep
+                        </th>
+                        <th scope="col" className={th}>
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
                       {result.rows.map((m) => (
                         <tr key={m.id} className="hover:bg-surface-canvas">
                           <td className={td}>
-                            <Link href={`/dashboard/anggota/${m.id}`} className="font-semibold text-text-primary hover:text-text-accent hover:underline">
+                            <Link
+                              href={`/dashboard/anggota/${m.id}`}
+                              className="font-semibold text-text-primary hover:text-text-accent hover:underline"
+                            >
                               {m.fullName}
                             </Link>
                             <p className="text-sm text-text-secondary">
-                              {m.kta ? `KTA ${m.kta}` : 'KTA belum terbit'} · {ageOn(m.birthDate)} th · {m.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
+                              {m.kta ? `KTA ${m.kta}` : 'KTA belum terbit'} · {ageOn(m.birthDate)} th ·{' '}
+                              {m.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
                             </p>
                           </td>
                           <td className={cn(td, 'text-text-secondary')}>{golonganLabel(m.golongan)}</td>

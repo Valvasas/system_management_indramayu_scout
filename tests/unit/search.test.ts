@@ -8,7 +8,9 @@ describe('pencarian situs', () => {
   });
 
   it('semua kata wajib cocok; judul berbobot lebih tinggi', () => {
-    expect(scoreText(['kemah', 'bakti'], 'Perkemahan Bakti', '')).toBeGreaterThan(scoreText(['kemah', 'bakti'], 'Agenda', 'perkemahan bakti'));
+    expect(scoreText(['kemah', 'bakti'], 'Perkemahan Bakti', '')).toBeGreaterThan(
+      scoreText(['kemah', 'bakti'], 'Agenda', 'perkemahan bakti'),
+    );
     expect(scoreText(['kemah', 'jambore'], 'Perkemahan Bakti', 'tanpa kata kedua')).toBe(0);
   });
 

@@ -4,10 +4,7 @@ import type { KwarranInfo, OrganizationMember } from '@/types';
 
 export async function getOrganizationMembers(): Promise<OrganizationMember[]> {
   const db = await getDb();
-  const rows = await db
-    .select()
-    .from(schema.boardMembers)
-    .orderBy(asc(schema.boardMembers.sortOrder), asc(schema.boardMembers.name));
+  const rows = await db.select().from(schema.boardMembers).orderBy(asc(schema.boardMembers.sortOrder), asc(schema.boardMembers.name));
   return rows.map((m) => ({
     id: m.id,
     name: m.name,
@@ -20,9 +17,7 @@ export async function getOrganizationMembers(): Promise<OrganizationMember[]> {
 }
 
 /** Pengurus dikelompokkan per departemen, urutan mengikuti `sortOrder` pertama tiap departemen. */
-export async function getOrganizationByDepartment(): Promise<
-  { department: string; members: OrganizationMember[] }[]
-> {
+export async function getOrganizationByDepartment(): Promise<{ department: string; members: OrganizationMember[] }[]> {
   const groups = new Map<string, OrganizationMember[]>();
   for (const member of await getOrganizationMembers()) {
     const list = groups.get(member.department) ?? [];

@@ -14,9 +14,13 @@ export interface GudepFilters {
 }
 
 const activeMembers = () =>
-  sql<number>`(select count(*) from ${schema.members} where ${schema.members.gudepId} = ${schema.gudep.id} and ${schema.members.status} = 'ACTIVE')`.mapWith(Number);
+  sql<number>`(select count(*) from ${schema.members} where ${schema.members.gudepId} = ${schema.gudep.id} and ${schema.members.status} = 'ACTIVE')`.mapWith(
+    Number,
+  );
 const pendingMembers = () =>
-  sql<number>`(select count(*) from ${schema.members} where ${schema.members.gudepId} = ${schema.gudep.id} and ${schema.members.status} in ('PENDING','NEEDS_FIX'))`.mapWith(Number);
+  sql<number>`(select count(*) from ${schema.members} where ${schema.members.gudepId} = ${schema.gudep.id} and ${schema.members.status} in ('PENDING','NEEDS_FIX'))`.mapWith(
+    Number,
+  );
 
 function conditions(user: SessionUser, f: GudepFilters): SQL | undefined {
   const conds: (SQL | undefined)[] = [gudepScope(user)];
@@ -74,7 +78,14 @@ export async function gudepMapPoints(user: SessionUser, kwarranId?: string) {
     })
     .from(schema.gudep)
     .innerJoin(schema.kwarran, eq(schema.kwarran.id, schema.gudep.kwarranId))
-    .where(and(gudepScope(user), isNotNull(schema.gudep.lat), isNotNull(schema.gudep.lng), kwarranId ? eq(schema.gudep.kwarranId, kwarranId) : undefined))
+    .where(
+      and(
+        gudepScope(user),
+        isNotNull(schema.gudep.lat),
+        isNotNull(schema.gudep.lng),
+        kwarranId ? eq(schema.gudep.kwarranId, kwarranId) : undefined,
+      ),
+    )
     .then((rows) => rows.map((r) => ({ ...r, lat: r.lat as number, lng: r.lng as number })));
 }
 

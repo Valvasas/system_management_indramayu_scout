@@ -34,3 +34,4 @@ start_server.bat
 # database lokal (PGlite) & berkas unggahan — sertakan storage/ dalam backup produksi
 .data/
 storage/
+server.log

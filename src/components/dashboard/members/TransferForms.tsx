@@ -40,10 +40,20 @@ export const TransferDecisionForm: React.FC<{ action: Action; id: string }> = ({
               htmlFor={`${id}-${v}`}
               className={cn(
                 'flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-pill border px-3 text-sm font-semibold transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus-ring',
-                decision === v ? 'border-action-primary bg-surface-meadow text-action-secondary-text' : 'border-border-subtle text-text-secondary hover:bg-surface-subtle',
+                decision === v
+                  ? 'border-action-primary bg-surface-meadow text-action-secondary-text'
+                  : 'border-border-subtle text-text-secondary hover:bg-surface-subtle',
               )}
             >
-              <input id={`${id}-${v}`} type="radio" name="decision" value={v} checked={decision === v} onChange={() => setDecision(v)} className="sr-only" />
+              <input
+                id={`${id}-${v}`}
+                type="radio"
+                name="decision"
+                value={v}
+                checked={decision === v}
+                onChange={() => setDecision(v)}
+                className="sr-only"
+              />
               <Icon className="h-4 w-4" aria-hidden="true" />
               {label}
             </label>

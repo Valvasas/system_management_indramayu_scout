@@ -27,13 +27,7 @@ export interface FilterChipsProps {
  * Memakai aria-pressed di dalam group ber-label — bukan role="tab",
  * karena tidak ada tabpanel yang dipasangkan.
  */
-export const FilterChips: React.FC<FilterChipsProps> = ({
-  label,
-  param,
-  options,
-  active,
-  defaultValue = 'semua',
-}) => {
+export const FilterChips: React.FC<FilterChipsProps> = ({ label, param, options, active, defaultValue = 'semua' }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

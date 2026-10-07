@@ -115,9 +115,7 @@ export const golongan: Golongan[] = [
       'Pembina adalah anggota dewasa yang mendampingi peserta didik di gugus depan. Untuk membina, seseorang menempuh kursus berjenjang yang diselenggarakan Pusdiklatcab.',
       'Selain pembina, ada pelatih yang menyiapkan para pembina, serta andalan dan pengurus kwartir yang mengelola organisasi.',
     ],
-    units: [
-      { name: 'Gugus Depan', description: 'Satuan pendidikan tempat pembina bertugas, berpangkalan di sekolah atau komunitas.' },
-    ],
+    units: [{ name: 'Gugus Depan', description: 'Satuan pendidikan tempat pembina bertugas, berpangkalan di sekolah atau komunitas.' }],
     levels: { label: 'Jenjang kursus', items: ['Kursus Mahir Dasar (KMD)', 'Kursus Mahir Lanjutan (KML)'] },
     honorCode: 'Trisatya dan Dasadarma',
     activities: ['Membina latihan rutin', 'Mendampingi perkemahan', 'Kursus & pelatihan', 'Mengelola gugus depan'],

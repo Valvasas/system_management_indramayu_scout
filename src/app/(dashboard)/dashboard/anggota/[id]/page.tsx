@@ -2,17 +2,24 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { and, desc, eq } from 'drizzle-orm';
-import { AlertTriangle, Lock, Pencil, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Lock, Pencil, RotateCcw, UserX } from 'lucide-react';
 import { getDb, schema } from '@/db';
 import { ActionButton } from '@/components/dashboard/ConfirmButton';
 import { ArchiveForm, PortalAccountForm, VerifyForm } from '@/components/dashboard/members/MemberActions';
 import { InfoList, MemberStatusBadge, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
 import { ButtonLink } from '@/components/ui/Button';
-import { archiveMemberAction, createPortalAccountAction, restoreMemberAction, verifyMemberAction } from '@/features/members/actions';
+import {
+  anonymizeMemberAction,
+  archiveMemberAction,
+  createPortalAccountAction,
+  restoreMemberAction,
+  verifyMemberAction,
+} from '@/features/members/actions';
 import { getMember } from '@/features/members/queries';
 import { cancelTransferAction, requestTransferAction } from '@/features/members/transfer-actions';
 import { transferTargetOptions, transfersForMember } from '@/features/members/transfers';
 import { TransferRequestForm } from '@/components/dashboard/members/TransferForms';
+import { ConsentPanel } from '@/components/dashboard/consent/ConsentPanel';
 import { resetPesertaPasswordAction } from '@/features/users/actions';
 import { can, requirePermission } from '@/lib/auth/session';
 import { GENDER_LABELS, ageOn, golonganLabel } from '@/lib/domain';
@@ -32,7 +39,13 @@ const SAVED: Record<string, string> = {
   'mutasi-batal': 'Pengajuan mutasi dibatalkan.',
 };
 
-export default async function DetailAnggotaPage({ params, searchParams }: { params: { id: string }; searchParams?: { tersimpan?: string } }) {
+export default async function DetailAnggotaPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { tersimpan?: string; anonim?: string };
+}) {
   const user = await requirePermission('members.read');
   const row = await getMember(user, params.id);
   if (!row) notFound();
@@ -62,7 +75,12 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
   // Melihat data sensitif anggota lintas wilayah tercatat (kebijakan audit).
   if (sensitive && (user.role === 'ADMIN_KWARCAB' || user.role === 'SUPER_ADMIN')) {
     const { audit } = await import('@/lib/auth/audit');
-    await audit(user, { action: 'member.view_sensitive', summary: `Melihat data lengkap ${m.fullName}`, entityType: 'member', entityId: m.id });
+    await audit(user, {
+      action: 'member.view_sensitive',
+      summary: `Melihat data lengkap ${m.fullName}`,
+      entityType: 'member',
+      entityId: m.id,
+    });
   }
 
   const archived = m.status === 'ARCHIVED';
@@ -91,9 +109,18 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
         }
       />
       {searchParams?.tersimpan && SAVED[searchParams.tersimpan] && <Notice>{SAVED[searchParams.tersimpan]}</Notice>}
+      {searchParams?.anonim === 'ok' && (
+        <Notice>Identitas anggota dihapus. Riwayat gudep, kegiatan, dan statistik tetap tersimpan tanpa nama.</Notice>
+      )}
+      {searchParams?.anonim === 'belum-nonaktif' && (
+        <Notice tone="warning">Hanya anggota nonaktif (diarsipkan) yang dapat dianonimkan.</Notice>
+      )}
 
       {m.status === 'NEEDS_FIX' && m.reviewNote && (
-        <div role="note" className="mb-6 flex gap-3 rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text">
+        <div
+          role="note"
+          className="mb-6 flex gap-3 rounded-lg border border-status-warning-border bg-status-warning-surface p-4 text-status-warning-text"
+        >
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">Catatan verifikator</p>
@@ -153,8 +180,14 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
               <InfoList
                 items={[
                   { label: 'Nama orang tua/wali', value: m.guardianName },
-                  { label: 'Telepon orang tua/wali', value: m.guardianPhone ? <a href={`tel:${m.guardianPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">{m.guardianPhone}</a> : null },
-                  { label: 'Persetujuan wali', value: m.guardianConsentAt ? formatDate(m.guardianConsentAt) : ageOn(m.birthDate) < 18 ? <span className="text-status-danger-text">Belum ada</span> : 'Tidak diperlukan (dewasa)' },
+                  {
+                    label: 'Telepon orang tua/wali',
+                    value: m.guardianPhone ? (
+                      <a href={`tel:${m.guardianPhone.replace(/[^\d+]/g, '')}`} className="text-text-accent underline">
+                        {m.guardianPhone}
+                      </a>
+                    ) : null,
+                  },
                   { label: 'Telepon anggota', value: m.phone },
                   { label: 'Alamat', value: m.address },
                 ]}
@@ -166,6 +199,13 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
               </p>
             )}
           </Panel>
+
+          <ConsentPanel
+            memberId={m.id}
+            birthDate={m.birthDate}
+            canManage={can(user, 'members.update') && !archived}
+            sensitive={sensitive}
+          />
 
           {m.notes && (
             <Panel title="Catatan internal">
@@ -187,6 +227,31 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
             />
           </Panel>
 
+          {can(user, 'members.anonymize') && archived && !m.anonymizedAt && (
+            <Panel title="Hapus identitas (anonimkan)">
+              <p className="text-sm text-text-secondary">
+                Atas permintaan anggota atau wali (hak subjek data). Nama, KTA, tanggal lahir (kecuali tahun), kontak, alamat, data wali,
+                catatan, dan akun portal dihapus. Riwayat gudep, kegiatan, dan statistik golongan tetap ada tanpa nama.
+              </p>
+              <div className="mt-4">
+                <ActionButton
+                  action={anonymizeMemberAction.bind(null, m.id)}
+                  variant="danger"
+                  size="md"
+                  confirm="Hapus identitas anggota ini secara permanen? Tindakan ini tidak dapat dibatalkan."
+                >
+                  <UserX className="h-4 w-4" aria-hidden="true" />
+                  Anonimkan sekarang
+                </ActionButton>
+              </div>
+            </Panel>
+          )}
+          {m.anonymizedAt && (
+            <Panel title="Data dianonimkan">
+              <p className="text-sm text-text-secondary">Identitas dihapus pada {formatDate(m.anonymizedAt.toISOString())}.</p>
+            </Panel>
+          )}
+
           {can(user, 'users.create_peserta') && !archived && (
             <Panel title="Akun portal peserta">
               {row.portalUsername ? (
@@ -201,7 +266,9 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
                 </>
               ) : m.status === 'ACTIVE' ? (
                 <>
-                  <p className="mb-4 text-sm text-text-secondary">Peserta dapat melihat kegiatan, mendaftar, dan membaca pengumuman gudep.</p>
+                  <p className="mb-4 text-sm text-text-secondary">
+                    Peserta dapat melihat kegiatan, mendaftar, dan membaca pengumuman gudep.
+                  </p>
                   <PortalAccountForm action={createPortalAccountAction.bind(null, m.id)} />
                 </>
               ) : (
@@ -221,7 +288,11 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
                   Ke {openTransfer.toName} · diajukan {openTransfer.t.requestedByName}
                 </p>
                 <div className="mt-3">
-                  <ActionButton action={cancelTransferAction.bind(null, openTransfer.t.id)} variant="outline" confirm="Batalkan pengajuan mutasi ini?">
+                  <ActionButton
+                    action={cancelTransferAction.bind(null, openTransfer.t.id)}
+                    variant="outline"
+                    confirm="Batalkan pengajuan mutasi ini?"
+                  >
                     Batalkan pengajuan
                   </ActionButton>
                 </div>
@@ -291,8 +362,11 @@ export default async function DetailAnggotaPage({ params, searchParams }: { para
             )}
           </Panel>
 
-          {can(user, 'members.archive') && (
-            <Panel title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'} description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}>
+          {can(user, 'members.archive') && !m.anonymizedAt && (
+            <Panel
+              title={archived ? 'Pulihkan anggota' : 'Arsipkan anggota'}
+              description={archived ? 'Data kembali ke antrean verifikasi.' : 'Data tidak dihapus; disembunyikan dari daftar aktif.'}
+            >
               {archived ? (
                 <ActionButton action={restoreMemberAction.bind(null, m.id)} confirm={`Pulihkan ${m.fullName} dari arsip?`}>
                   <RotateCcw className="h-4 w-4" aria-hidden="true" />

@@ -31,19 +31,10 @@ export const DocumentSearch: React.FC<{ initialValue: string }> = ({ initialValu
   }, [value, initialValue, pathname, router, searchParams]);
 
   return (
-    <form
-      role="search"
-      action={pathname}
-      method="get"
-      className="max-w-md"
-      onSubmit={(e) => e.preventDefault()}
-    >
+    <form role="search" action={pathname} method="get" className="max-w-md" onSubmit={(e) => e.preventDefault()}>
       <Field id="cari" label="Cari dokumen">
         <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
-            aria-hidden="true"
-          />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
           <Input
             id="cari"
             name="cari"

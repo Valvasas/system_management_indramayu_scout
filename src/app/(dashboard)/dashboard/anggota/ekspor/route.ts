@@ -4,6 +4,9 @@ import { audit } from '@/lib/auth/audit';
 import { can, getSessionUser } from '@/lib/auth/session';
 import { toCsv } from '@/lib/csv';
 import { GENDER_LABELS, MEMBER_STATUS_LABELS, golonganLabel } from '@/lib/domain';
+import { CONSENT_KIND_LABELS } from '@/components/dashboard/consent/ConsentBadge';
+import { consentStatusesFor } from '@/features/consent/consent';
+import { needsGuardianConsent } from '@/features/consent/status';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,12 +28,44 @@ export async function GET(req: Request) {
   const rows = await listMembersForExport(user, filters);
   const sensitive = can(user, 'members.view_sensitive');
 
-  const header = ['No KTA', 'Nama Lengkap', 'Jenis Kelamin', 'Tanggal Lahir', 'Golongan', 'Gudep', 'No Gudep', 'Kwarran', 'Status', 'Tanggal Bergabung'];
-  if (sensitive) header.push('Telepon', 'Alamat', 'Nama Wali', 'Telepon Wali', 'Tanggal Persetujuan Wali');
+  const header = [
+    'No KTA',
+    'Nama Lengkap',
+    'Jenis Kelamin',
+    'Tanggal Lahir',
+    'Golongan',
+    'Gudep',
+    'No Gudep',
+    'Kwarran',
+    'Status',
+    'Tanggal Bergabung',
+  ];
+  if (sensitive)
+    header.push('Telepon', 'Alamat', 'Nama Wali', 'Telepon Wali', 'Persetujuan Data', 'Persetujuan Foto', 'Persetujuan Kegiatan');
+  // Status persetujuan wali terkini (bukan tanggal manual lama).
+  const consents: Awaited<ReturnType<typeof consentStatusesFor>> = sensitive
+    ? await consentStatusesFor(rows.map((r) => r.m.id))
+    : new Map();
 
   const body = rows.map(({ m, gudepName, gudepNumber, kwarranName }) => {
-    const base: unknown[] = [m.kta, m.fullName, GENDER_LABELS[m.gender], m.birthDate, golonganLabel(m.golongan), gudepName, gudepNumber, kwarranName, MEMBER_STATUS_LABELS[m.status], m.joinedAt];
-    if (sensitive) base.push(m.phone, m.address, m.guardianName, m.guardianPhone, m.guardianConsentAt);
+    const base: unknown[] = [
+      m.kta,
+      m.fullName,
+      GENDER_LABELS[m.gender],
+      m.birthDate,
+      golonganLabel(m.golongan),
+      gudepName,
+      gudepNumber,
+      kwarranName,
+      MEMBER_STATUS_LABELS[m.status],
+      m.joinedAt,
+    ];
+    if (sensitive) {
+      const c = consents.get(m.id);
+      const label = (scope: 'DATA' | 'PHOTO' | 'ACTIVITY') =>
+        needsGuardianConsent(m.birthDate) && c ? CONSENT_KIND_LABELS[c[scope].kind] : 'Tidak diperlukan';
+      base.push(m.phone, m.address, m.guardianName, m.guardianPhone, label('DATA'), label('PHOTO'), label('ACTIVITY'));
+    }
     return base;
   });
 

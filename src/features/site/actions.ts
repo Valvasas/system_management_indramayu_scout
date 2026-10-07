@@ -22,8 +22,12 @@ async function setSetting(key: string, value: string | null) {
 export async function saveAppearanceAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requirePermission('settings.manage');
   const current = await getSiteAppearance();
-  const alt = String(formData.get('heroImageAlt') ?? '').trim().slice(0, 200);
-  const caption = String(formData.get('heroCaption') ?? '').trim().slice(0, 120);
+  const alt = String(formData.get('heroImageAlt') ?? '')
+    .trim()
+    .slice(0, 200);
+  const caption = String(formData.get('heroCaption') ?? '')
+    .trim()
+    .slice(0, 120);
 
   const file = formData.get('heroImage');
   if (isFile(file)) {
@@ -34,7 +38,9 @@ export async function saveAppearanceAction(_prev: FormState, formData: FormData)
       const saved = await saveImage(file, 'situs');
       if (saved.width < 1200) {
         await deleteMedia(saved.url);
-        return fail('Foto terlalu kecil untuk header. Gunakan foto lebar minimal 1200 piksel.', { heroImage: 'Minimal lebar 1200 piksel.' });
+        return fail('Foto terlalu kecil untuk header. Gunakan foto lebar minimal 1200 piksel.', {
+          heroImage: 'Minimal lebar 1200 piksel.',
+        });
       }
       await deleteMedia(current.heroImage);
       await setSetting('heroImage', saved.url);
@@ -68,8 +74,12 @@ export async function markMessageReadAction(id: string): Promise<void> {
 export async function deleteMessageAction(id: string): Promise<void> {
   const user = await requirePermission('messages.read');
   const db = await getDb();
-  const [row] = await db.delete(schema.contactMessages).where(eq(schema.contactMessages.id, id)).returning({ name: schema.contactMessages.name });
-  if (row) await audit(user, { action: 'message.delete', summary: `Menghapus pesan dari ${row.name}`, entityType: 'message', entityId: id });
+  const [row] = await db
+    .delete(schema.contactMessages)
+    .where(eq(schema.contactMessages.id, id))
+    .returning({ name: schema.contactMessages.name });
+  if (row)
+    await audit(user, { action: 'message.delete', summary: `Menghapus pesan dari ${row.name}`, entityType: 'message', entityId: id });
   revalidatePath('/dashboard/pesan');
   redirect('/dashboard/pesan?dihapus=1');
 }

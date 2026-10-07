@@ -13,9 +13,7 @@ import { destroyUserSessions, requirePermission, type SessionUser } from '@/lib/
 import { checkbox, fail, ok, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { getUser } from './queries';
 
-const optionalUuid = z
-  .union([z.string(), z.undefined()])
-  .transform((v) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null));
+const optionalUuid = z.union([z.string(), z.undefined()]).transform((v) => (v && /^[0-9a-f-]{36}$/i.test(v) ? v : null));
 
 const UserSchema = z
   .object({
@@ -31,7 +29,8 @@ const UserSchema = z
     active: checkbox,
   })
   .superRefine((v, ctx) => {
-    if (v.role === 'STAFF_KWARRAN' && !v.kwarranId) ctx.addIssue({ code: 'custom', path: ['kwarranId'], message: 'Pilih kwarran yang dikelola.' });
+    if (v.role === 'STAFF_KWARRAN' && !v.kwarranId)
+      ctx.addIssue({ code: 'custom', path: ['kwarranId'], message: 'Pilih kwarran yang dikelola.' });
     if (v.role === 'STAFF_GUDEP' && !v.gudepId) ctx.addIssue({ code: 'custom', path: ['gudepId'], message: 'Pilih gudep yang dikelola.' });
     if (v.role === 'PESERTA') ctx.addIssue({ code: 'custom', path: ['role'], message: 'Akun peserta dibuat dari halaman detail anggota.' });
   });
@@ -79,7 +78,12 @@ export async function createUserAction(_prev: FormState, formData: FormData): Pr
     })
     .returning({ id: schema.users.id });
 
-  await audit(actor, { action: 'user.create', summary: `Membuat akun ${v.username} (${ROLE_LABELS[v.role]})`, entityType: 'user', entityId: created.id });
+  await audit(actor, {
+    action: 'user.create',
+    summary: `Membuat akun ${v.username} (${ROLE_LABELS[v.role]})`,
+    entityType: 'user',
+    entityId: created.id,
+  });
   const { code, expiresAt } = await issueAccessCode(actor, { id: created.id, username: v.username }, 'ACTIVATION');
   revalidatePath('/dashboard/pengguna');
   return ok(accessCodeMessage(v.username, code, expiresAt, 'ACTIVATION'));
@@ -107,7 +111,14 @@ export async function updateUserAction(id: string, _prev: FormState, formData: F
   const db = await getDb();
   await db
     .update(schema.users)
-    .set({ name: v.name, username: v.username, email: v.email, role: v.role, active: v.active, ...scopeFor(v.role, v.kwarranId, v.gudepId) })
+    .set({
+      name: v.name,
+      username: v.username,
+      email: v.email,
+      role: v.role,
+      active: v.active,
+      ...scopeFor(v.role, v.kwarranId, v.gudepId),
+    })
     .where(eq(schema.users.id, id));
   // Perubahan peran/penugasan/nonaktif berlaku segera: paksa masuk ulang.
   if (!v.active || v.role !== target.role || v.kwarranId !== target.kwarranId || v.gudepId !== target.gudepId) {

@@ -42,11 +42,21 @@ export default async function DokumenAdminPage({ searchParams = {} }: { searchPa
               <caption className="sr-only">Daftar dokumen</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Dokumen</th>
-                  <th scope="col" className={th}>Kategori</th>
-                  <th scope="col" className={th}>Berkas</th>
-                  <th scope="col" className={th}>Status</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Dokumen
+                  </th>
+                  <th scope="col" className={th}>
+                    Kategori
+                  </th>
+                  <th scope="col" className={th}>
+                    Berkas
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -59,12 +69,19 @@ export default async function DokumenAdminPage({ searchParams = {} }: { searchPa
                       <p className="text-sm text-text-secondary">{formatDate(d.date)}</p>
                     </td>
                     <td className={td}>{d.category}</td>
-                    <td className={td}>{d.fileUrl ? `${d.fileType} · ${formatBytes(d.fileSize)}` : <span className="text-text-muted">Belum diunggah</span>}</td>
+                    <td className={td}>
+                      {d.fileUrl ? `${d.fileType} · ${formatBytes(d.fileSize)}` : <span className="text-text-muted">Belum diunggah</span>}
+                    </td>
                     <td className={td}>
                       <PublishBadge published={d.published} />
                     </td>
                     <td className={td}>
-                      <ActionButton action={deleteDocumentAction.bind(null, d.id)} variant="ghost" confirm={`Hapus dokumen "${d.title}" beserta berkasnya?`} label={`Hapus dokumen ${d.title}`}>
+                      <ActionButton
+                        action={deleteDocumentAction.bind(null, d.id)}
+                        variant="ghost"
+                        confirm={`Hapus dokumen "${d.title}" beserta berkasnya?`}
+                        label={`Hapus dokumen ${d.title}`}
+                      >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Hapus
                       </ActionButton>

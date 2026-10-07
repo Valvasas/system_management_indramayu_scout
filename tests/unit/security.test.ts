@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { hashPassword, passwordProblem, verifyPassword } from '@/lib/auth/password';
-import { createRateLimiter } from '@/lib/security/request';
 
 describe('kebijakan kata sandi', () => {
   it('menolak yang pendek, tanpa angka, atau tanpa huruf', () => {
@@ -18,23 +17,4 @@ describe('kebijakan kata sandi', () => {
   });
 });
 
-describe('pembatas laju', () => {
-  it('menolak setelah batas, per kunci, lalu pulih setelah jendela', () => {
-    vi.useFakeTimers();
-    const rl = createRateLimiter(3, 10 * 60_000);
-    expect([1, 2, 3].map(() => rl.limited('ip-a'))).toEqual([false, false, false]);
-    expect(rl.limited('ip-a')).toBe(true);
-    expect(rl.limited('ip-b')).toBe(false); // kunci lain tidak terpengaruh
-    vi.advanceTimersByTime(10 * 60_000 + 1);
-    expect(rl.limited('ip-a')).toBe(false);
-    vi.useRealTimers();
-  });
-
-  it('reset membuka kembali kunci (dipakai setelah login berhasil)', () => {
-    const rl = createRateLimiter(1, 60_000);
-    rl.limited('u');
-    expect(rl.limited('u')).toBe(true);
-    rl.reset('u');
-    expect(rl.limited('u')).toBe(false);
-  });
-});
+// Pembatas laju: lihat tests/integration/rate-limit.test.ts (store PostgreSQL bersama).

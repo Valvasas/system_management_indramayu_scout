@@ -25,8 +25,8 @@ export default function KodeAksesPage() {
               <p className="eyebrow">Aktivasi & pemulihan</p>
               <h1 className="mt-3 font-display text-display-md font-semibold text-text-primary">Punya kode akses?</h1>
               <p className="mt-3 max-w-sm text-text-secondary">
-                Kode dari pembina atau pengurus berbentuk <strong className="font-semibold text-text-primary">ABCD-2345</strong>. Kode hanya bisa dipakai sekali dan ada masa
-                berlakunya.
+                Kode dari pembina atau pengurus berbentuk <strong className="font-semibold text-text-primary">ABCD-2345</strong>. Kode hanya
+                bisa dipakai sekali dan ada masa berlakunya.
               </p>
               <p className="mt-4 max-w-sm text-sm text-text-secondary">
                 Kata sandi yang Anda buat hanya Anda yang tahu, bahkan pembina pun tidak. Jangan bagikan ke siapa pun.

@@ -13,10 +13,7 @@ export type GalleryPhoto = Photo & { available: boolean };
  * role="dialog" + aria-modal, fokus terperangkap, Escape menutup,
  * fokus kembali ke thumbnail pemicu, scroll body terkunci, panah kiri/kanan.
  */
-export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string }> = ({
-  photos,
-  albumTitle,
-}) => {
+export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string }> = ({ photos, albumTitle }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -29,8 +26,7 @@ export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string
   const close = useCallback(() => setOpenIndex(null), []);
 
   const step = useCallback(
-    (dir: 1 | -1) =>
-      setOpenIndex((cur) => (cur === null ? cur : (cur + dir + photos.length) % photos.length)),
+    (dir: 1 | -1) => setOpenIndex((cur) => (cur === null ? cur : (cur + dir + photos.length) % photos.length)),
     [photos.length],
   );
 
@@ -51,9 +47,7 @@ export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string
       if (e.key === 'ArrowRight') step(1);
       else if (e.key === 'ArrowLeft') step(-1);
       else if (e.key === 'Tab' && dialogRef.current) {
-        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href]',
-        );
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]');
         if (focusables.length === 0) return;
         const first = focusables[0];
         const last = focusables[focusables.length - 1];
@@ -157,19 +151,11 @@ export const PhotoGallery: React.FC<{ photos: GalleryPhoto[]; albumTitle: string
 
             <div className="relative mt-4 aspect-video overflow-hidden rounded-lg bg-surface-sunken">
               {photo.available ? (
-                <Image
-                  src={photo.url}
-                  alt={photo.altText}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 672px"
-                  className="object-contain"
-                />
+                <Image src={photo.url} alt={photo.altText} fill sizes="(max-width: 768px) 100vw, 672px" className="object-contain" />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
                   <ImageOff className="h-10 w-10 text-text-muted" aria-hidden="true" />
-                  <p className="text-sm text-text-secondary">
-                    Berkas foto belum diunggah. Keterangan: {photo.altText}
-                  </p>
+                  <p className="text-sm text-text-secondary">Berkas foto belum diunggah. Keterangan: {photo.altText}</p>
                 </div>
               )}
             </div>

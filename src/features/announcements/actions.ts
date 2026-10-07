@@ -37,7 +37,12 @@ export async function createAnnouncementAction(_prev: FormState, formData: FormD
     .insert(schema.announcements)
     .values({ ...v, gudepId, createdById: user.id, authorName: user.name })
     .returning({ id: schema.announcements.id });
-  await audit(user, { action: 'announcement.create', summary: `Membuat pengumuman "${v.title}"`, entityType: 'announcement', entityId: row.id });
+  await audit(user, {
+    action: 'announcement.create',
+    summary: `Membuat pengumuman "${v.title}"`,
+    entityType: 'announcement',
+    entityId: row.id,
+  });
   revalidatePath('/dashboard/pengumuman');
   redirect('/dashboard/pengumuman?tersimpan=1');
 }
@@ -51,7 +56,12 @@ export async function deleteAnnouncementAction(id: string): Promise<void> {
     canTargetWholeKwarcab(user) || row.createdById === user.id || (row.gudepId !== null && (await canAccessGudep(user, row.gudepId)));
   if (!allowed) redirect('/dashboard/pengumuman');
   await db.delete(schema.announcements).where(eq(schema.announcements.id, id));
-  await audit(user, { action: 'announcement.delete', summary: `Menghapus pengumuman "${row.title}"`, entityType: 'announcement', entityId: id });
+  await audit(user, {
+    action: 'announcement.delete',
+    summary: `Menghapus pengumuman "${row.title}"`,
+    entityType: 'announcement',
+    entityId: id,
+  });
   revalidatePath('/dashboard/pengumuman');
   redirect('/dashboard/pengumuman?dihapus=1');
 }

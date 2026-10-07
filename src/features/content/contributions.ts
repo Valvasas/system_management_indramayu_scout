@@ -23,9 +23,13 @@ const ContributionSchema = z.object({
   content: requiredText('Isi berita', 20000),
   author: requiredText('Penulis', 120),
   status: z.enum(['DRAFT', 'REVIEW'], { errorMap: () => ({ message: 'Pilih simpan draf atau kirim untuk review.' }) }),
-  tags: z
-    .union([z.string(), z.undefined()])
-    .transform((s) => (s ?? '').split(',').map((t) => t.trim()).filter(Boolean).slice(0, 10)),
+  tags: z.union([z.string(), z.undefined()]).transform((s) =>
+    (s ?? '')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 10),
+  ),
   removeCover: checkbox,
 });
 
@@ -68,7 +72,10 @@ export async function saveContributionAction(id: string | null, _prev: FormState
     await db.update(schema.news).set(values).where(eq(schema.news.id, existing.id));
   } else {
     const slug = await uniqueSlug(schema.news, schema.news.slug, schema.news.id, v.title);
-    const [row] = await db.insert(schema.news).values({ ...values, slug, createdById: user.id }).returning({ id: schema.news.id });
+    const [row] = await db
+      .insert(schema.news)
+      .values({ ...values, slug, createdById: user.id })
+      .returning({ id: schema.news.id });
     newsId = row.id;
   }
   await audit(user, {
@@ -91,7 +98,8 @@ export async function deleteContributionAction(id: string): Promise<void> {
     .where(and(eq(schema.news.id, id), eq(schema.news.createdById, user.id), eq(schema.news.status, 'DRAFT')))
     .returning({ title: schema.news.title, coverImage: schema.news.coverImage });
   if (row) await deleteMedia(row.coverImage);
-  if (row) await audit(user, { action: 'content.delete', summary: `Menghapus draf berita "${row.title}"`, entityType: 'news', entityId: id });
+  if (row)
+    await audit(user, { action: 'content.delete', summary: `Menghapus draf berita "${row.title}"`, entityType: 'news', entityId: id });
   revalidatePath('/dashboard/kontribusi');
   redirect('/dashboard/kontribusi?dihapus=1');
 }

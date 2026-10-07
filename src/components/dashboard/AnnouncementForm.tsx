@@ -15,7 +15,13 @@ export const AnnouncementForm: React.FC<{
 }> = ({ action, audienceOptions, gudepOptions, allowWholeKwarcab }) => (
   <ActionForm action={action} resetOnSuccess>
     <TextField name="title" label="Judul" required />
-    <TextAreaField name="body" label="Isi pengumuman" rows={5} hint="Tulis singkat dan jelas: apa, kapan, di mana, siapa yang perlu bertindak." required />
+    <TextAreaField
+      name="body"
+      label="Isi pengumuman"
+      rows={5}
+      hint="Tulis singkat dan jelas: apa, kapan, di mana, siapa yang perlu bertindak."
+      required
+    />
     <div className="grid gap-4 sm:grid-cols-2">
       <SelectField name="audience" label="Ditujukan kepada" defaultValue="ALL" options={audienceOptions} required />
       {gudepOptions && (

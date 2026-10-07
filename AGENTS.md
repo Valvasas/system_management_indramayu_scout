@@ -12,7 +12,7 @@
 |---|---|
 | `Read` seluruh direktori "untuk memahami konteks" | Baca `CODEMAP.md` → langsung ke file yang relevan |
 | `Read` file penuh untuk mencari satu fungsi | `Grep` nama simbolnya, lalu `Read` dengan `offset`/`limit` di sekitar hasil |
-| Membaca `generate_pages.js` (34 KB) seluruhnya | `Grep` nama rutenya; file itu berisi 16 halaman, kamu cuma butuh satu |
+| Membaca file besar (mis. `e2e-portal.mjs`, `schema.ts`) seluruhnya | `Grep` nama simbol/rutenya, lalu `Read` dengan `offset`/`limit` |
 | Membuka `package-lock.json` (188 KB) | `Grep` nama paket yang dicari |
 | Menjelajah `node_modules/`, `.next/` | Tidak pernah. Nol pengecualian |
 | Mengulang eksplorasi yang sudah ada hasilnya | Percayai `CODEMAP.md`; kalau meleset, perbaiki `CODEMAP.md` sekalian |
@@ -29,7 +29,7 @@
 
 1. **Build butuh basis data.** Halaman detail memanggil DB di `generateStaticParams`. Lokal/CI: `npm run db:seed -- --demo` lalu `ALLOW_PGLITE=1 npm run build` (PGlite tertanam). Produksi: isi `DATABASE_URL`. Akun demo: sandi `demo-pramuka-2026` (`admin`, `kwarcab`, `humas`, `kwarran.indramayu`, `gudep.smp1`, `peserta.dimas`). Data demo **fiktif**.
 2. **`AI_CONTEXT.MD` masih melebih-lebihkan.** Pakai sebagai *niat desain*; kebenaran ada di kode + `CODEMAP.md`. Dokumen rancangan sumber: `docs/product/rancangan-v5.md` (niat, bukan status).
-3. **`generate_pages.js` / `create_components.js` USANG.** Jangan dijalankan: menimpa `src/app` dengan template lama.
+3. **Generator lama sudah dihapus** (6 Okt 2026). `src/` adalah satu-satunya sumber kebenaran; jangan membuat ulang skrip yang menulis kode sebagai template string.
 4. **Menulis konten publik wajib memanggil `revalidatePublicSite()`** (`features/content/shared.ts`). Tanpanya halaman statis (`/galeri`, `/struktur-organisasi`, beranda) menampilkan versi lama.
 5. **Halaman `[slug]` memakai `dynamicParams = true` dan halaman daftarnya berada di route group `(daftar)`.** Jangan pindahkan `loading.tsx` ke folder induk: itu membungkus detail dalam Suspense dan slug asing berubah jadi soft 404 (status 200). **Semua** rute dinamis publik (termasuk `/golongan/[id]`, `/wilayah/[slug]` yang daftarnya tetap) wajib `dynamicParams = true` + `notFound()`: di Next 14, `dynamicParams = false` membuat seluruh path rute itu 404 setelah `revalidatePublicSite()` dipanggil (diuji di `npm run e2e`).
 6. **Perbarui `/kebijakan-privasi` setiap skema data atau kontrol akses berubah.** Tiap klaim harus bisa ditunjuk implementasinya; yang belum ada tetap di "Yang belum berlaku".
@@ -164,4 +164,4 @@ docker compose up -d                 # PostgreSQL + PostGIS (opsional)
 
 ## 9. File yang Tidak Perlu Dibaca
 
-`node_modules/` · `.next/` · `package-lock.json` · `create_components.js` & `generate_pages.js` (usang, jangan dibaca maupun dijalankan).
+`node_modules/` · `.next/` · `.data/` · `package-lock.json` · `coverage/`.

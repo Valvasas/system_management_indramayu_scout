@@ -37,7 +37,11 @@ export default async function KegiatanPage({ searchParams = {} }: { searchParams
 
       {events.length === 0 ? (
         <Panel>
-          <EmptyState icon={CalendarX2} title="Belum ada kegiatan mendatang" description="Kegiatan baru akan muncul di sini setelah dijadwalkan oleh pengurus." />
+          <EmptyState
+            icon={CalendarX2}
+            title="Belum ada kegiatan mendatang"
+            description="Kegiatan baru akan muncul di sini setelah dijadwalkan oleh pengurus."
+          />
         </Panel>
       ) : (
         <ul className="space-y-4">
@@ -72,12 +76,23 @@ export default async function KegiatanPage({ searchParams = {} }: { searchParams
 
                   <div className="shrink-0">
                     {e.registered ? (
-                      <ActionButton action={cancelRegistrationAction.bind(null, e.id)} variant="outline" size="md" confirm={`Batalkan pendaftaran "${e.title}"?`} label={`Batalkan pendaftaran ${e.title}`}>
+                      <ActionButton
+                        action={cancelRegistrationAction.bind(null, e.id)}
+                        variant="outline"
+                        size="md"
+                        confirm={`Batalkan pendaftaran "${e.title}"?`}
+                        label={`Batalkan pendaftaran ${e.title}`}
+                      >
                         Batalkan pendaftaran
                       </ActionButton>
                     ) : e.registrationOpen ? (
                       canRegister ? (
-                        <ActionButton action={registerEventAction.bind(null, e.id)} variant="secondary" size="md" label={`Daftar kegiatan ${e.title}`}>
+                        <ActionButton
+                          action={registerEventAction.bind(null, e.id)}
+                          variant="secondary"
+                          size="md"
+                          label={`Daftar kegiatan ${e.title}`}
+                        >
                           Daftar kegiatan
                         </ActionButton>
                       ) : (

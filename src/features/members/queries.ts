@@ -65,11 +65,7 @@ export async function listMembers(user: SessionUser, f: MemberFilters) {
       )
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db
-      .select({ total: count() })
-      .from(schema.members)
-      .innerJoin(schema.gudep, eq(schema.gudep.id, schema.members.gudepId))
-      .where(where),
+    db.select({ total: count() }).from(schema.members).innerJoin(schema.gudep, eq(schema.gudep.id, schema.members.gudepId)).where(where),
   ]);
 
   return { rows, total, page, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
@@ -187,11 +183,16 @@ export async function gudepOptions(user: SessionUser) {
 export async function recentMembers(user: SessionUser, limit = 5) {
   const db = await getDb();
   return db
-    .select({ id: schema.members.id, fullName: schema.members.fullName, status: schema.members.status, gudepName: schema.gudep.name, updatedAt: schema.members.updatedAt })
+    .select({
+      id: schema.members.id,
+      fullName: schema.members.fullName,
+      status: schema.members.status,
+      gudepName: schema.gudep.name,
+      updatedAt: schema.members.updatedAt,
+    })
     .from(schema.members)
     .innerJoin(schema.gudep, eq(schema.gudep.id, schema.members.gudepId))
     .where(and(memberScope(user), or(eq(schema.members.status, 'PENDING'), eq(schema.members.status, 'NEEDS_FIX'))))
     .orderBy(asc(schema.members.updatedAt))
     .limit(limit);
 }
-

@@ -19,7 +19,10 @@ export function escapeIcsText(value: string): string {
 
 /** 2026-10-17T01:00:00.000Z → 20261017T010000Z */
 export function icsDate(d: Date): string {
-  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return d
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 /** Lipat baris panjang: lanjutan diawali satu spasi, dihitung per byte UTF-8. */

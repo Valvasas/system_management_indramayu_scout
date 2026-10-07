@@ -7,6 +7,7 @@
  */
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
   date,
@@ -16,24 +17,19 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { aadFor, encryptedText } from './encrypted-text';
 
 /* ------------------------------------------------------------------ */
 /* Enum                                                                 */
 /* ------------------------------------------------------------------ */
 
-export const roleEnum = pgEnum('role', [
-  'SUPER_ADMIN',
-  'ADMIN_KWARCAB',
-  'ADMIN_WEBSITE',
-  'STAFF_KWARRAN',
-  'STAFF_GUDEP',
-  'PESERTA',
-]);
+export const roleEnum = pgEnum('role', ['SUPER_ADMIN', 'ADMIN_KWARCAB', 'ADMIN_WEBSITE', 'STAFF_KWARRAN', 'STAFF_GUDEP', 'PESERTA']);
 
 export const golonganEnum = pgEnum('golongan', ['SIAGA', 'PENGGALANG', 'PENEGAK', 'PANDEGA', 'DEWASA']);
 
@@ -53,6 +49,36 @@ export const resetRequestStatusEnum = pgEnum('reset_request_status', ['OPEN', 'R
 export const transferStatusEnum = pgEnum('transfer_status', ['REQUESTED', 'APPROVED', 'REJECTED', 'CANCELLED']);
 
 export const audienceEnum = pgEnum('audience', ['ALL', 'PESERTA', 'STAFF']);
+/** Cakupan persetujuan wali (V5 §10): data pribadi, foto/dokumentasi, keikutsertaan kegiatan. */
+export const consentScopeEnum = pgEnum('consent_scope', ['DATA', 'PHOTO', 'ACTIVITY']);
+/**
+ * Cara keputusan persetujuan tercatat:
+ * GUARDIAN_CODE      = wali sendiri, diverifikasi kode sekali pakai (satu-satunya cara MEMBERI persetujuan)
+ * STAFF_REVOCATION   = pembina mencatat pencabutan atas permintaan wali (hanya bisa mencabut)
+ * LEGACY_MANUAL      = tanggal yang diketik staf sebelum fitur ini (belum terverifikasi)
+ */
+export const consentMethodEnum = pgEnum('consent_method', ['GUARDIAN_CODE', 'STAFF_REVOCATION', 'LEGACY_MANUAL']);
+/** Jenis notifikasi portal (2.1). Preferensi pengguna disimpan per jenis. */
+export const notificationKindEnum = pgEnum('notification_kind', [
+  'ANNOUNCEMENT',
+  'NEWS_REVIEW',
+  'NEWS_RETURNED',
+  'NEWS_PUBLISHED',
+  'TRANSFER_REQUESTED',
+  'TRANSFER_DECIDED',
+  'ACCESS_REQUEST',
+  'CONSENT_DECIDED',
+  'EVENT_REGISTRATION',
+  'TERM_ENDING',
+  'SYSTEM',
+]);
+export const notificationPriorityEnum = pgEnum('notification_priority', ['LOW', 'NORMAL', 'HIGH']);
+/** Presensi kegiatan (2.2): hadir / izin / alpa. */
+export const attendanceStatusEnum = pgEnum('attendance_status', ['PRESENT', 'EXCUSED', 'ABSENT']);
+/** SKU = Syarat Kecakapan Umum, SKK = Syarat Kecakapan Khusus (2.3). */
+export const competencyKindEnum = pgEnum('competency_kind', ['SKU', 'SKK']);
+/** Kategori dokumen internal (2.6). */
+export const internalDocCategoryEnum = pgEnum('internal_doc_category', ['SK', 'SURAT', 'FORMULIR', 'LAPORAN', 'LAINNYA']);
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -121,12 +147,16 @@ export const members = pgTable(
       .notNull()
       .references(() => gudep.id, { onDelete: 'restrict' }),
     status: memberStatusEnum('status').notNull().default('PENDING'),
-    /* --- Sensitif / sangat sensitif: hanya peran berwenang (members.view_sensitive) --- */
-    phone: text('phone'),
-    address: text('address'),
-    guardianName: text('guardian_name'),
-    guardianPhone: text('guardian_phone'),
-    /** Tanggal persetujuan orang tua/wali (wajib untuk anggota di bawah 18 tahun). */
+    /* --- Sensitif / sangat sensitif: hanya peran berwenang (members.view_sensitive) ---
+       Dienkripsi AES-256-GCM di aplikasi (src/db/encrypted-text.ts); tidak bisa dicari/diurutkan. */
+    phone: encryptedText('phone', aadFor('members', 'phone')),
+    address: encryptedText('address', aadFor('members', 'address')),
+    guardianName: encryptedText('guardian_name', aadFor('members', 'guardian_name')),
+    guardianPhone: encryptedText('guardian_phone', aadFor('members', 'guardian_phone')),
+    /**
+     * USANG (6 Okt 2026): tanggal yang diketik staf, tanpa verifikasi. Tidak ditulis lagi; isinya
+     * dipindah ke `guardian_consents` (method LEGACY_MANUAL). Kolom tetap ada agar data lama tidak hilang.
+     */
     guardianConsentAt: date('guardian_consent_at', { mode: 'string' }),
     joinedAt: date('joined_at', { mode: 'string' }),
     notes: text('notes'),
@@ -135,6 +165,8 @@ export const members = pgTable(
     verifiedById: uuid('verified_by_id'),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
     createdById: uuid('created_by_id'),
+    /** Diisi saat identitas dihapus (hak subjek data). Baris tetap ada agar statistik & riwayat utuh. */
+    anonymizedAt: timestamp('anonymized_at', { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
@@ -143,6 +175,57 @@ export const members = pgTable(
     index('members_name_idx').on(t.fullName),
     uniqueIndex('members_kta_uq').on(t.kta),
   ],
+);
+
+/**
+ * Permintaan persetujuan wali: pembina membuat kode sekali pakai, wali memakainya di
+ * /persetujuan-wali (tanpa email/akun, V5 §10). Hanya hash kode yang disimpan.
+ */
+export const guardianConsentRequests = pgTable(
+  'guardian_consent_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    requestedById: uuid('requested_by_id'),
+    requestedByName: text('requested_by_name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('consent_requests_member_idx').on(t.memberId)],
+);
+
+/**
+ * Keputusan persetujuan wali — APPEND-ONLY: status terkini per cakupan = baris terbaru.
+ * Pencabutan adalah baris baru (granted=false), riwayat tidak pernah ditimpa.
+ */
+export const guardianConsents = pgTable(
+  'guardian_consents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    requestId: uuid('request_id').references(() => guardianConsentRequests.id, { onDelete: 'set null' }),
+    scope: consentScopeEnum('scope').notNull(),
+    granted: boolean('granted').notNull(),
+    /** Versi teks persetujuan yang dibaca wali (src/features/consent/texts.ts). */
+    textVersion: text('text_version').notNull(),
+    method: consentMethodEnum('method').notNull(),
+    /** Nama yang diketik wali saat menyetujui (terenkripsi). */
+    guardianName: encryptedText('guardian_name', aadFor('guardian_consents', 'guardian_name')),
+    /** HMAC IP pengirim — bukti tanpa menyimpan IP mentah. */
+    ipHash: text('ip_hash'),
+    recordedById: uuid('recorded_by_id'),
+    recordedByName: text('recorded_by_name'),
+    note: text('note'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('consents_member_scope_idx').on(t.memberId, t.scope, t.decidedAt)],
 );
 
 /**
@@ -197,6 +280,8 @@ export const users = pgTable('users', {
   active: boolean('active').notNull().default(true),
   mustChangePassword: boolean('must_change_password').notNull().default(true),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  /** Awal masa tenggang MFA (diisi saat masuk pertama kali setelah MFA diwajibkan untuk perannya). */
+  mfaGraceStartedAt: timestamp('mfa_grace_started_at', { withTimezone: true }),
   ...timestamps,
 });
 
@@ -211,9 +296,43 @@ export const sessions = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     ip: text('ip'),
     userAgent: text('user_agent'),
+    /** true = sandi benar, faktor kedua (TOTP/kode pemulihan) belum. Tidak memberi akses portal. */
+    mfaPending: boolean('mfa_pending').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('sessions_user_idx').on(t.userId)],
+);
+
+/**
+ * TOTP (RFC 6238) per akun. `secret` (base32) dienkripsi AES-256-GCM.
+ * `confirmedAt` null = pendaftaran belum dikonfirmasi dengan kode pertama.
+ * `lastUsedStep` = langkah waktu terakhir yang diterima → kode yang sama ditolak (anti-replay).
+ */
+export const userMfa = pgTable('user_mfa', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  secret: encryptedText('secret', aadFor('user_mfa', 'secret')).notNull(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
+  lastUsedStep: bigint('last_used_step', { mode: 'number' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Kode pemulihan MFA sekali pakai. Hanya SHA-256 yang disimpan; kode tampil sekali saat dibuat. */
+export const mfaRecoveryCodes = pgTable(
+  'mfa_recovery_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('mfa_recovery_user_idx').on(t.userId)],
 );
 
 /**
@@ -255,6 +374,22 @@ export const passwordResetRequests = pgTable(
   (t) => [index('reset_requests_status_idx').on(t.status, t.createdAt)],
 );
 
+/**
+ * Penghitung rate limit bersama (semua instance aplikasi membaca tabel yang sama).
+ * `key` = HMAC dari cakupan + IP/nama pengguna — nilai asli tidak pernah disimpan.
+ * Jendela tetap: hitungan direset saat `window_ends_at` lewat. Baris kedaluwarsa dibersihkan
+ * oportunistik dan oleh `npm run db:retention`.
+ */
+export const rateLimits = pgTable(
+  'rate_limits',
+  {
+    key: text('key').primaryKey(),
+    count: integer('count').notNull(),
+    windowEndsAt: timestamp('window_ends_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('rate_limits_window_idx').on(t.windowEndsAt)],
+);
+
 export const auditLogs = pgTable(
   'audit_logs',
   {
@@ -268,9 +403,52 @@ export const auditLogs = pgTable(
     entityId: text('entity_id'),
     summary: text('summary').notNull(),
     ip: text('ip'),
+    /**
+     * Rantai HMAC tahan-ubah (src/lib/auth/audit-chain.ts): `hash` = HMAC(isi entri + `prev_hash`).
+     * Null hanya untuk entri lama sebelum rantai diaktifkan. Tabel ini INSERT-only:
+     * trigger memblokir UPDATE/DELETE/TRUNCATE dan user aplikasi tidak punya hak keduanya.
+     */
+    prevHash: text('prev_hash'),
+    hash: text('hash'),
   },
   (t) => [index('audit_at_idx').on(t.at), index('audit_entity_idx').on(t.entityType, t.entityId)],
 );
+
+export const backupStatusEnum = pgEnum('backup_status', ['RUNNING', 'SUCCESS', 'FAILED']);
+
+/** Riwayat backup (manual dari portal atau `npm run db:backup`). Berkasnya di BACKUP_DIR. */
+export const backupRuns = pgTable(
+  'backup_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    status: backupStatusEnum('status').notNull().default('RUNNING'),
+    kind: text('kind').notNull(),
+    fileName: text('file_name'),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+    sha256: text('sha256'),
+    /** Hasil uji pulih (restore) terakhir atas berkas ini; null = belum diuji. */
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    verifyNote: text('verify_note'),
+    triggeredById: uuid('triggered_by_id'),
+    triggeredByName: text('triggered_by_name').notNull(),
+    error: text('error'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [index('backup_runs_started_idx').on(t.startedAt)],
+);
+
+/**
+ * Jangkar rantai audit setelah retensi menghapus entri tertua: `prev_hash` milik entri
+ * pertama yang tersisa, dicatat oleh `npm run db:retention` (dijalankan pemilik skema).
+ */
+export const auditChainAnchors = pgTable('audit_chain_anchors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  firstLogId: bigint('first_log_id', { mode: 'number' }).notNull(),
+  prevHash: text('prev_hash').notNull(),
+  deletedCount: integer('deleted_count').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 /* ------------------------------------------------------------------ */
 /* Konten publik                                                        */
@@ -287,7 +465,10 @@ export const news = pgTable(
     content: text('content').notNull().default(''),
     coverImage: text('cover_image'),
     author: text('author').notNull(),
-    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    tags: text('tags')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     status: publishStatusEnum('status').notNull().default('DRAFT'),
     /** Catatan editor saat berita dikembalikan ke kontributor. */
     reviewNote: text('review_note'),
@@ -398,8 +579,206 @@ export const boardMembers = pgTable('board_members', {
   department: text('department').notNull(),
   period: text('period').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
+  /** Masa jabatan (2.4). Data lama: mulai kosong, berakhir kosong, aktif (default aman: tetap tampil). */
+  termStart: date('term_start', { mode: 'string' }),
+  termEnd: date('term_end', { mode: 'string' }),
+  isActive: boolean('is_active').notNull().default(true),
   ...timestamps,
 });
+
+/* ------------------------------------------------------------------ */
+/* Fitur operasional (Blok 2)                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Penugasan pembina/staf berperiode (2.4) — RIWAYAT informasional. Cakupan akses tetap
+ * ditentukan `users.kwarran_id`/`users.gudep_id`; masa berakhir hanya memicu pengingat,
+ * tidak mencabut akses otomatis.
+ */
+export const staffAssignments = pgTable(
+  'staff_assignments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: roleEnum('role').notNull(),
+    /** Jabatan, mis. "Pembina Gudep", "Andalan Kwarran". */
+    position: text('position').notNull(),
+    kwarranId: uuid('kwarran_id').references(() => kwarran.id, { onDelete: 'set null' }),
+    gudepId: uuid('gudep_id').references(() => gudep.id, { onDelete: 'set null' }),
+    termStart: date('term_start', { mode: 'string' }),
+    termEnd: date('term_end', { mode: 'string' }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdById: uuid('created_by_id'),
+    ...timestamps,
+  },
+  (t) => [index('staff_assignments_user_idx').on(t.userId), index('staff_assignments_end_idx').on(t.termEnd)],
+);
+
+/** Notifikasi per penerima (2.1). Isi ringkas tanpa data sensitif; tautan ke halaman ber-izin. */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: notificationKindEnum('kind').notNull(),
+    priority: notificationPriorityEnum('priority').notNull().default('NORMAL'),
+    title: text('title').notNull(),
+    body: text('body').notNull().default(''),
+    href: text('href'),
+    /** Satu notifikasi per penerima per kunci (mis. pengingat masa jabatan). Null = tanpa dedupe. */
+    dedupeKey: text('dedupe_key'),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('notifications_user_idx').on(t.userId, t.createdAt), uniqueIndex('notifications_dedupe_uq').on(t.userId, t.dedupeKey)],
+);
+
+/** Preferensi notifikasi per jenis. Tidak ada baris = aktif. Prioritas tinggi selalu dikirim. */
+export const notificationPreferences = pgTable(
+  'notification_preferences',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: notificationKindEnum('kind').notNull(),
+    enabled: boolean('enabled').notNull().default(true),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind] })],
+);
+
+/** Presensi kegiatan (2.2). Satu baris per anggota per kegiatan; dicatat staf dalam cakupannya. */
+export const eventAttendance = pgTable(
+  'event_attendance',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => events.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    status: attendanceStatusEnum('status').notNull(),
+    note: text('note'),
+    recordedById: uuid('recorded_by_id'),
+    recordedByName: text('recorded_by_name').notNull(),
+    recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('attendance_event_member_uq').on(t.eventId, t.memberId), index('attendance_member_idx').on(t.memberId)],
+);
+
+/**
+ * Daftar syarat SKU/SKK per golongan (2.3) — data referensi yang dikelola admin.
+ * Isi resmi diketik apa adanya dari dokumen Kwarnas; teks Tri Satya/Dasa Darma tidak boleh
+ * diparafrasekan. `level` = tingkatan SKU (mis. Ramu) atau nama SKK.
+ */
+export const competencyRequirements = pgTable(
+  'competency_requirements',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    kind: competencyKindEnum('kind').notNull(),
+    golongan: golonganEnum('golongan').notNull(),
+    level: text('level').notNull(),
+    code: text('code').notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    active: boolean('active').notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex('competency_code_uq').on(t.code), index('competency_golongan_idx').on(t.golongan, t.kind, t.level)],
+);
+
+/** Syarat yang sudah diverifikasi pembina untuk seorang anggota (2.3). */
+export const memberCompetencies = pgTable(
+  'member_competencies',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    memberId: uuid('member_id')
+      .notNull()
+      .references(() => members.id, { onDelete: 'cascade' }),
+    requirementId: uuid('requirement_id')
+      .notNull()
+      .references(() => competencyRequirements.id, { onDelete: 'restrict' }),
+    verifiedAt: timestamp('verified_at', { withTimezone: true }).notNull().defaultNow(),
+    verifiedById: uuid('verified_by_id'),
+    verifiedByName: text('verified_by_name').notNull(),
+    note: text('note'),
+    /** Verifikasi dibatalkan (salah catat). Riwayat lengkap ada di log audit. */
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedByName: text('revoked_by_name'),
+  },
+  (t) => [uniqueIndex('member_competency_uq').on(t.memberId, t.requirementId)],
+);
+
+/**
+ * Dokumen internal non-publik (2.6), terpisah dari `documents` (publik). Terlihat bila peran
+ * pengguna ada di `allowed_roles` DAN (tanpa cakupan, atau cakupan pengguna meliputi
+ * kwarran/gudep dokumen). Berkas di folder privat STORAGE_DIR, tidak lewat /media.
+ */
+export const internalDocuments = pgTable(
+  'internal_documents',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: text('title').notNull(),
+    category: internalDocCategoryEnum('category').notNull(),
+    description: text('description'),
+    allowedRoles: roleEnum('allowed_roles').array().notNull(),
+    kwarranId: uuid('kwarran_id').references(() => kwarran.id, { onDelete: 'set null' }),
+    gudepId: uuid('gudep_id').references(() => gudep.id, { onDelete: 'set null' }),
+    currentVersion: integer('current_version').notNull().default(0),
+    createdById: uuid('created_by_id'),
+    createdByName: text('created_by_name').notNull(),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [index('internal_docs_category_idx').on(t.category)],
+);
+
+export const internalDocumentVersions = pgTable(
+  'internal_document_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    documentId: uuid('document_id')
+      .notNull()
+      .references(() => internalDocuments.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    /** Path acak di folder privat — nama dari klien tidak pernah dipakai sebagai path. */
+    storageKey: text('storage_key').notNull(),
+    /** Nama tampilan yang sudah disanitasi. */
+    fileName: text('file_name').notNull(),
+    /** Tipe hasil pemeriksaan isi berkas (magic bytes), bukan dari klien. */
+    mimeType: text('mime_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    sha256: text('sha256').notNull(),
+    note: text('note'),
+    uploadedById: uuid('uploaded_by_id'),
+    uploadedByName: text('uploaded_by_name').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('internal_doc_version_uq').on(t.documentId, t.version)],
+);
+
+export const internalDocumentDownloads = pgTable(
+  'internal_document_downloads',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    documentId: uuid('document_id')
+      .notNull()
+      .references(() => internalDocuments.id, { onDelete: 'cascade' }),
+    versionId: uuid('version_id')
+      .notNull()
+      .references(() => internalDocumentVersions.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id'),
+    userName: text('user_name').notNull(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('internal_doc_downloads_idx').on(t.documentId, t.at)],
+);
 
 /* ------------------------------------------------------------------ */
 /* Komunikasi & pengaturan                                              */
@@ -446,6 +825,13 @@ export type MemberStatus = (typeof memberStatusEnum.enumValues)[number];
 export type PublishStatus = (typeof publishStatusEnum.enumValues)[number];
 export type TransferStatus = (typeof transferStatusEnum.enumValues)[number];
 export type Audience = (typeof audienceEnum.enumValues)[number];
+export type ConsentScope = (typeof consentScopeEnum.enumValues)[number];
+export type ConsentMethod = (typeof consentMethodEnum.enumValues)[number];
+export type NotificationKind = (typeof notificationKindEnum.enumValues)[number];
+export type NotificationPriority = (typeof notificationPriorityEnum.enumValues)[number];
+export type AttendanceStatus = (typeof attendanceStatusEnum.enumValues)[number];
+export type CompetencyKind = (typeof competencyKindEnum.enumValues)[number];
+export type InternalDocCategory = (typeof internalDocCategoryEnum.enumValues)[number];
 
 export type KwarranRow = typeof kwarran.$inferSelect;
 export type GudepRow = typeof gudep.$inferSelect;

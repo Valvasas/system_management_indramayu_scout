@@ -33,7 +33,8 @@ export default async function ProfilPage() {
 
       {m.status === 'NEEDS_FIX' && (
         <Notice tone="warning">
-          <span className="font-semibold">Data Anda dikembalikan untuk diperbaiki.</span> {m.reviewNote ?? 'Hubungi pembina gudep untuk keterangan.'}
+          <span className="font-semibold">Data Anda dikembalikan untuk diperbaiki.</span>{' '}
+          {m.reviewNote ?? 'Hubungi pembina gudep untuk keterangan.'}
         </Notice>
       )}
 

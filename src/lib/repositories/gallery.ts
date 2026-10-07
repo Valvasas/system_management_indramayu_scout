@@ -43,11 +43,7 @@ async function withPhotos(albums: AlbumRow[]): Promise<GalleryAlbum[]> {
 
 export async function getGalleryAlbums(limit?: number): Promise<GalleryAlbum[]> {
   const db = await getDb();
-  const query = db
-    .select()
-    .from(schema.albums)
-    .where(eq(schema.albums.published, true))
-    .orderBy(desc(schema.albums.date));
+  const query = db.select().from(schema.albums).where(eq(schema.albums.published, true)).orderBy(desc(schema.albums.date));
   const albums = typeof limit === 'number' ? await query.limit(limit) : await query;
   return withPhotos(albums);
 }

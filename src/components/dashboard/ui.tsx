@@ -49,7 +49,9 @@ export const PortalHeader: React.FC<{
 /* ---------------- Sapaan bergambar (beranda portal) ---------------- */
 
 const todayLabel = () =>
-  new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date());
+  new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(
+    new Date(),
+  );
 
 /** Kepala beranda portal: langit, kontur, dan pita lanskap. Satu h1. */
 export const PortalWelcome: React.FC<{ title: string; subtitle?: React.ReactNode; actions?: React.ReactNode; scene?: SceneVariant }> = ({
@@ -180,13 +182,19 @@ export const Pagination: React.FC<{ page: number; pageCount: number; hrefFor: (p
     {pageCount > 1 && (
       <div className="flex gap-2">
         {page > 1 ? (
-          <Link href={hrefFor(page - 1)} className="inline-flex min-h-touch items-center gap-1 rounded-lg border border-border-strong bg-surface-base px-3 font-medium text-text-primary hover:bg-surface-subtle">
+          <Link
+            href={hrefFor(page - 1)}
+            className="inline-flex min-h-touch items-center gap-1 rounded-lg border border-border-strong bg-surface-base px-3 font-medium text-text-primary hover:bg-surface-subtle"
+          >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             Sebelumnya
           </Link>
         ) : null}
         {page < pageCount ? (
-          <Link href={hrefFor(page + 1)} className="inline-flex min-h-touch items-center gap-1 rounded-lg border border-border-strong bg-surface-base px-3 font-medium text-text-primary hover:bg-surface-subtle">
+          <Link
+            href={hrefFor(page + 1)}
+            className="inline-flex min-h-touch items-center gap-1 rounded-lg border border-border-strong bg-surface-base px-3 font-medium text-text-primary hover:bg-surface-subtle"
+          >
             Berikutnya
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Link>

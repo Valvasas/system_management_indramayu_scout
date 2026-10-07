@@ -14,6 +14,20 @@ export const PERMISSIONS = [
   'members.export',
   'members.import',
   'members.view_sensitive',
+  /** Menghapus identitas anggota nonaktif (tidak dapat dibatalkan). Hanya tingkat Kwarcab. */
+  'members.anonymize',
+  /** Mencatat presensi kegiatan anggota dalam cakupan (2.2). */
+  'attendance.record',
+  /** Mengelola daftar syarat SKU/SKK (data referensi, 2.3). */
+  'competency.manage',
+  /** Memverifikasi syarat SKU/SKK anggota dalam cakupan (2.3). */
+  'competency.verify',
+  /** Melihat rekap & mengunduh laporan dalam cakupan (2.5). */
+  'reports.view',
+  /** Melihat dokumen internal yang ditujukan ke peran & cakupannya (2.6). */
+  'internal_docs.view',
+  /** Mengunggah & mengelola dokumen internal dalam cakupan (2.6). */
+  'internal_docs.manage',
   'gudep.read',
   'gudep.create',
   'gudep.update',
@@ -27,6 +41,12 @@ export const PERMISSIONS = [
   'messages.read',
   'settings.manage',
   'audit.view',
+  /** Memverifikasi integritas rantai log audit. Khusus Super Admin. */
+  'audit.verify',
+  /** Mereset MFA akun lain (tercatat di log). Khusus Super Admin. */
+  'users.reset_mfa',
+  /** Memicu backup manual & melihat statusnya. Khusus Super Admin. */
+  'system.backup',
   'self.portal',
 ] as const;
 
@@ -44,13 +64,20 @@ const STAFF_MEMBER_BASE: Permission[] = [
   'announcements.manage',
   'users.create_peserta',
   'content.contribute',
+  'attendance.record',
+  'competency.verify',
+  'reports.view',
+  'internal_docs.view',
 ];
+
+/** Izin yang tidak pernah diberikan selain kepada Super Admin. */
+export const SUPER_ADMIN_ONLY: readonly Permission[] = ['audit.verify', 'users.reset_mfa', 'system.backup'];
 
 const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   SUPER_ADMIN: PERMISSIONS.filter((p) => p !== 'self.portal'),
-  ADMIN_KWARCAB: PERMISSIONS.filter((p) => p !== 'self.portal'),
-  ADMIN_WEBSITE: ['content.manage', 'content.contribute', 'announcements.manage', 'messages.read', 'settings.manage'],
-  STAFF_KWARRAN: [...STAFF_MEMBER_BASE, 'members.verify', 'members.archive', 'gudep.create'],
+  ADMIN_KWARCAB: PERMISSIONS.filter((p) => p !== 'self.portal' && !SUPER_ADMIN_ONLY.includes(p)),
+  ADMIN_WEBSITE: ['content.manage', 'content.contribute', 'announcements.manage', 'messages.read', 'settings.manage', 'internal_docs.view'],
+  STAFF_KWARRAN: [...STAFF_MEMBER_BASE, 'members.verify', 'members.archive', 'gudep.create', 'internal_docs.manage'],
   STAFF_GUDEP: STAFF_MEMBER_BASE,
   PESERTA: ['self.portal'],
 };

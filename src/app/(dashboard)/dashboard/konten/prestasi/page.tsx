@@ -40,11 +40,21 @@ export default async function PrestasiAdminPage({ searchParams = {} }: { searchP
               <caption className="sr-only">Daftar prestasi, tahun terbaru di atas</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Prestasi</th>
-                  <th scope="col" className={th}>Tingkat</th>
-                  <th scope="col" className={th}>Tahun</th>
-                  <th scope="col" className={th}>Status</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Prestasi
+                  </th>
+                  <th scope="col" className={th}>
+                    Tingkat
+                  </th>
+                  <th scope="col" className={th}>
+                    Tahun
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -62,7 +72,12 @@ export default async function PrestasiAdminPage({ searchParams = {} }: { searchP
                       <PublishBadge published={a.published} draftLabel="Disembunyikan" />
                     </td>
                     <td className={td}>
-                      <ActionButton action={deleteAchievementAction.bind(null, a.id)} variant="ghost" confirm={`Hapus prestasi "${a.title}"?`} label={`Hapus prestasi ${a.title}`}>
+                      <ActionButton
+                        action={deleteAchievementAction.bind(null, a.id)}
+                        variant="ghost"
+                        confirm={`Hapus prestasi "${a.title}"?`}
+                        label={`Hapus prestasi ${a.title}`}
+                      >
                         <Trash2 className="h-4 w-4" aria-hidden="true" />
                         Hapus
                       </ActionButton>

@@ -65,10 +65,7 @@ export const Section: React.FC<SectionProps> = ({
     >
       <div className="civic-container">
         <Reveal
-          className={cn(
-            'mb-10 flex flex-col gap-5',
-            center ? 'items-center text-center' : 'sm:flex-row sm:items-end sm:justify-between',
-          )}
+          className={cn('mb-10 flex flex-col gap-5', center ? 'items-center text-center' : 'sm:flex-row sm:items-end sm:justify-between')}
         >
           <div className={cn(center && 'flex flex-col items-center')}>
             {eyebrow && <p className={cn('eyebrow mb-3', dark && 'text-text-inverse-muted')}>{eyebrow}</p>}

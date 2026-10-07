@@ -13,7 +13,7 @@ const COLUMNS: [string, string][] = [
   ['tanggal_lahir', 'Wajib — 2012-05-17 atau 17/05/2012'],
   ['golongan', 'Wajib — Siaga, Penggalang, Penegak, Pandega, Dewasa'],
   ['nomor_gudep', 'Wajib (kecuali staf gudep: otomatis gudep Anda)'],
-  ['nama_wali, telepon_wali, tanggal_persetujuan_wali', 'Wajib bila usia di bawah 18 tahun'],
+  ['nama_wali, telepon_wali', 'Wajib bila usia di bawah 18 tahun. Persetujuan wali diminta lewat kode dari halaman anggota setelah impor'],
   ['nomor_kta, telepon, alamat, tanggal_bergabung, catatan', 'Opsional'],
 ];
 
@@ -45,7 +45,9 @@ export default async function ImporAnggotaPage() {
             ))}
           </dl>
           {!can(user, 'members.verify') && (
-            <p className="mt-5 text-sm text-text-secondary">Data hasil impor berstatus Menunggu verifikasi sampai diperiksa staf Kwarran.</p>
+            <p className="mt-5 text-sm text-text-secondary">
+              Data hasil impor berstatus Menunggu verifikasi sampai diperiksa staf Kwarran.
+            </p>
           )}
         </Panel>
       </div>

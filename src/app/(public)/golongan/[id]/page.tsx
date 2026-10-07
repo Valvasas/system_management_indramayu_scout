@@ -99,14 +99,18 @@ export default async function GolonganPage({ params }: Params) {
                   </li>
                 ))}
               </ol>
-              <p className="mt-4 text-sm text-text-muted">Rincian syarat tiap jenjang mengikuti petunjuk penyelenggaraan Kwartir Nasional yang berlaku.</p>
+              <p className="mt-4 text-sm text-text-muted">
+                Rincian syarat tiap jenjang mengikuti petunjuk penyelenggaraan Kwartir Nasional yang berlaku.
+              </p>
             </section>
           </article>
 
           <aside className="space-y-5 lg:col-span-5 lg:sticky lg:top-28 lg:self-start">
             <div className="rounded-3xl bg-surface-forest p-6 text-text-inverse on-inverse">
               <p className="text-sm text-text-inverse-muted">Anggota {g.name} terverifikasi di Indramayu</p>
-              <p className="mt-1 font-display text-display-lg font-semibold tabular-nums">{new Intl.NumberFormat('id-ID').format(active)}</p>
+              <p className="mt-1 font-display text-display-lg font-semibold tabular-nums">
+                {new Intl.NumberFormat('id-ID').format(active)}
+              </p>
               <p className="mt-1 text-xs text-text-inverse-muted">Angka agregat dari data portal, tanpa data pribadi.</p>
             </div>
 
@@ -114,8 +118,8 @@ export default async function GolonganPage({ params }: Params) {
               <ScrollText className="h-5 w-5 text-text-accent" aria-hidden="true" />
               <h2 className="mt-3 font-semibold text-text-primary">Kode kehormatan</h2>
               <p className="mt-1 text-sm leading-relaxed text-text-secondary">
-                Golongan {g.name} berpegang pada <strong className="text-text-primary">{g.honorCode}</strong>. Teks resminya diucapkan dalam upacara
-                dan dapat dibaca di dokumen resmi Gerakan Pramuka.
+                Golongan {g.name} berpegang pada <strong className="text-text-primary">{g.honorCode}</strong>. Teks resminya diucapkan dalam
+                upacara dan dapat dibaca di dokumen resmi Gerakan Pramuka.
               </p>
             </div>
 
@@ -156,7 +160,10 @@ export default async function GolonganPage({ params }: Params) {
             <span />
           )}
           {next && (
-            <Link href={`/golongan/${next.id}`} className="group flex min-h-touch flex-col items-end rounded-2xl p-4 text-right hover:bg-surface-base">
+            <Link
+              href={`/golongan/${next.id}`}
+              className="group flex min-h-touch flex-col items-end rounded-2xl p-4 text-right hover:bg-surface-base"
+            >
               <span className="flex items-center gap-1.5 text-sm text-text-secondary">
                 Berikutnya
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />

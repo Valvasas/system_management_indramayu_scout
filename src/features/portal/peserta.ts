@@ -22,7 +22,13 @@ export async function upcomingEventsFor(user: SessionUser) {
   const events = await db
     .select()
     .from(schema.events)
-    .where(and(eq(schema.events.published, true), eq(schema.events.cancelled, false), gte(schema.events.dateStart, new Date(Date.now() - 86400_000))))
+    .where(
+      and(
+        eq(schema.events.published, true),
+        eq(schema.events.cancelled, false),
+        gte(schema.events.dateStart, new Date(Date.now() - 86400_000)),
+      ),
+    )
     .orderBy(asc(schema.events.dateStart))
     .limit(30);
   const registered = new Set<string>();
@@ -30,7 +36,15 @@ export async function upcomingEventsFor(user: SessionUser) {
     const regs = await db
       .select({ eventId: schema.eventRegistrations.eventId })
       .from(schema.eventRegistrations)
-      .where(and(eq(schema.eventRegistrations.memberId, user.memberId), inArray(schema.eventRegistrations.eventId, events.map((e) => e.id))));
+      .where(
+        and(
+          eq(schema.eventRegistrations.memberId, user.memberId),
+          inArray(
+            schema.eventRegistrations.eventId,
+            events.map((e) => e.id),
+          ),
+        ),
+      );
     for (const r of regs) registered.add(r.eventId);
   }
   return events.map((e) => ({ ...e, registered: registered.has(e.id) }));

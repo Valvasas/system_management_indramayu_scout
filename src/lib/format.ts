@@ -49,7 +49,6 @@ export function greeting(now: Date = new Date()): string {
 /** "Sab, 17 Okt" — ringkas untuk blok tanggal di daftar. */
 export function formatDayMonth(iso: string): { day: string; month: string; weekday: string } {
   const d = new Date(iso);
-  const part = (opts: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat('id-ID', { ...opts, timeZone: 'Asia/Jakarta' }).format(d);
+  const part = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('id-ID', { ...opts, timeZone: 'Asia/Jakarta' }).format(d);
   return { day: part({ day: 'numeric' }), month: part({ month: 'short' }), weekday: part({ weekday: 'long' }) };
 }

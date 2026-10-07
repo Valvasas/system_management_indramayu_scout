@@ -1,14 +1,5 @@
 import React, { HTMLAttributes } from 'react';
-import {
-  CheckCircle2,
-  Clock,
-  FileSpreadsheet,
-  FileText,
-  FileType,
-  LucideIcon,
-  PlayCircle,
-  XCircle,
-} from 'lucide-react';
+import { CheckCircle2, Clock, FileSpreadsheet, FileText, FileType, LucideIcon, PlayCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AgendaStatus } from '@/types';
 
@@ -33,19 +24,9 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
  * Label status/kategori. Warna tidak pernah jadi satu-satunya pembawa makna
  * (WCAG 1.4.1): setiap badge membawa teks, dan badge status membawa ikon.
  */
-export const Badge: React.FC<BadgeProps> = ({
-  className,
-  tone = 'neutral',
-  icon: Icon,
-  children,
-  ...props
-}) => (
+export const Badge: React.FC<BadgeProps> = ({ className, tone = 'neutral', icon: Icon, children, ...props }) => (
   <span
-    className={cn(
-      'inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-xs font-medium',
-      tones[tone],
-      className,
-    )}
+    className={cn('inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-xs font-medium', tones[tone], className)}
     {...props}
   >
     {Icon && <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />}
@@ -64,10 +45,7 @@ const agendaStatus: Record<AgendaStatus, { label: string; tone: BadgeTone; icon:
 
 export const agendaStatusLabel = (status: AgendaStatus) => agendaStatus[status].label;
 
-export const AgendaStatusBadge: React.FC<{ status: AgendaStatus; className?: string }> = ({
-  status,
-  className,
-}) => {
+export const AgendaStatusBadge: React.FC<{ status: AgendaStatus; className?: string }> = ({ status, className }) => {
   const s = agendaStatus[status];
   return (
     <Badge tone={s.tone} icon={s.icon} className={className}>
@@ -82,19 +60,13 @@ const fileIcons: Record<string, LucideIcon> = {
   XLSX: FileSpreadsheet,
 };
 
-export const FileTypeBadge: React.FC<{ type: string; className?: string }> = ({
-  type,
-  className,
-}) => (
+export const FileTypeBadge: React.FC<{ type: string; className?: string }> = ({ type, className }) => (
   <Badge tone="neutral" icon={fileIcons[type.toUpperCase()] ?? FileText} className={className}>
     {type.toUpperCase()}
   </Badge>
 );
 
-export const CategoryBadge: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className,
-}) => (
+export const CategoryBadge: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
   <Badge tone="brand" className={className}>
     {children}
   </Badge>

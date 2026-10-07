@@ -27,11 +27,21 @@ export default async function KwarranPage({ searchParams }: { searchParams?: { t
             <caption className="sr-only">Daftar kwarran</caption>
             <thead>
               <tr className="border-b border-border-subtle">
-                <th scope="col" className={th}>Kwarran</th>
-                <th scope="col" className={th}>Ketua</th>
-                <th scope="col" className={cn(th, 'text-right')}>Gudep aktif</th>
-                <th scope="col" className={cn(th, 'text-right')}>Anggota aktif</th>
-                <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                <th scope="col" className={th}>
+                  Kwarran
+                </th>
+                <th scope="col" className={th}>
+                  Ketua
+                </th>
+                <th scope="col" className={cn(th, 'text-right')}>
+                  Gudep aktif
+                </th>
+                <th scope="col" className={cn(th, 'text-right')}>
+                  Anggota aktif
+                </th>
+                <th scope="col" className={th}>
+                  <span className="sr-only">Aksi</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -49,7 +59,10 @@ export default async function KwarranPage({ searchParams }: { searchParams?: { t
                   </td>
                   <td className={cn(td, 'text-right font-semibold text-text-primary')}>{k.activeMembers.toLocaleString('id-ID')}</td>
                   <td className={cn(td, 'text-right')}>
-                    <Link href={`/dashboard/kwarran/${k.id}`} className="inline-flex min-h-touch items-center rounded-lg px-2 font-semibold text-text-accent hover:underline">
+                    <Link
+                      href={`/dashboard/kwarran/${k.id}`}
+                      className="inline-flex min-h-touch items-center rounded-lg px-2 font-semibold text-text-accent hover:underline"
+                    >
                       Ubah<span className="sr-only"> data Kwarran {k.name}</span>
                     </Link>
                   </td>

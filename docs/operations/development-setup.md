@@ -1,111 +1,63 @@
-# Development Setup Guide
+# Panduan Setup Pengembangan
 
-Dokumen ini memandu Anda dalam menyiapkan lingkungan kerja (development environment) untuk berkontribusi pada proyek Rumah Pramuka Indramayu.
+> Diperbarui 6 Okt 2026. Versi lama dokumen ini menyebut pnpm, Prisma, dan NextAuth — **tidak satu pun dipakai proyek**.
+> Kebenaran ada di `package.json`, `.env.example`, dan `CODEMAP.md`.
 
 ## Prasyarat
 
-Sebelum memulai, pastikan sistem Anda telah memiliki perangkat lunak berikut yang terpasang dengan benar:
-- **Node.js** >= 20 LTS
-- **pnpm** >= 9 (Package Manager)
-- **Docker Desktop** (Untuk menjalankan database lokal)
-- **Git** (Version Control System)
-- **VS Code** (Rekomendasi Code Editor)
+- **Node.js 22** (sama dengan CI) dan **npm** (lockfile: `package-lock.json`).
+- **Git**.
+- Opsional: **Docker** untuk PostgreSQL + PostGIS. Tanpa Docker, aplikasi memakai PGlite (PostgreSQL di dalam proses).
 
-## Clone & Install
-
-Langkah pertama adalah mengunduh repositori dan menginstal seluruh dependensi.
+## Install & jalankan
 
 ```bash
-git clone <repo-url>
-cd rumah-pramuka-indramayu
-pnpm install
+npm ci
+npm run db:seed -- --demo     # data FIKTIF + 6 akun demo (sandi demo-pramuka-2026)
+npm run dev                   # http://localhost:3000
 ```
 
-## Database Setup (Docker)
+Tanpa `DATABASE_URL`, data disimpan di `.data/pglite` dan migrasi berjalan otomatis saat koneksi pertama.
+Hapus folder itu untuk mulai dari nol.
 
-Proyek ini memanfaatkan kontainer Docker untuk menjamin keseragaman database environment yang mencakup PostgreSQL dengan ekstensi PostGIS. 
+## Environment
 
-File `docker-compose.yml` telah disediakan:
+Salin `.env.example` ke `.env.local`. Setiap variabel dijelaskan di file itu dan divalidasi oleh
+`src/lib/env.ts` saat server start. Konfigurasi cacat menghentikan server dengan pesan yang hanya
+menyebut nama variabel (nilai rahasia tidak pernah dicetak).
 
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  db:
-    image: postgis/postgis:16-3.4
-    container_name: rpi-database
-    environment:
-      POSTGRES_DB: rumah_pramuka
-      POSTGRES_USER: pramuka_dev
-      POSTGRES_PASSWORD: pramuka_dev_password
-    ports:
-      - '5432:5432'
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+Kode aplikasi **tidak boleh** membaca `process.env` langsung. Tambah variabel baru di `env.ts`
+(skema + aturan pesan) dan `.env.example` sekaligus.
 
-volumes:
-  pgdata:
-```
+## PostgreSQL lewat Docker (opsional)
 
-Jalankan container database dalam mode background (detached):
 ```bash
+# isi POSTGRES_PASSWORD di .env (dibaca docker compose)
 docker compose up -d
+DATABASE_URL="postgresql://rumah_pramuka_app:<password>@127.0.0.1:5432/rumah_pramuka" npm run db:migrate
 ```
 
-## Environment Variables
+`docker/db-init/` membuat user aplikasi non-superuser saat volume pertama kali dibuat.
 
-Salin template variabel lingkungan `.env.example` menjadi `.env.local` dan konfigurasikan isinya:
+## Perubahan skema
 
-```env
-# .env.local
-DATABASE_URL="postgresql://pramuka_dev:pramuka_dev_password@localhost:5432/rumah_pramuka"
-NEXTAUTH_SECRET="generate-random-secret"
-NEXTAUTH_URL="http://localhost:3000"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-NEXT_PUBLIC_DEFAULT_LOCALE="id"
-```
-*(Ganti `generate-random-secret` dengan string acak yang kuat).*
+Edit `src/db/schema.ts` lalu `npm run db:generate`. Jangan menulis SQL migrasi dengan tangan.
 
-## Prisma Setup
-
-Lakukan sinkronisasi schema Prisma ke dalam database development:
+## Gerbang kualitas
 
 ```bash
-# Melakukan generate Prisma Client
-pnpm prisma generate
-
-# Sinkronisasi schema saat development (tanpa membuat riwayat migrasi)
-pnpm prisma db push
-
-# Menjalankan migrasi secara resmi (saat schema sudah matang/stabil)
-pnpm prisma migrate dev
+npm run typecheck && npm run lint && npm run format:check && npm test
+npm run db:seed -- --demo && ALLOW_PGLITE=1 npm run build
+ALLOW_PGLITE=1 npm run start          # terminal lain
+npm run a11y && npm run e2e           # e2e mengubah data: seed ulang sebelum menjalankannya lagi
 ```
 
-## Run Development Server
+## Ekstensi editor yang disarankan
 
-Jalankan server aplikasi Next.js dalam mode development:
+ESLint, Prettier, Tailwind CSS IntelliSense.
 
-```bash
-pnpm dev
-```
-Setelah server menyala, Anda dapat membuka browser dan mengakses: **http://localhost:3000**
+## Pemecahan masalah
 
-## VS Code Extensions (Rekomendasi)
-
-Untuk memaksimalkan produktivitas dan kepatuhan standar proyek, pasang ekstensi VS Code berikut:
-- **ESLint** (Linting kode JavaScript/TypeScript)
-- **Prettier - Code formatter** (Konsistensi format kode)
-- **Tailwind CSS IntelliSense** (Autocomplete class Tailwind)
-- **Prisma** (Syntax highlighting & formatting `.prisma`)
-- **PostCSS Language Support** (Dukungan syntax PostCSS)
-
-## Troubleshooting
-
-### Docker tidak start
-Pastikan Docker Desktop (atau daemon Docker) sedang berjalan. Cek koneksi atau jika terdapat pesan error `permission denied`.
-
-### Port 5432 Conflict
-Jika saat menjalankan `docker compose up` terdapat error port 5432 in use, itu berarti ada instansi PostgreSQL lain yang berjalan di komputer Anda. Matikan service Postgres lokal (seperti service bawaan Windows/Mac) sebelum menjalankan container.
-
-### Prisma Connection Error
-Cek kesesuaian credentials (username, password, db name, port) pada string `DATABASE_URL` di file `.env.local`. Pastikan container berjalan sehat dengan perintah `docker ps`.
+- **`EnvError: Konfigurasi environment tidak valid`** — baca daftar variabel di pesan, cocokkan dengan `.env.example`.
+- **Port 5432 bentrok** — matikan PostgreSQL lokal lain sebelum `docker compose up`.
+- **Data demo berantakan setelah e2e** — `rm -rf .data/pglite && npm run db:seed -- --demo`.

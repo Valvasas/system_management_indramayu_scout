@@ -52,7 +52,9 @@ function baseQuery(db: Database) {
 }
 
 export async function transfersForMember(memberId: string) {
-  return baseQuery(await getDb()).where(eq(schema.memberTransfers.memberId, memberId)).orderBy(desc(schema.memberTransfers.createdAt));
+  return baseQuery(await getDb())
+    .where(eq(schema.memberTransfers.memberId, memberId))
+    .orderBy(desc(schema.memberTransfers.createdAt));
 }
 
 export async function openTransferForMember(memberId: string) {
@@ -85,7 +87,8 @@ export async function transfersOutgoing(user: SessionUser) {
 /** Keputusan terbaru yang menyentuh wilayah pengguna (asal atau tujuan). */
 export async function transfersRecent(user: SessionUser, limit = 20) {
   const ids = await scopedGudepIds(user);
-  const scope = ids === null ? undefined : or(inScope(schema.memberTransfers.fromGudepId, ids), inScope(schema.memberTransfers.toGudepId, ids));
+  const scope =
+    ids === null ? undefined : or(inScope(schema.memberTransfers.fromGudepId, ids), inScope(schema.memberTransfers.toGudepId, ids));
   return baseQuery(await getDb())
     .where(and(ne(schema.memberTransfers.status, 'REQUESTED'), scope))
     .orderBy(desc(schema.memberTransfers.decidedAt))

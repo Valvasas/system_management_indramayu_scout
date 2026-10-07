@@ -36,7 +36,8 @@ export default async function WilayahPage() {
               Peta gugus depan
             </h2>
             <p className="mt-3 text-text-secondary">
-              {points.length} dari {totalGudep} gugus depan aktif sudah ditandai lokasi pangkalannya. Klik penanda untuk membuka daftar gudep di kecamatan tersebut.
+              {points.length} dari {totalGudep} gugus depan aktif sudah ditandai lokasi pangkalannya. Klik penanda untuk membuka daftar
+              gudep di kecamatan tersebut.
             </p>
             <p className="mt-3 text-sm text-text-muted">
               Peta hanya memuat lokasi sekolah/komunitas pangkalan. Alamat dan kontak anggota tidak pernah ditampilkan.
@@ -65,7 +66,9 @@ export default async function WilayahPage() {
             Direktori Kwartir Ranting
           </h2>
           <div className="mt-6">
-            <KwarranFinder items={directory.map(({ slug, name, gudepCount, activeMembers }) => ({ slug, name, gudepCount, activeMembers }))} />
+            <KwarranFinder
+              items={directory.map(({ slug, name, gudepCount, activeMembers }) => ({ slug, name, gudepCount, activeMembers }))}
+            />
           </div>
         </section>
       </div>

@@ -23,10 +23,7 @@ export default async function PengumumanPage({ searchParams }: { searchParams?: 
 
   return (
     <>
-      <PortalHeader
-        title="Pengumuman"
-        description="Pesan singkat untuk peserta dan/atau staf. Tampil di halaman Ringkasan penerima."
-      />
+      <PortalHeader title="Pengumuman" description="Pesan singkat untuk peserta dan/atau staf. Tampil di halaman Ringkasan penerima." />
       {searchParams?.tersimpan && <Notice>Pengumuman diterbitkan.</Notice>}
       {searchParams?.dihapus && <Notice>Pengumuman dihapus.</Notice>}
 
@@ -51,10 +48,16 @@ export default async function PengumumanPage({ searchParams }: { searchParams?: 
                     <p className="font-semibold text-text-primary">{a.title}</p>
                     <p className="mt-1 whitespace-pre-line text-text-secondary">{a.body}</p>
                     <p className="mt-1 text-sm text-text-muted">
-                      {AUDIENCE_LABELS[a.audience]} · {gudepName ?? 'Seluruh Kwarcab'} · {a.authorName} · {formatDate(a.createdAt.toISOString())}
+                      {AUDIENCE_LABELS[a.audience]} · {gudepName ?? 'Seluruh Kwarcab'} · {a.authorName} ·{' '}
+                      {formatDate(a.createdAt.toISOString())}
                     </p>
                   </div>
-                  <ActionButton action={deleteAnnouncementAction.bind(null, a.id)} variant="ghost" confirm={`Hapus pengumuman "${a.title}"?`} label={`Hapus pengumuman ${a.title}`}>
+                  <ActionButton
+                    action={deleteAnnouncementAction.bind(null, a.id)}
+                    variant="ghost"
+                    confirm={`Hapus pengumuman "${a.title}"?`}
+                    label={`Hapus pengumuman ${a.title}`}
+                  >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                     Hapus
                   </ActionButton>

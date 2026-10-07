@@ -18,7 +18,12 @@ export default async function UbahGudepPage({ params }: { params: { id: string }
   // Staf gudep hanya perlu label kwarrannya (dikunci), bukan seluruh daftar.
   const kwarrans = canRestructure
     ? await kwarranOptions(user)
-    : await (await getDb()).select({ id: schema.kwarran.id, name: schema.kwarran.name }).from(schema.kwarran).orderBy(asc(schema.kwarran.name));
+    : await (
+        await getDb()
+      )
+        .select({ id: schema.kwarran.id, name: schema.kwarran.name })
+        .from(schema.kwarran)
+        .orderBy(asc(schema.kwarran.name));
 
   return (
     <>

@@ -12,6 +12,7 @@
 import path from 'node:path';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './schema';
+import { serverEnv } from '@/lib/env';
 
 export type Database = NodePgDatabase<typeof schema>;
 
@@ -22,23 +23,20 @@ const globalHolder = globalThis as unknown as { __rumahPramukaDb?: Holder };
 const holder: Holder = (globalHolder.__rumahPramukaDb ??= {});
 
 async function connect(): Promise<Database> {
-  const url = process.env.DATABASE_URL;
+  // serverEnv() menolak produksi tanpa DATABASE_URL (kecuali ALLOW_PGLITE=1).
+  const env = serverEnv();
 
-  if (url) {
+  if (env.DATABASE_URL) {
     const { Pool } = await import('pg');
     const { drizzle } = await import('drizzle-orm/node-postgres');
-    const pool = new Pool({ connectionString: url, max: Number(process.env.DATABASE_POOL_MAX ?? 10) });
+    const pool = new Pool({ connectionString: env.DATABASE_URL, max: env.DATABASE_POOL_MAX });
     return drizzle(pool, { schema });
-  }
-
-  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PGLITE !== '1') {
-    throw new Error('DATABASE_URL wajib diisi di produksi (lihat .env.example).');
   }
 
   const { PGlite } = await import('@electric-sql/pglite');
   const { drizzle } = await import('drizzle-orm/pglite');
   const { migrate } = await import('drizzle-orm/pglite/migrator');
-  const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), '.data', 'pglite');
+  const dir = env.PGLITE_DIR ?? path.join(process.cwd(), '.data', 'pglite');
   const { mkdirSync } = await import('node:fs');
   mkdirSync(dir, { recursive: true });
   const client = new PGlite(dir);

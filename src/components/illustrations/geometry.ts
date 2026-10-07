@@ -25,9 +25,7 @@ export function pinePath(x: number, base: number, h: number): string {
     { y: base - h * 0.32, half: w * 0.4, top: base - h * 0.78 },
     { y: base - h * 0.6, half: w * 0.28, top: base - h },
   ];
-  return tiers
-    .map((t) => `M${r(x - t.half)} ${r(t.y)}L${r(x)} ${r(t.top)}L${r(x + t.half)} ${r(t.y)}Z`)
-    .join('');
+  return tiers.map((t) => `M${r(x - t.half)} ${r(t.y)}L${r(x)} ${r(t.top)}L${r(x + t.half)} ${r(t.y)}Z`).join('');
 }
 
 /** Barisan pinus dari kiri ke kanan, tingginya acak dalam rentang. */
@@ -50,7 +48,10 @@ export function hillsPath(opts: { width: number; height: number; base: number; a
   let d = `M0 ${height}L0 ${r(base + Math.sin(phase) * amp)}`;
   for (let i = 1; i <= steps; i++) {
     const x = (i / steps) * width;
-    const y = base + Math.sin((i / steps) * Math.PI * 2 * waves + phase) * amp + Math.sin((i / steps) * Math.PI * 5 * waves + phase * 2) * amp * 0.25;
+    const y =
+      base +
+      Math.sin((i / steps) * Math.PI * 2 * waves + phase) * amp +
+      Math.sin((i / steps) * Math.PI * 5 * waves + phase * 2) * amp * 0.25;
     d += `L${r(x)} ${r(y)}`;
   }
   return `${d}L${width} ${height}Z`;

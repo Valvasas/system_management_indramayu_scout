@@ -5,11 +5,7 @@
  * full-text search PostgreSQL bila konten sudah ribuan.
  */
 
-export const normalize = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '');
+export const normalize = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '');
 
 export function tokenize(q: string): string[] {
   return normalize(q)
@@ -36,7 +32,10 @@ export function scoreText(tokens: string[], title: string, body = ''): number {
 /** Potongan teks di sekitar kecocokan pertama, untuk pratinjau hasil. */
 export function snippet(text: string, tokens: string[], radius = 90): string {
   const n = normalize(text);
-  const hit = tokens.map((t) => n.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  const hit = tokens
+    .map((t) => n.indexOf(t))
+    .filter((i) => i >= 0)
+    .sort((a, b) => a - b)[0];
   if (hit === undefined) return text.slice(0, radius * 2).trim() + (text.length > radius * 2 ? '…' : '');
   const start = Math.max(0, hit - radius);
   const end = Math.min(text.length, hit + radius);

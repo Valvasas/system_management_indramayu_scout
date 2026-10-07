@@ -32,11 +32,7 @@ const sizes: Record<ButtonSize, string> = {
   lg: 'min-h-touch h-12 px-7 text-base',
 };
 
-export function buttonStyles(
-  variant: ButtonVariant = 'primary',
-  size: ButtonSize = 'md',
-  className?: string,
-) {
+export function buttonStyles(variant: ButtonVariant = 'primary', size: ButtonSize = 'md', className?: string) {
   return cn(base, variants[variant], sizes[size], className);
 }
 

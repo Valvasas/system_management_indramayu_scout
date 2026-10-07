@@ -20,7 +20,11 @@ export default async function PengaturanPage() {
         title="Tampilan beranda"
         description="Foto header adalah kesan pertama pengunjung. Gunakan foto kegiatan resmi terbaik Kwarcab."
         actions={
-          <Link href="/" target="_blank" className="inline-flex min-h-touch items-center gap-2 rounded-lg px-3 font-semibold text-text-accent hover:underline">
+          <Link
+            href="/"
+            target="_blank"
+            className="inline-flex min-h-touch items-center gap-2 rounded-lg px-3 font-semibold text-text-accent hover:underline"
+          >
             Lihat beranda
             <ExternalLink className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">(tab baru)</span>

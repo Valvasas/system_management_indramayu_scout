@@ -37,7 +37,12 @@ export const GudepForm: React.FC<{
     <FieldGroup title="Identitas gudep">
       <TextField name="name" label="Nama gudep" defaultValue={defaults.name} hint="Mis. Gudep SMP Negeri 1 Indramayu" required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="number" label="Nomor gudep" defaultValue={defaults.number ?? ''} hint="Mis. 11.001-11.002 (putra-putri). Kosongkan bila belum ada." />
+        <TextField
+          name="number"
+          label="Nomor gudep"
+          defaultValue={defaults.number ?? ''}
+          hint="Mis. 11.001-11.002 (putra-putri). Kosongkan bila belum ada."
+        />
         {canRestructure ? (
           <SelectField
             name="kwarranId"
@@ -57,10 +62,21 @@ export const GudepForm: React.FC<{
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="pangkalan" label="Pangkalan (sekolah/lembaga)" defaultValue={defaults.pangkalan ?? ''} />
-        <SelectField name="jenjang" label="Jenjang pangkalan" placeholder="Pilih…" defaultValue={defaults.jenjang ?? undefined} options={JENJANG_OPTIONS.map((j) => ({ value: j, label: j }))} />
+        <SelectField
+          name="jenjang"
+          label="Jenjang pangkalan"
+          placeholder="Pilih…"
+          defaultValue={defaults.jenjang ?? undefined}
+          options={JENJANG_OPTIONS.map((j) => ({ value: j, label: j }))}
+        />
       </div>
       {canRestructure && !isNew ? (
-        <CheckboxField name="active" label="Gudep aktif" description="Gudep nonaktif tidak muncul di pilihan formulir anggota." defaultChecked={defaults.active ?? true} />
+        <CheckboxField
+          name="active"
+          label="Gudep aktif"
+          description="Gudep nonaktif tidak muncul di pilihan formulir anggota."
+          defaultChecked={defaults.active ?? true}
+        />
       ) : (
         <input type="hidden" name="active" value="on" />
       )}

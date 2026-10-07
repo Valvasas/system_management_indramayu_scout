@@ -137,7 +137,11 @@ export default function BergabungPage() {
             const Icon = p.icon;
             return (
               <Reveal key={p.id} delay={(i % 2) * 90}>
-                <section id={p.id} aria-labelledby={`${p.id}-title`} className="h-full scroll-mt-28 rounded-3xl border border-border-subtle bg-surface-base p-6 sm:p-8">
+                <section
+                  id={p.id}
+                  aria-labelledby={`${p.id}-title`}
+                  className="h-full scroll-mt-28 rounded-3xl border border-border-subtle bg-surface-base p-6 sm:p-8"
+                >
                   <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-surface-meadow text-text-accent">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
@@ -173,7 +177,10 @@ export default function BergabungPage() {
               <details key={f.q} className="group">
                 <summary className="flex min-h-[3.5rem] cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 font-semibold text-text-primary hover:bg-surface-subtle [&::-webkit-details-marker]:hidden">
                   {f.q}
-                  <ChevronDown className="h-5 w-5 shrink-0 text-text-accent transition-transform group-open:rotate-180" aria-hidden="true" />
+                  <ChevronDown
+                    className="h-5 w-5 shrink-0 text-text-accent transition-transform group-open:rotate-180"
+                    aria-hidden="true"
+                  />
                 </summary>
                 <p className="px-6 pb-5 leading-relaxed text-text-secondary">{f.a}</p>
               </details>
@@ -188,7 +195,10 @@ export default function BergabungPage() {
           </p>
         </section>
 
-        <section aria-labelledby="bantuan-title" className="mt-20 overflow-hidden rounded-3xl bg-surface-forest text-text-inverse on-inverse topo-inverse">
+        <section
+          aria-labelledby="bantuan-title"
+          className="mt-20 overflow-hidden rounded-3xl bg-surface-forest text-text-inverse on-inverse topo-inverse"
+        >
           <div className="grid gap-8 p-8 sm:p-12 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 id="bantuan-title" className="font-display text-display-md font-semibold">

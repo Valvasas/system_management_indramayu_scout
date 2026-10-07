@@ -9,11 +9,12 @@ import { createUserAction, resetPasswordAction, updateUserAction } from '@/featu
 import { getUser } from '@/features/users/queries';
 import { ROLE_DESCRIPTIONS, ROLE_LABELS, assignableRoles } from '@/lib/auth/permissions';
 import { requirePermission } from '@/lib/auth/session';
+import { MfaAdminPanel } from '@/components/dashboard/users/MfaAdminPanel';
 
 export const metadata: Metadata = { title: 'Akun pengguna' };
 
 /** `/dashboard/pengguna/baru` → buat akun; `/dashboard/pengguna/<id>` → ubah akun. */
-export default async function AkunPenggunaPage({ params }: { params: { id: string } }) {
+export default async function AkunPenggunaPage({ params, searchParams = {} }: { params: { id: string }; searchParams?: { mfa?: string } }) {
   const actor = await requirePermission('users.manage');
   const isNew = params.id === 'baru';
   const target = isNew ? null : await getUser(params.id);
@@ -39,7 +40,11 @@ export default async function AkunPenggunaPage({ params }: { params: { id: strin
     <>
       <PortalHeader
         title={isNew ? 'Buat akun staf' : target!.name}
-        description={isNew ? 'Untuk pengurus Kwarcab, admin website, staf Kwarran, atau pembina/staf gudep.' : `${ROLE_LABELS[target!.role]} · ${target!.username}`}
+        description={
+          isNew
+            ? 'Untuk pengurus Kwarcab, admin website, staf Kwarran, atau pembina/staf gudep.'
+            : `${ROLE_LABELS[target!.role]} · ${target!.username}`
+        }
         back={{ href: '/dashboard/pengguna', label: 'Kembali ke daftar akun' }}
       />
       {locked ? (
@@ -60,9 +65,12 @@ export default async function AkunPenggunaPage({ params }: { params: { id: strin
             />
           </div>
           {!isNew && target!.id !== actor.id && (
-            <Panel title="Kata sandi">
-              <ResetPasswordForm action={resetPasswordAction.bind(null, target!.id)} />
-            </Panel>
+            <div className="space-y-6">
+              <Panel title="Kata sandi">
+                <ResetPasswordForm action={resetPasswordAction.bind(null, target!.id)} />
+              </Panel>
+              <MfaAdminPanel actor={actor} target={target!} reset={searchParams.mfa === 'direset'} />
+            </div>
           )}
         </div>
       )}

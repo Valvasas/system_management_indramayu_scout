@@ -1,4 +1,5 @@
 /** Sumber kebenaran tunggal identitas situs: dipakai metadata, sitemap, robots, JSON-LD. */
+import { publicEnv } from '@/lib/env';
 
 export const site = {
   name: 'Rumah Pramuka Indramayu',
@@ -9,7 +10,7 @@ export const site = {
   locale: 'id_ID',
   lang: 'id',
   // Domain publik. Override lewat NEXT_PUBLIC_SITE_URL saat pratinjau/staging.
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pramukaindramayu.or.id').replace(/\/$/, ''),
+  url: publicEnv.siteUrl,
   logo: '/brand/logo.svg',
   /** Tanda persegi untuk header, footer, dan portal (logo horizontal terlalu kecil di kotak 40px). */
   mark: '/brand/mark.svg',
@@ -38,5 +39,4 @@ export const site = {
   ],
 } as const;
 
-export const absoluteUrl = (path: string) =>
-  `${site.url}${path.startsWith('/') ? path : `/${path}`}`;
+export const absoluteUrl = (path: string) => `${site.url}${path.startsWith('/') ? path : `/${path}`}`;

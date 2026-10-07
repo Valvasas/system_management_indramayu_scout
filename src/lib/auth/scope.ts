@@ -63,11 +63,7 @@ export async function canAccessGudep(user: SessionUser, gudepId: string): Promis
   if (level === 'GUDEP') return user.gudepId === gudepId;
   if (level === 'KWARRAN') {
     const db = await getDb();
-    const [row] = await db
-      .select({ kwarranId: schema.gudep.kwarranId })
-      .from(schema.gudep)
-      .where(eq(schema.gudep.id, gudepId))
-      .limit(1);
+    const [row] = await db.select({ kwarranId: schema.gudep.kwarranId }).from(schema.gudep).where(eq(schema.gudep.id, gudepId)).limit(1);
     return row?.kwarranId === user.kwarranId;
   }
   return false;

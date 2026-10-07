@@ -25,7 +25,11 @@ const BRAND = '#1F5C3E';
  * Peta sebaran gudep. Penanda `circleMarker` (bukan ikon bawaan Leaflet yang dimuat dari CDN
  * dan diblokir CSP). Isi popup dibangun lewat DOM + textContent — tidak ada HTML dari data.
  */
-const GudepMap: React.FC<{ points: GudepPoint[]; linkBase?: string; label: string }> = ({ points, linkBase = '/dashboard/gudep', label }) => {
+const GudepMap: React.FC<{ points: GudepPoint[]; linkBase?: string; label: string }> = ({
+  points,
+  linkBase = '/dashboard/gudep',
+  label,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -10,7 +10,14 @@ import type { FormState } from '@/lib/forms';
 
 export const KwarranForm: React.FC<{
   action: (state: FormState, formData: FormData) => Promise<FormState>;
-  defaults: { code: string | null; leaderName: string | null; phone: string | null; address: string | null; lat: number | null; lng: number | null };
+  defaults: {
+    code: string | null;
+    leaderName: string | null;
+    phone: string | null;
+    address: string | null;
+    lat: number | null;
+    lng: number | null;
+  };
 }> = ({ action, defaults }) => (
   <ActionForm action={action} className="space-y-6">
     <FieldGroup title="Data kwarran">

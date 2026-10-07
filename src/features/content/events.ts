@@ -18,7 +18,10 @@ const EventSchema = z
       if (!d) ctx.addIssue({ code: 'custom', message: 'Tanggal & jam mulai wajib diisi.' });
       return d as Date;
     }),
-    dateEnd: z.string().optional().transform((s) => (s ? parseLocalDateTime(s.trim()) : null)),
+    dateEnd: z
+      .string()
+      .optional()
+      .transform((s) => (s ? parseLocalDateTime(s.trim()) : null)),
     location: requiredText('Lokasi', 200),
     organizer: requiredText('Penyelenggara', 150),
     description: requiredText('Deskripsi', 5000),
@@ -45,10 +48,18 @@ export async function saveEventAction(id: string | null, _prev: FormState, formD
     if (!row) return fail('Agenda tidak ditemukan.');
   } else {
     const slug = await uniqueSlug(schema.events, schema.events.slug, schema.events.id, v.title);
-    const [row] = await db.insert(schema.events).values({ ...v, slug, createdById: user.id }).returning({ id: schema.events.id });
+    const [row] = await db
+      .insert(schema.events)
+      .values({ ...v, slug, createdById: user.id })
+      .returning({ id: schema.events.id });
     id = row.id;
   }
-  await audit(user, { action: 'content.save', summary: `Menyimpan agenda "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`, entityType: 'event', entityId: id });
+  await audit(user, {
+    action: 'content.save',
+    summary: `Menyimpan agenda "${v.title}"${v.published ? ' (tayang)' : ' (draf)'}`,
+    entityType: 'event',
+    entityId: id,
+  });
   revalidatePath('/dashboard/konten/agenda');
   revalidatePublicSite();
   redirect('/dashboard/konten/agenda?tersimpan=1');

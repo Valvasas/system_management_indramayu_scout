@@ -15,7 +15,9 @@ export async function announcementsFor(user: SessionUser, limit = 10) {
   if (user.role === 'PESERTA') {
     where = and(
       inArray(schema.announcements.audience, ['ALL', 'PESERTA']),
-      user.gudepId ? or(isNull(schema.announcements.gudepId), eq(schema.announcements.gudepId, user.gudepId)) : isNull(schema.announcements.gudepId),
+      user.gudepId
+        ? or(isNull(schema.announcements.gudepId), eq(schema.announcements.gudepId, user.gudepId))
+        : isNull(schema.announcements.gudepId),
     );
   } else if (scopeLevel(user) === 'KABUPATEN' || user.role === 'ADMIN_WEBSITE') {
     where = inArray(schema.announcements.audience, ['ALL', 'STAFF']);
@@ -23,7 +25,9 @@ export async function announcementsFor(user: SessionUser, limit = 10) {
     const ids = await gudepIdsInScope(user);
     where = and(
       inArray(schema.announcements.audience, ['ALL', 'STAFF']),
-      ids.length ? or(isNull(schema.announcements.gudepId), inArray(schema.announcements.gudepId, ids)) : isNull(schema.announcements.gudepId),
+      ids.length
+        ? or(isNull(schema.announcements.gudepId), inArray(schema.announcements.gudepId, ids))
+        : isNull(schema.announcements.gudepId),
     );
   }
   return db

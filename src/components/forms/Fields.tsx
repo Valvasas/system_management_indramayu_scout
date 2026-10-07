@@ -15,9 +15,14 @@ interface BaseProps {
 
 const idFor = (name: string) => `f-${name}`;
 
-export const TextField: React.FC<
-  BaseProps & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'id'>
-> = ({ name, label, hint, required, className, ...input }) => {
+export const TextField: React.FC<BaseProps & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'id'>> = ({
+  name,
+  label,
+  hint,
+  required,
+  className,
+  ...input
+}) => {
   const error = useFieldError(name);
   const id = idFor(name);
   return (
@@ -27,9 +32,15 @@ export const TextField: React.FC<
   );
 };
 
-export const TextAreaField: React.FC<
-  BaseProps & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'name' | 'id'>
-> = ({ name, label, hint, required, className, rows = 4, ...textarea }) => {
+export const TextAreaField: React.FC<BaseProps & Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'name' | 'id'>> = ({
+  name,
+  label,
+  hint,
+  required,
+  className,
+  rows = 4,
+  ...textarea
+}) => {
   const error = useFieldError(name);
   const id = idFor(name);
   return (

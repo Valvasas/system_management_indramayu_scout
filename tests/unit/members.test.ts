@@ -11,16 +11,18 @@ const base = {
 };
 
 describe('validasi anggota (UU PDP: data anak)', () => {
-  it('anggota di bawah 18 tahun wajib punya wali dan tanggal persetujuan', () => {
+  it('anggota di bawah 18 tahun wajib punya nama & telepon wali', () => {
     const r = MemberSchema.safeParse(base);
     expect(r.success).toBe(false);
     const paths = r.success ? [] : r.error.issues.map((i) => i.path[0]);
-    expect(paths).toEqual(expect.arrayContaining(['guardianName', 'guardianPhone', 'guardianConsentAt']));
+    expect(paths).toEqual(expect.arrayContaining(['guardianName', 'guardianPhone']));
   });
 
-  it('lolos bila data wali lengkap', () => {
+  it('lolos bila data wali lengkap; tanggal persetujuan ketikan staf tidak diterima lagi', () => {
     const r = MemberSchema.safeParse({ ...base, guardianName: 'Ibu Sari', guardianPhone: '081234567890', guardianConsentAt: '2026-09-01' });
     expect(r.success).toBe(true);
+    // Persetujuan hanya lewat kode wali (features/consent): kolom ini dibuang dari masukan formulir.
+    expect(r.success && 'guardianConsentAt' in r.data).toBe(false);
   });
 
   it('dewasa tidak wajib data wali', () => {

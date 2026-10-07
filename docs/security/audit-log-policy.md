@@ -1,5 +1,23 @@
 # Kebijakan Audit Log
 
+> **Status implementasi (6 Okt 2026)** — kebenaran ada di kode.
+>
+> | Butir kebijakan | Status | Implementasi |
+> |---|---|---|
+> | Append-only, tidak bisa diubah/dihapus siapa pun | **Berlaku** | Trigger `audit_logs_guard` (UPDATE/DELETE/TRUNCATE ditolak, juga untuk pemilik skema) + `REVOKE` untuk user aplikasi (`drizzle/0004_audit_insert_only.sql`), diuji di PGlite dan PostgreSQL 16 |
+> | Deteksi perubahan | **Berlaku** | Rantai HMAC `prev_hash`/`hash` (`src/lib/auth/audit-chain.ts`); verifikasi di `/dashboard/log/integritas` (izin `audit.verify`) |
+> | Retensi otomatis | **Berlaku, satu tingkat** | `npm run db:retention`, bawaan 24 bulan (`RETENTION_AUDIT_LOG_MONTHS`, minimal 6), dengan jangkar rantai. Belum ada pembedaan 1 vs 3 tahun untuk log keamanan kritis |
+> | Aksi yang dicatat | Sebagian besar | Login (sukses/gagal/MFA), reset & kode akses, MFA (aktif/reset/nonaktif), perubahan anggota & ekspor, persetujuan wali (diminta/diputuskan/dicabut), anonimisasi, mutasi, konten, backup, retensi |
+> | Kolom: waktu, pelaku, aksi, entitas, ringkasan, IP | **Berlaku** | Tabel `audit_logs` |
+> | Kolom: peran aktif, user agent, nilai lama/baru, status hasil | Belum | Ringkasan teks menyebut kolom yang berubah, bukan nilainya |
+> | Akses baca log | Berlaku | `audit.view`: Super Admin & Pengurus Kwarcab (peran "Admin System" tidak ada) |
+> | Recursive auditing (membuka modul log ikut tercatat) | Sebagian | Pemeriksaan integritas tercatat; membuka daftar log belum |
+
+---
+
+*Bagian di bawah adalah kebijakan (niat). Yang belum tercantum di status di atas belum berlaku.*
+
+
 Dokumen ini merangkum mekanisme pencatatan riwayat aktivitas di sistem Rumah Pramuka Indramayu. Audit Log dirancang untuk menjamin akuntabilitas, keamanan, dan kemampuan pelacakan forensik apabila terjadi insiden kebocoran data atau penyalahgunaan akun.
 
 ## Aksi yang Wajib Dicatat

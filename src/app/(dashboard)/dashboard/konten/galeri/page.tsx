@@ -40,11 +40,21 @@ export default async function GaleriAdminPage({ searchParams = {} }: { searchPar
               <caption className="sr-only">Daftar album foto, kegiatan terbaru di atas</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Album</th>
-                  <th scope="col" className={th}>Tanggal</th>
-                  <th scope="col" className={th}>Foto</th>
-                  <th scope="col" className={th}>Status</th>
-                  <th scope="col" className={th}><span className="sr-only">Aksi</span></th>
+                  <th scope="col" className={th}>
+                    Album
+                  </th>
+                  <th scope="col" className={th}>
+                    Tanggal
+                  </th>
+                  <th scope="col" className={th}>
+                    Foto
+                  </th>
+                  <th scope="col" className={th}>
+                    Status
+                  </th>
+                  <th scope="col" className={th}>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">

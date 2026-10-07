@@ -49,18 +49,33 @@ export default async function PendaftarPage({ params }: { params: { id: string }
 
       <Panel>
         {rows.length === 0 ? (
-          <EmptyState variant="icon" icon={Users} title="Belum ada pendaftar" description="Anggota aktif di wilayah Anda dapat mendaftar lewat menu Kegiatan di portal peserta." />
+          <EmptyState
+            variant="icon"
+            icon={Users}
+            title="Belum ada pendaftar"
+            description="Anggota aktif di wilayah Anda dapat mendaftar lewat menu Kegiatan di portal peserta."
+          />
         ) : (
           <TableWrap label="Daftar pendaftar">
             <table className="w-full min-w-[44rem] text-base">
               <caption className="sr-only">Pendaftar {event.title}</caption>
               <thead className="border-b border-border-subtle">
                 <tr>
-                  <th scope="col" className={th}>Nama</th>
-                  <th scope="col" className={th}>Golongan</th>
-                  <th scope="col" className={th}>Gudep</th>
-                  <th scope="col" className={th}>Kwarran</th>
-                  <th scope="col" className={th}>Mendaftar</th>
+                  <th scope="col" className={th}>
+                    Nama
+                  </th>
+                  <th scope="col" className={th}>
+                    Golongan
+                  </th>
+                  <th scope="col" className={th}>
+                    Gudep
+                  </th>
+                  <th scope="col" className={th}>
+                    Kwarran
+                  </th>
+                  <th scope="col" className={th}>
+                    Mendaftar
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">

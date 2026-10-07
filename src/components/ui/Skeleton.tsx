@@ -23,11 +23,7 @@ export const CardListSkeleton: React.FC<{ count?: number; columns?: string }> = 
   </div>
 );
 
-export const PageLoading: React.FC<{ title: string; columns?: string; count?: number }> = ({
-  title,
-  columns,
-  count,
-}) => (
+export const PageLoading: React.FC<{ title: string; columns?: string; count?: number }> = ({ title, columns, count }) => (
   <div className="civic-container py-12">
     <p role="status" className="sr-only">
       {title} sedang dimuat

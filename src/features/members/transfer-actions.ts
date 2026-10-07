@@ -30,7 +30,12 @@ async function applyTransfer(actor: SessionUser, t: TransferRow, memberName: str
     .update(schema.memberTransfers)
     .set({ status: 'APPROVED', decidedById: actor.id, decidedByName: actor.name, decidedAt: new Date(), decisionNote: note })
     .where(eq(schema.memberTransfers.id, t.id));
-  await audit(actor, { action: 'member.transfer', summary: `Menyetujui mutasi ${memberName} ke gudep baru`, entityType: 'member', entityId: t.memberId });
+  await audit(actor, {
+    action: 'member.transfer',
+    summary: `Menyetujui mutasi ${memberName} ke gudep baru`,
+    entityType: 'member',
+    entityId: t.memberId,
+  });
 }
 
 /** Diajukan oleh staf yang berwenang atas gudep ASAL. */
@@ -47,14 +52,23 @@ export async function requestTransferAction(memberId: string, _prev: FormState, 
   if (await openTransferForMember(memberId)) return fail('Masih ada pengajuan mutasi yang belum diputuskan untuk anggota ini.');
 
   const db = await getDb();
-  const [dest] = await db.select({ id: schema.gudep.id, name: schema.gudep.name, active: schema.gudep.active }).from(schema.gudep).where(eq(schema.gudep.id, toGudepId)).limit(1);
+  const [dest] = await db
+    .select({ id: schema.gudep.id, name: schema.gudep.name, active: schema.gudep.active })
+    .from(schema.gudep)
+    .where(eq(schema.gudep.id, toGudepId))
+    .limit(1);
   if (!dest?.active) return fail('Gudep tujuan tidak ditemukan atau tidak aktif.', { toGudepId: 'Pilih gudep aktif.' });
 
   const [created] = await db
     .insert(schema.memberTransfers)
     .values({ memberId, fromGudepId: row.m.gudepId, toGudepId, reason, requestedById: actor.id, requestedByName: actor.name })
     .returning();
-  await audit(actor, { action: 'member.transfer_request', summary: `Mengajukan mutasi ${row.m.fullName}: ${row.gudep.name} → ${dest.name}`, entityType: 'member', entityId: memberId });
+  await audit(actor, {
+    action: 'member.transfer_request',
+    summary: `Mengajukan mutasi ${row.m.fullName}: ${row.gudep.name} → ${dest.name}`,
+    entityType: 'member',
+    entityId: memberId,
+  });
 
   // Bila pengaju juga berwenang memverifikasi di gudep tujuan (mis. staf kwarran untuk mutasi dalam
   // satu kecamatan), tidak perlu menunggu diri sendiri: langsung diterapkan & tercatat.
@@ -93,14 +107,20 @@ export async function decideTransferAction(transferId: string, _prev: FormState,
   if (!(await canAccessGudep(actor, row.t.toGudepId))) return fail('Gudep tujuan di luar wilayah Anda.');
 
   if (parsed.data.decision === 'approve') {
-    if (row.currentGudep !== row.t.fromGudepId) return fail('Data anggota sudah berubah sejak pengajuan dibuat. Tolak pengajuan ini dan minta pengajuan baru.');
+    if (row.currentGudep !== row.t.fromGudepId)
+      return fail('Data anggota sudah berubah sejak pengajuan dibuat. Tolak pengajuan ini dan minta pengajuan baru.');
     await applyTransfer(actor, row.t, row.memberName, parsed.data.note);
   } else {
     await db
       .update(schema.memberTransfers)
       .set({ status: 'REJECTED', decidedById: actor.id, decidedByName: actor.name, decidedAt: new Date(), decisionNote: parsed.data.note })
       .where(and(eq(schema.memberTransfers.id, transferId), eq(schema.memberTransfers.status, 'REQUESTED')));
-    await audit(actor, { action: 'member.transfer_reject', summary: `Menolak mutasi ${row.memberName}`, entityType: 'member', entityId: row.t.memberId });
+    await audit(actor, {
+      action: 'member.transfer_reject',
+      summary: `Menolak mutasi ${row.memberName}`,
+      entityType: 'member',
+      entityId: row.t.memberId,
+    });
   }
   revalidatePath('/dashboard/mutasi');
   redirect(`/dashboard/mutasi?keputusan=${parsed.data.decision === 'approve' ? 'setuju' : 'tolak'}`);
@@ -116,7 +136,12 @@ export async function cancelTransferAction(transferId: string): Promise<void> {
       .update(schema.memberTransfers)
       .set({ status: 'CANCELLED', decidedById: actor.id, decidedByName: actor.name, decidedAt: new Date() })
       .where(eq(schema.memberTransfers.id, transferId));
-    await audit(actor, { action: 'member.transfer_cancel', summary: 'Membatalkan pengajuan mutasi', entityType: 'member', entityId: t.memberId });
+    await audit(actor, {
+      action: 'member.transfer_cancel',
+      summary: 'Membatalkan pengajuan mutasi',
+      entityType: 'member',
+      entityId: t.memberId,
+    });
   }
   revalidatePath('/dashboard/mutasi');
   redirect(t ? `/dashboard/anggota/${t.memberId}?tersimpan=mutasi-batal` : '/dashboard/mutasi');

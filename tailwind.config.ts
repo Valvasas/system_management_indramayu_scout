@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
@@ -170,10 +170,10 @@ const config: Config = {
         out: 'var(--ease-out)',
       },
       keyframes: {
-        'sway': { '0%,100%': { transform: 'rotate(-1.2deg)' }, '50%': { transform: 'rotate(1.2deg)' } },
-        'drift': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-40px)' } },
-        'flicker': { '0%,100%': { transform: 'scaleY(1)', opacity: '1' }, '50%': { transform: 'scaleY(0.9)', opacity: '0.85' } },
-        'rise': { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+        sway: { '0%,100%': { transform: 'rotate(-1.2deg)' }, '50%': { transform: 'rotate(1.2deg)' } },
+        drift: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-40px)' } },
+        flicker: { '0%,100%': { transform: 'scaleY(1)', opacity: '1' }, '50%': { transform: 'scaleY(0.9)', opacity: '0.85' } },
+        rise: { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
       },
       animation: {
         sway: 'sway 7s ease-in-out infinite',
@@ -193,5 +193,5 @@ const config: Config = {
     },
   },
   plugins: [],
-}
-export default config
+};
+export default config;

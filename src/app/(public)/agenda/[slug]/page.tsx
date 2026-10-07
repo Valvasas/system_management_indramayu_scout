@@ -10,6 +10,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import { getAgendaBySlug, getAgendaSlugs } from '@/lib/repositories';
 import { formatDateRange, formatDayMonth, formatTime } from '@/lib/format';
 import { absoluteUrl } from '@/lib/site';
+import { jsonLdHtml } from '@/lib/json-ld';
 
 interface Params {
   params: { slug: string };
@@ -55,10 +56,7 @@ export default async function AgendaDetailPage({ params }: Params) {
     description: agenda.description,
     startDate: agenda.dateStart,
     endDate: agenda.dateEnd,
-    eventStatus:
-      agenda.status === 'CANCELLED'
-        ? 'https://schema.org/EventCancelled'
-        : 'https://schema.org/EventScheduled',
+    eventStatus: agenda.status === 'CANCELLED' ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: { '@type': 'Place', name: agenda.location },
     organizer: { '@type': 'Organization', name: agenda.organizer },
@@ -90,9 +88,14 @@ export default async function AgendaDetailPage({ params }: Params) {
             ))}
           </div>
 
-          <section aria-labelledby="juknis-title" className="mt-10 flex flex-col gap-4 rounded-2xl bg-surface-sand p-6 sm:flex-row sm:items-center sm:justify-between">
+          <section
+            aria-labelledby="juknis-title"
+            className="mt-10 flex flex-col gap-4 rounded-2xl bg-surface-sand p-6 sm:flex-row sm:items-center sm:justify-between"
+          >
             <div>
-              <h2 id="juknis-title" className="font-semibold text-text-primary">Petunjuk pelaksanaan & teknis</h2>
+              <h2 id="juknis-title" className="font-semibold text-text-primary">
+                Petunjuk pelaksanaan & teknis
+              </h2>
               <p className="text-sm text-text-secondary">Edaran dan panduan resmi panitia tersedia di Pusat Dokumen.</p>
             </div>
             <ButtonLink href="/dokumen" variant="outline" className="shrink-0">
@@ -100,7 +103,10 @@ export default async function AgendaDetailPage({ params }: Params) {
             </ButtonLink>
           </section>
 
-          <Link href="/agenda" className="mt-8 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline">
+          <Link
+            href="/agenda"
+            className="mt-8 inline-flex min-h-touch items-center gap-2 rounded-md text-sm font-semibold text-text-accent hover:underline"
+          >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Semua agenda
           </Link>
@@ -122,7 +128,11 @@ export default async function AgendaDetailPage({ params }: Params) {
             </div>
             <dl className="divide-y divide-border-subtle px-5">
               {[
-                { icon: CalendarDays, label: 'Jadwal', value: <time dateTime={agenda.dateStart}>{formatDateRange(agenda.dateStart, agenda.dateEnd)}</time> },
+                {
+                  icon: CalendarDays,
+                  label: 'Jadwal',
+                  value: <time dateTime={agenda.dateStart}>{formatDateRange(agenda.dateStart, agenda.dateEnd)}</time>,
+                },
                 { icon: Clock, label: 'Waktu', value: formatTime(agenda.dateStart) },
                 { icon: MapPin, label: 'Lokasi', value: agenda.location },
                 { icon: Users, label: 'Penyelenggara', value: agenda.organizer },
@@ -164,10 +174,7 @@ export default async function AgendaDetailPage({ params }: Params) {
         </aside>
       </div>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
     </div>
   );
 }
