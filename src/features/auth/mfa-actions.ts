@@ -113,7 +113,8 @@ export async function confirmMfaEnrollmentAction(_prev: MfaCodesState, formData:
   if (!codes) return fail(WRONG, { code: 'Kode tidak cocok.' });
   await verifyPerAccount.reset(user.id);
   await audit(user, { action: 'auth.mfa_enabled', summary: 'Mengaktifkan MFA (TOTP)', entityType: 'user', entityId: user.id });
-  revalidatePath(MFA_SETUP_PATH);
+  // SENGAJA tanpa revalidatePath: render ulang halaman akan meng-unmount formulir yang memegang
+  // kode pemulihan sebelum pengguna sempat menyimpannya. Tombol "Selesai" memuat ulang halaman.
   return { status: 'success', message: 'MFA aktif. Simpan kode pemulihan di bawah ini sekarang.', codes };
 }
 

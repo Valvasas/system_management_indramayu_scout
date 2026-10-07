@@ -1,5 +1,22 @@
 # Kebijakan Backup (Backup Policy)
 
+> **Status implementasi (6 Okt 2026)** — prosedur rinci: `docs/operations/monitoring.md`.
+>
+> | Butir kebijakan | Status | Implementasi |
+> |---|---|---|
+> | Backup manual oleh Super Admin | **Berlaku** | `/dashboard/backup` (izin `system.backup`), `npm run db:backup`; riwayat di `backup_runs`, tercatat di log |
+> | Uji pemulihan | **Berlaku** (tombol) + prosedur manual | Checksum + pulih ke DB sementara (PGlite) / `pg_restore --list` (PostgreSQL); uji pulih penuh terdokumentasi dan sudah dijalankan pada PostgreSQL 16 lokal |
+> | Backup otomatis harian | Disiapkan, **belum diverifikasi di produksi** | Contoh cron di `monitoring.md`; bergantung server |
+> | Retensi berkas | Berlaku | `BACKUP_KEEP` (bawaan 14 berkas, bukan 30 hari) |
+> | Penyimpanan terpisah (off-site) & enkripsi berkas | Belum otomatis | Kolom sensitif di dalam backup sudah terenkripsi (AES-256-GCM); salin berkas ke luar server dengan `age`/`gpg` (manual) |
+> | Peringatan backup usang | Sebagian | Peringatan di `/dashboard/backup` bila backup terakhir ≥ 2 hari; belum ada penundaan (snooze) beralasan |
+> | Berkas unggahan (`STORAGE_DIR`) | Belum | Harus dibackup terpisah (restic/rsync) |
+
+---
+
+*Bagian di bawah adalah kebijakan (niat). Yang belum tercantum di status di atas belum berlaku.*
+
+
 Dokumen ini menjelaskan strategi, prosedur, dan aturan main pencadangan data (backup) untuk sistem Rumah Pramuka Indramayu guna mencegah kehilangan data.
 
 ## Backup Otomatis

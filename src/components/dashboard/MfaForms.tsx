@@ -24,7 +24,17 @@ function Submit({ children }: { children: React.ReactNode }) {
  * Formulir kode TOTP yang, bila berhasil, menampilkan kode pemulihan SEKALI di tempat.
  * Kode tidak pernah lewat URL, log, atau penyimpanan peramban.
  */
-export function MfaCodeForm({ action, submitLabel, inputLabel }: { action: CodesAction; submitLabel: string; inputLabel: string }) {
+export function MfaCodeForm({
+  action,
+  submitLabel,
+  inputLabel,
+  doneHref = '/dashboard/akun/mfa',
+}: {
+  action: CodesAction;
+  submitLabel: string;
+  inputLabel: string;
+  doneHref?: string;
+}) {
   const [state, formAction] = useFormState(action, { status: 'idle' });
   const alertRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -58,6 +68,12 @@ export function MfaCodeForm({ action, submitLabel, inputLabel }: { action: Codes
           Tulis atau cetak lalu simpan di tempat aman, terpisah dari ponsel. Setiap kode hanya berlaku sekali. Halaman ini tidak akan
           menampilkannya lagi.
         </p>
+        <a
+          href={doneHref}
+          className="inline-flex min-h-touch items-center rounded-pill border border-border-strong bg-surface-base px-5 font-semibold text-text-primary hover:bg-surface-subtle"
+        >
+          Sudah saya simpan, selesai
+        </a>
       </div>
     );
   }

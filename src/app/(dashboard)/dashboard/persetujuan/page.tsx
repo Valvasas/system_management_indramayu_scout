@@ -76,7 +76,8 @@ export default async function PersetujuanPage({ searchParams = {} }: { searchPar
             ]}
           />
         </Panel>
-        <Panel bodyClassName="p-0 sm:p-0" className="lg:col-span-3">
+        {/* min-w-0: item grid default min-width:auto membuat tabel lebar memaksa halaman meluap di ponsel. */}
+        <Panel bodyClassName="p-0 sm:p-0" className="min-w-0 lg:col-span-3">
           <div className="space-y-4 border-b border-border-subtle p-4 sm:p-5">
             <FilterChips
               label="Saring status persetujuan"
@@ -115,52 +116,54 @@ export default async function PersetujuanPage({ searchParams = {} }: { searchPar
               />
             </div>
           ) : (
-            <TableWrap label="Daftar persetujuan wali">
-              <table className="w-full min-w-[720px]">
-                <caption className="sr-only">Status persetujuan wali per anggota</caption>
-                <thead>
-                  <tr className="border-b border-border-subtle">
-                    <th scope="col" className={`${th} pl-5`}>
-                      Anggota
-                    </th>
-                    {CONSENT_SCOPES.map((s) => (
-                      <th key={s} scope="col" className={th}>
-                        {CONSENT_SCOPE_LABELS[s]}
+            <div className="px-5 sm:px-6">
+              <TableWrap label="Daftar persetujuan wali">
+                <table className="w-full min-w-[720px]">
+                  <caption className="sr-only">Status persetujuan wali per anggota</caption>
+                  <thead>
+                    <tr className="border-b border-border-subtle">
+                      <th scope="col" className={`${th} pl-5`}>
+                        Anggota
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const st = statuses.get(r.id)!;
-                    return (
-                      <tr key={r.id} className="border-b border-border-subtle last:border-0">
-                        <td className={`${td} pl-5`}>
-                          <Link
-                            href={`/dashboard/anggota/${r.id}`}
-                            className="font-semibold text-text-primary underline-offset-2 hover:underline"
-                          >
-                            {r.fullName}
-                          </Link>
-                          <p className="text-sm text-text-secondary">{r.gudepName}</p>
-                          {open.has(r.id) && (
-                            <p className="mt-1 flex items-center gap-1.5 text-sm text-text-secondary">
-                              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                              Kode terkirim, menunggu wali
-                            </p>
-                          )}
-                        </td>
-                        {CONSENT_SCOPES.map((s) => (
-                          <td key={s} className={td}>
-                            <ConsentBadge kind={st[s].kind} />
+                      {CONSENT_SCOPES.map((s) => (
+                        <th key={s} scope="col" className={th}>
+                          {CONSENT_SCOPE_LABELS[s]}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => {
+                      const st = statuses.get(r.id)!;
+                      return (
+                        <tr key={r.id} className="border-b border-border-subtle last:border-0">
+                          <td className={`${td} pl-5`}>
+                            <Link
+                              href={`/dashboard/anggota/${r.id}`}
+                              className="font-semibold text-text-primary underline-offset-2 hover:underline"
+                            >
+                              {r.fullName}
+                            </Link>
+                            <p className="text-sm text-text-secondary">{r.gudepName}</p>
+                            {open.has(r.id) && (
+                              <p className="mt-1 flex items-center gap-1.5 text-sm text-text-secondary">
+                                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                                Kode terkirim, menunggu wali
+                              </p>
+                            )}
                           </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </TableWrap>
+                          {CONSENT_SCOPES.map((s) => (
+                            <td key={s} className={td}>
+                              <ConsentBadge kind={st[s].kind} />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </TableWrap>
+            </div>
           )}
           <div className="p-4 sm:p-5">
             <Pagination

@@ -32,8 +32,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `vitest.config.ts` | Alias `@`, `tests/unit/**` | |
 | `.github/workflows/ci.yml` | format:check → lint → typecheck → test → seed demo → build (PGlite) → server → axe+CSP audit → e2e | Belum pernah dijalankan di GitHub; dibuktikan secara lokal |
 | `.prettierrc.json`, `.prettierignore`, `.husky/pre-commit`, `.git-blame-ignore-revs` | Prettier (lebar 140, kutip tunggal); pre-commit = lint-staged (prettier + eslint) | Markdown & `drizzle/` tidak diformat |
-| `drizzle.config.ts`, `drizzle/` | Konfigurasi & migrasi SQL (`0000_init.sql`, `0001_portal_features.sql` = kode akses, permintaan reset, mutasi, status REVIEW) | Migrasi PGlite otomatis; Postgres lewat `npm run db:migrate` |
-| `docker-compose.yml`, `docker/db-init/` | PostgreSQL 16 + PostGIS, user aplikasi non-superuser | Belum dites di mesin ini |
+| `drizzle.config.ts`, `drizzle/` | Migrasi SQL: `0000` init · `0001` kode akses/mutasi/REVIEW · `0002` rate_limits · `0003` rantai audit · `0004`* log INSERT-only (trigger + REVOKE) · `0005` MFA · `0006` persetujuan wali · `0007`* migrasi tanggal manual → LEGACY · `0008` anonimisasi · `0009` backup_runs · `0010`* user app baca jurnal migrasi | `*` = `drizzle-kit generate --custom` (SQL ditulis tangan, satu-satunya pengecualian). PGlite otomatis; Postgres `npm run db:migrate` (pemilik skema) |
+| `docker-compose.yml`, `docker/db-init/` | PostgreSQL 16 + PostGIS, user aplikasi non-superuser (`APP_DB_PASSWORD` terpisah) | Skrip init + migrasi + REVOKE + backup diuji di PostgreSQL 16 lokal (bukan Docker) |
 | `.env.example` | Semua variabel yang dibaca kode + penjelasan | Jangan baca `.env.local`. Divalidasi `src/lib/env.ts` |
 | `components.json` | Konfigurasi shadcn | Menunjuk `src/styles/globals.css` |
 
@@ -46,6 +46,10 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal + header CSP & pelanggaran CSP runtime, 1280 & 390px. Butuh server jalan + data demo |
 | `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar, CSP ber-nonce portal. **Mengubah data**, pakai data demo segar |
 | `make-icons.mjs` | Membuat ikon PWA PNG + menyelaraskan warna `logo.svg` |
+| `encrypt-backfill.ts` | `npm run db:encrypt-backfill` (`--dry-run`): enkripsi data lama & rotasi kunci, idempoten |
+| `retention.ts` | `npm run db:retention` (`--dry-run`): retensi terjadwal; jalankan dengan pemilik skema |
+| `backup.ts` | `npm run db:backup` (`--verify`): pg_dump / dump PGlite + checksum + uji pulih |
+| `permission-matrix.ts` | `npm run docs:matrix`: tabel izin untuk `authorization-model.md` (dicek tes) |
 
 ## Dokumentasi
 
@@ -57,6 +61,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `docs/product/rancangan-v5.md` | Dokumen rancangan sumber V5 (niat produk, bukan status) |
 | `docs/design/design-system.md` | Design system "Hutan & Lapangan": warna, tipografi, radius, ilustrasi, gerak, pola halaman |
 | `docs/design/`, `security/`, `product/`, `operations/`, `architecture/`, `testing/` | Brief desain, kontras terukur, model otorisasi, klasifikasi data, kebijakan consent/audit/backup/unggah, MVP, deployment |
+| `docs/operations/retention.md`, `monitoring.md` | Retensi & anonimisasi + jadwal · health, Sentry, backup & prosedur uji pulih |
 | `docs/tour/` | Video tur + tangkapan layar situs (dibuat 5 Okt 2026) |
 | `skills/frontend-craft/SKILL.md` | Panduan craft frontend. Baca sebelum ubah UI |
 
@@ -76,7 +81,9 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `/prestasi`, `/dokumen` | `…/page.tsx` | Filter lewat query param; unduhan divalidasi allowlist |
 | `/kontak` | `kontak/page.tsx` + `ContactForm.tsx` + `actions.ts` | Server Action → tabel `contact_messages`; honeypot, time-trap, rate limit 3/10 mnt; webhook opsional |
 | `/kebijakan-privasi`, `/aksesibilitas` | `…/page.tsx` | Hanya klaim yang terbukti + bagian "Yang belum berlaku". **Perbarui setiap skema data/akses berubah** |
-| `/masuk`, `/masuk/lupa-sandi`, `/masuk/kode` | `masuk/…` | Login; permintaan reset ke pembina (tanpa email); tukar kode akses → buat sandi sendiri. `noindex` |
+| `/masuk`, `/masuk/lupa-sandi`, `/masuk/kode`, `/masuk/verifikasi` | `masuk/…` | Login; reset ke pembina (tanpa email); kode akses → sandi sendiri; **verifikasi** = langkah MFA (sesi `mfa_pending`). `noindex`. `/masuk` & `/masuk/verifikasi` wajib dinamis (CSP nonce) |
+| `/persetujuan-wali` | `persetujuan-wali/page.tsx` + `components/public/GuardianConsentFlow.tsx` | Wali memakai kode sekali pakai, memilih per cakupan. `noindex` |
+| `/api/health` (di `app/api`) | `api/health/route.ts` | 200/503 + cek DB, tanpa detail konfigurasi |
 
 ## `src/app/(dashboard)/dashboard/` — Portal (login wajib, `noindex`, `force-dynamic`)
 
@@ -93,6 +100,10 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `pendaftaran`, `pendaftaran/[id]` (+`ekspor`) | `content.manage` | Pendaftar per kegiatan + unduh CSV |
 | `kontribusi`, `kontribusi/[id]` | `content.contribute` | Staf gudep/kwarran menulis berita → status REVIEW → editor terbitkan/kembalikan |
 | `pengumuman`, `pesan`, `log`, `pengaturan`, `akun` | per izin | Log = audit (`audit.view`) |
+| `log/integritas` | `audit.verify` | Verifikasi rantai HMAC log + kepala rantai |
+| `akun/mfa` | login | Daftar/kelola TOTP; satu-satunya halaman yang terbuka saat tenggang MFA habis |
+| `persetujuan` | `members.read` | Pusat persetujuan wali (anak < 18 dalam cakupan). Minta kode & catat pencabutan di detail anggota (`ConsentPanel`) |
+| `backup` | `system.backup` | Backup manual, uji pulih, riwayat |
 | **`konten`** (hub) + `konten/{berita,agenda,galeri,dokumen,pengurus,prestasi}` | `content.manage` | **CMS.** Tiap bagian: `page.tsx` daftar + `[id]/page.tsx` editor (`baru` = buat). Galeri `[id]` memuat unggah foto & keterangan |
 | **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan; profil tanpa alamat/telepon/wali |
 | `/media/[...path]` (di `app/`) | publik | Menyajikan berkas unggahan dari `STORAGE_DIR` |
@@ -111,22 +122,28 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `forms/` | `ActionForm` (+`SubmitButton`), `Fields` (`TextField`, `SelectField`, `FileField`, `CheckboxField`, `FieldGroup`) — pembungkus `useFormState` |
 | `dashboard/` | `DashboardShell` (sidebar hutan + bilah bawah ponsel + bottom sheet), `nav.ts` (menu per izin + lencana antrean), `ui.tsx` (`PortalWelcome`, `PortalHeader`, `Panel`, `Notice`, `TableWrap`, `Pagination`, `PublishBadge`, …), `ConfirmButton` (`ActionButton`), `home/`, `members/` (+`TransferForms`), `gudep/`, `users/` (+`IssueCodeForm`) |
 | `dashboard/content/ContentForms.tsx` | Formulir CMS klien: Berita, Agenda, Album, Foto, Dokumen, Pengurus, Prestasi |
+| `dashboard/consent/` | `ConsentBadge` (ikon + teks), `ConsentPanel` (status, riwayat, minta kode, catat pencabutan) |
+| `dashboard/QrCode.tsx`, `MfaForms.tsx`, `MfaGraceNotice.tsx`, `users/MfaAdminPanel.tsx` | QR SVG dari matriks (server) · formulir kode yang menampilkan kode pemulihan sekali · pengingat tenggang · reset MFA Super Admin |
 | `maps/` | `GudepMap`, `GudepMapCanvas`, `LocationPicker` (Leaflet, `ssr:false`) |
 
 **Komponen = *named export*** kecuali `LeafletMap`. **`TableWrap` wajib `relative`** (elemen `sr-only` di dalam tabel bisa melebarkan halaman).
 
 ## `src/features/` — Logika per fitur (Server Action + query)
 
-`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
+`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset; **`mfa.ts` + `mfa-actions.ts`** = TOTP, kode pemulihan, verifikasi masuk, reset Super Admin) · **`consent`** (`texts.ts` teks berversi, `status.ts` aturan murni, `consent.ts` + `consent-actions.ts`) · **`retention/retention.ts`** · **`backup/`** (`backup.ts`, `backup-actions.ts`) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi, `anonymize.ts` = hak subjek data) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
 
 ## `src/lib/`, `src/db/`, `src/styles/`, `src/types/`
 
 | File | Isi |
 |---|---|
 | `db/index.ts`, `db/schema.ts` | Drizzle. `DATABASE_URL` → Postgres; kosong → PGlite di `.data/pglite` (ditolak di produksi kecuali `ALLOW_PGLITE=1`). Koneksi malas |
-| `lib/auth/` | `permissions.ts` (matriks 6 peran, + `content.contribute`), `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`), `audit.ts`, `password.ts`, `access-code.ts` (bentuk/hash/cocok kode) |
+| `db/encrypted-text.ts`, `db/encrypt-backfill.ts` | `encryptedText()` customType (AES-GCM transparan, kolom tak bisa dicari) + `ENCRYPTED_COLUMNS` · backfill/rotasi |
+| `lib/auth/` | `permissions.ts` (matriks 6 peran, `SUPER_ADMIN_ONLY`), `permission-matrix.ts`, `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`, sesi `mfaPending`, kunci tenggang MFA), `audit.ts` → `audit-chain.ts` (rantai HMAC, verifikasi), `password.ts`, `access-code.ts`, `totp.ts` (RFC 6238), `mfa-policy.ts` |
 | `lib/env.ts` | **Satu-satunya pembaca `process.env`.** `publicEnv` (aman di klien) · `serverEnv()` Zod, di-cache; galat tanpa nilai |
-| `lib/security/request.ts` | `clientIp`, `createRateLimiter` (in-memory, satu instance) |
+| `lib/security/request.ts` | `clientIp`, `userAgent` |
+| `lib/security/rate-limit.ts` | `createRateLimiter(max, ms, { scope, failClosed })` di tabel `rate_limits` (bersama antar-instance, kunci HMAC) |
+| `lib/security/crypto.ts` | AES-256-GCM berformat `enc:v1:<keyId>:…`, rotasi, `blindIndex()` (HMAC). Kunci dev publik bila env kosong |
+| `lib/monitoring.ts` | `reportError()` → Sentry envelope bila `SENTRY_DSN`; `scrub()` menyamarkan data pribadi |
 | `lib/security/csp.mjs` | `buildCsp({dev, nonce})`, `usesNonceCsp`, `STATIC_CSP_SOURCE` — dipakai `next.config.mjs` & middleware |
 | `lib/json-ld.ts` | `jsonLdHtml()` — JSON-LD aman di `<script>` (escape `<>&`). Wajib untuk semua JSON-LD |
 | `lib/storage.ts` | Unggah: validasi magic-bytes, sharp→WebP (membuang EXIF/GPS), simpan ke `STORAGE_DIR` |
@@ -139,7 +156,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 ## `tests/`
 
-`tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi & rate limit, validasi anggota (UU PDP), waktu WIB, iCalendar, pencarian, kode akses, env, CSP & JSON-LD. Alur portal: `npm run e2e`. Jalankan `npm test`.
+`tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi, validasi anggota (UU PDP), waktu WIB, iCalendar, pencarian, kode akses, env, CSP & JSON-LD, kripto, TOTP (vektor RFC), MFA, persetujuan, monitoring, sinkron dokumen otorisasi.
+`tests/integration/*.test.ts` — **SQL sungguhan** di PGlite in-memory (`tests/helpers/test-db.ts`, migrasi asli, clone per tes): rate limit bersama, enkripsi + backfill, rantai audit & trigger, MFA, persetujuan wali (IDOR), retensi (termasuk `SET ROLE` tanpa hak DELETE), anonimisasi, backup. Alur portal: `npm run e2e`. Jalankan `npm test`.
 
 ## `public/`
 
@@ -148,6 +166,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 ## Alur data & token
 
 Baca publik: `DB` → `lib/repositories/*` → halaman (Server Component). Tulis: form → `features/*` Server Action (`requirePermission` → Zod → DB → `audit()` → `revalidatePublicSite()`).
+Env: **hanya** lewat `src/lib/env.ts` (`serverEnv()`, `publicEnv`). Variabel baru → skema + `RULES` di `env.ts` + `.env.example`.
 Token: `tokens.css` → `tailwind.config.ts` → kelas semantik (`bg-surface-subtle`, `text-text-secondary`).
 
 ## Perbarui file ini

@@ -1,5 +1,16 @@
 # Klasifikasi Data Sistem
 
+> **Status implementasi (6 Okt 2026).** Yang berlaku hari ini **dua lapis**: data umum dan data sensitif
+> (izin `members.view_sensitive`). Enkripsi tingkat kolom (AES-256-GCM, `src/db/encrypted-text.ts`) berlaku untuk
+> telepon, alamat, nama & telepon wali anggota, nama wali di catatan persetujuan, dan rahasia MFA. Nama dan tanggal lahir
+> anggota belum dienkripsi. Retensi otomatis: `docs/operations/retention.md` (data anggota tidak dihapus otomatis;
+> penghapusan atas permintaan = anonimisasi). Empat tingkat di bawah adalah target klasifikasi.
+
+---
+
+*Bagian di bawah adalah kebijakan (niat). Yang belum tercantum di status di atas belum berlaku.*
+
+
 Dokumen ini mendefinisikan tingkat klasifikasi data pada sistem Rumah Pramuka Indramayu, mengatur cara data diakses, disimpan, ditransmisikan, dan dihapus sesuai dengan tingkat sensitivitasnya.
 
 ## Tingkat Klasifikasi Data

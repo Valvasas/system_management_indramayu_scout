@@ -1,89 +1,100 @@
-# Model Otorisasi (RBAC)
+# Model Otorisasi (RBAC + Cakupan)
 
-Dokumen ini mendefinisikan model Role-Based Access Control (RBAC) yang digunakan dalam portal Rumah Pramuka Indramayu.
+> Diperbarui 6 Okt 2026 dari kode. Sumber kebenaran: `src/lib/auth/permissions.ts` (izin per peran),
+> `src/lib/auth/scope.ts` (cakupan baris data), `src/lib/auth/session.ts` (`requireUser`/`requirePermission`),
+> `src/lib/auth/mfa-policy.ts` (MFA). Versi lama dokumen ini memuat peran dan izin rancangan Fase 1 yang tidak pernah ada.
+> Niat produk jangka panjang (peran wali, pelatih, panitia kegiatan): `docs/product/rancangan-v5.md`.
 
-## Model Akses
+## Dua lapis kontrol
 
-Arsitektur model akses memisahkan antara akun (identitas pengguna), profil keanggotaan, role, dan penugasan organisasi (scope):
+1. **Izin peran** — boleh melakukan apa (`roleCan(role, permission)`).
+2. **Cakupan** — boleh menyentuh baris data mana (`memberScope`, `gudepScope`, `canAccessGudep`).
 
-```text
-Account
-├── User profile
-├── Member profile
-├── Role
-├── Permission
-├── Organization scope
-└── Organization assignment
-```
+Keduanya **dicek di server** pada setiap halaman, Server Action, dan route handler. Menyembunyikan tombol di UI bukan
+kontrol akses. Tanpa izin → `notFound()` (404), sehingga keberadaan halaman tidak bocor. Data di luar cakupan diperlakukan
+sama dengan tidak ada ("tidak ditemukan atau di luar wilayah Anda").
 
-## Prinsip Akun
+## Peran
 
-- **Satu orang = satu akun identitas**. Setiap individu hanya mendaftarkan satu akun utama yang merepresentasikan profil fisik mereka.
-- **Satu akun dapat memiliki lebih dari satu penugasan**. Pengguna dapat mengemban beberapa peran secara bersamaan dalam berbagai scope organisasi.
-- *Contoh Kasus*: Saudara Rizky dapat terdaftar sebagai Anggota Penegak, sekaligus bertugas sebagai Staff Administrasi di Gudep-nya, dan merangkap sebagai Panitia Kegiatan di tingkat Kwarcab menggunakan satu akun yang sama.
-
-## Role Dasar
-
-Sistem memiliki beberapa role dasar yang terikat dengan fase pengembangan proyek:
-
-| Role | Deskripsi | Fase Aktif |
+| Peran | Kode | Cakupan |
 |---|---|---|
-| Public Visitor | Pengunjung publik tanpa proses autentikasi (login) | Fase 1 |
-| Member Penggalang | Anggota muda usia SMP/MTs | Fase 2 |
-| Member Penegak | Anggota muda usia SMA/MA | Fase 2 |
-| Member Pandega | Anggota muda usia perguruan tinggi | Fase 2 |
-| Parent / Guardian | Orang tua atau wali dari anggota muda | Fase 2 |
-| Pembina | Pembina di tingkat Gugus Depan | Fase 2 |
-| Pelatih | Pelatih kegiatan kepramukaan | Fase 2 |
-| Staff Gudep | Staff atau pengurus administrasi di Gugus Depan | Fase 2 |
-| Staff Kwarran | Staff atau pengurus administrasi di tingkat Kwarran | Fase 2 |
-| Staff Kwarcab | Staff atau pengurus administrasi di tingkat Kwarcab | Fase 2 |
-| Admin Website | Administrator pengelola konten publik website | Fase 1 |
-| Admin System | Administrator untuk konfigurasi teknis sistem | Fase 1 |
-| Super Admin | Akses tertinggi mencakup semua izin dalam sistem | Fase 1 |
+| Super Admin | `SUPER_ADMIN` | Seluruh kabupaten + izin sistem khusus |
+| Pengurus Kwarcab | `ADMIN_KWARCAB` | Seluruh kabupaten |
+| Admin Website | `ADMIN_WEBSITE` | Konten publik saja (tanpa data anggota) |
+| Staf Kwarran | `STAFF_KWARRAN` | Gudep & anggota di satu kwarran (`users.kwarran_id`) |
+| Pembina / Staf Gudep | `STAFF_GUDEP` | Satu gudep (`users.gudep_id`) |
+| Peserta | `PESERTA` | Data dirinya sendiri (`users.member_id`) |
 
-> [!NOTE]
-> Pada pengembangan **Fase 1**, hanya role **Public Visitor**, **Admin Website**, dan **Super Admin** (serta Admin System) yang diaktifkan.
+Akun staf tanpa penugasan wilayah/gudep tidak melihat data apa pun (gagal tertutup).
+**Orang tua/wali tidak punya akun**: mereka memakai kode persetujuan sekali pakai (lihat Persetujuan wali di bawah).
 
-## Permission Matrix
+## Matriks izin
 
-Daftar izin (permissions) yang ada pada sistem meliputi:
-- `members.read`, `members.create`, `members.update`, `members.verify`, `members.archive`, `members.export`, `members.view_sensitive`
-- `organizations.read`, `organizations.manage`
-- `events.create`, `events.review`, `events.publish`, `events.manage`
-- `news.create`, `news.review`, `news.publish`, `news.archive`
-- `gallery.create`, `gallery.review`, `gallery.publish`
-- `roles.manage`, `permissions.manage`
-- `audit_logs.view`, `backups.manage`, `system.manage`
+Dihasilkan dari kode (`npm run docs:matrix`). Tes `tests/unit/authorization-doc.test.ts` gagal bila tabel ini tidak sama
+dengan `permissions.ts` — perbarui keduanya bersamaan.
 
-### Matriks Otorisasi (Fase 1)
+<!-- matriks:mulai -->
+| Izin | Super Admin | Pengurus Kwarcab | Admin Website | Staf Kwarran | Pembina / Staf Gudep | Peserta |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| `members.read` | ya | ya | — | ya | ya | — |
+| `members.create` | ya | ya | — | ya | ya | — |
+| `members.update` | ya | ya | — | ya | ya | — |
+| `members.verify` | ya | ya | — | ya | — | — |
+| `members.archive` | ya | ya | — | ya | — | — |
+| `members.export` | ya | ya | — | ya | ya | — |
+| `members.import` | ya | ya | — | ya | ya | — |
+| `members.view_sensitive` | ya | ya | — | ya | ya | — |
+| `members.anonymize` | ya | ya | — | — | — | — |
+| `gudep.read` | ya | ya | — | ya | ya | — |
+| `gudep.create` | ya | ya | — | ya | — | — |
+| `gudep.update` | ya | ya | — | ya | ya | — |
+| `kwarran.manage` | ya | ya | — | — | — | — |
+| `users.manage` | ya | ya | — | — | — | — |
+| `users.create_peserta` | ya | ya | — | ya | ya | — |
+| `content.manage` | ya | ya | ya | — | — | — |
+| `content.contribute` | ya | ya | ya | ya | ya | — |
+| `announcements.manage` | ya | ya | ya | ya | ya | — |
+| `messages.read` | ya | ya | ya | — | — | — |
+| `settings.manage` | ya | ya | ya | — | — | — |
+| `audit.view` | ya | ya | — | — | — | — |
+| `audit.verify` | ya | — | — | — | — | — |
+| `users.reset_mfa` | ya | — | — | — | — | — |
+| `system.backup` | ya | — | — | — | — | — |
+| `self.portal` | — | — | — | — | — | ya |
+<!-- matriks:selesai -->
 
-| Permission / Role | Public Visitor | Admin Website | Admin System | Super Admin |
-|---|:---:|:---:|:---:|:---:|
-| `news.read` (implicit) | ✓ | ✓ | ✓ | ✓ |
-| `news.create` | | ✓ | | ✓ |
-| `news.publish` | | ✓ | | ✓ |
-| `gallery.publish` | | ✓ | | ✓ |
-| `events.publish` | | ✓ | | ✓ |
-| `system.manage` | | | ✓ | ✓ |
-| `roles.manage` | | | ✓ | ✓ |
-| `audit_logs.view` | | | ✓ | ✓ |
+**Izin khusus Super Admin** (`SUPER_ADMIN_ONLY`): `audit.verify`, `users.reset_mfa`, `system.backup`. Pengurus Kwarcab
+mendapat semua izin lain kecuali `self.portal`.
 
-*(Catatan: Matriks lengkap untuk semua role Fase 2 akan ditambahkan saat pengembangan Fase 2 dimulai)*
+## Aturan khusus
 
-## Scope Organisasi
+| Aturan | Implementasi | Diuji |
+|---|---|---|
+| Pencegahan eskalasi hak: pengelola akun hanya bisa memberi peran di bawahnya; akun Super Admin hanya diubah Super Admin | `assignableRoles()`, halaman `pengguna/[id]` | `tests/unit/permissions.test.ts` |
+| Pembina tidak pernah melihat/menentukan sandi anggota; akses akun lewat kode akses sekali pakai | `features/auth/access-codes.ts` | `tests/unit/access-code.test.ts`, e2e |
+| **MFA wajib** untuk Super Admin + pemegang `users.manage`/`content.manage`/`audit.view` setelah `MFA_GRACE_DAYS`; setelah tenggang habis portal terkunci ke `/dashboard/akun/mfa` | `mfa-policy.ts`, `requireUser()` | `tests/unit/mfa.test.ts`, `tests/integration/mfa.test.ts`, e2e |
+| Sesi "sandi benar, MFA belum" (`sessions.mfa_pending`) tidak memberi akses portal; kode akses dari pembina tidak melewati MFA | `session.ts`, `access-actions.ts` | e2e |
+| Reset MFA hanya `users.reset_mfa`, tidak untuk diri sendiri, memutus semua sesi target, tercatat | `canResetMfa()`, `resetUserMfaAction` | `tests/unit/mfa.test.ts` |
+| Percobaan kode MFA ≤ 5/15 menit per akun (+ per IP), dicek **sebelum** kode diperiksa, fail-closed | `guardedSecondFactor()` | `tests/integration/mfa.test.ts` |
+| **Persetujuan wali**: staf (`members.update`, dalam cakupan) hanya bisa *meminta* kode & *mencatat pencabutan*; memberi persetujuan hanya lewat kode wali | `features/consent/consent.ts` | `tests/integration/consent.test.ts` |
+| Verifikasi anggota < 18 tahun mensyaratkan persetujuan DATA dari wali (bukan tanggal manual) | `verifyMemberAction` | `tests/unit/consent.test.ts` |
+| Anonimisasi hanya `members.anonymize` (Kwarcab), hanya anggota diarsipkan, dalam cakupan, tidak bisa dibatalkan | `features/members/anonymize.ts` | `tests/integration/anonymize.test.ts` |
+| Log audit INSERT-only: trigger + `REVOKE` untuk user aplikasi; integritas dicek `audit.verify` | `drizzle/0004_…`, `audit-chain.ts` | `tests/integration/audit-chain.test.ts`, `retention.test.ts` |
+| Backup manual & uji pulih hanya `system.backup` | `features/backup/backup-actions.ts` | `tests/integration/backup.test.ts` |
+| Peserta tidak melihat alamat, telepon, data wali; menu staf 404 | `self.portal`, `features/portal` | e2e |
 
-Akses pengguna tidak hanya dibatasi oleh Role, tetapi juga oleh Scope (cakupan kewenangan) wilayah/organisasi.
+## Cakupan per peran
 
-Tingkatan Scope:
-- **Kwarcab scope**: Mencakup seluruh data di wilayah Kabupaten (Indramayu).
-- **Kwarran scope**: Terbatas pada data di tingkat Kecamatan tertentu.
-- **Gudep scope**: Terbatas pada data pangkalan sekolah atau gugus depan tertentu.
-- **Event scope**: Terbatas pada kepanitiaan sebuah kegiatan.
-- **Content scope**: Terbatas pada konten artikel/berita yang dibuat sendiri.
-- **Personal scope**: Terbatas pada data profil pengguna itu sendiri.
+- **Kwarcab** (`SUPER_ADMIN`, `ADMIN_KWARCAB`): tanpa batas wilayah.
+- **Kwarran**: `gudep.kwarran_id = users.kwarran_id`.
+- **Gudep**: `members.gudep_id = users.gudep_id`.
+- **Mutasi**: diajukan dari cakupan gudep asal, diputuskan pengurus yang berwenang atas gudep **tujuan**.
+- **Lainnya**: tidak ada data organisasi (`sql false`).
 
-**Contoh Implementasi Scope:**
-- **Staff Gudep SMKN 1 Cikedung**: Hanya memiliki izin membaca dan mengubah data anggotanya sendiri di Gudep SMKN 1 Cikedung. Tidak diperbolehkan mengakses atau melihat data Gudep SMKN 1 Indramayu.
-- **Staff Kwarran**: Dapat melihat rekap dan data Gudep yang berada di dalam wilayah kecamatannya, namun tidak memiliki hak untuk mengubah konfigurasi data tingkat Kwarcab.
-- **Staff Kwarcab**: Memiliki akses lintas wilayah (semua Kwarran dan Gudep) untuk keperluan monitoring dan manajemen. Semua aktivitas mengubah atau melihat data sensitif anggota oleh Staff Kwarcab akan dicatat dalam audit log.
+Setiap aksi tulis yang menerima `id` dari klien memuat ulang barisnya **lewat filter cakupan** sebelum menulis
+(mis. `getMember(user, id)`), sehingga IDOR antar-gudep/kwarran menghasilkan "tidak ditemukan".
+
+## Yang belum ada
+
+Peran wali dengan akun, pelatih, panitia kegiatan dengan cakupan per kegiatan, dan persetujuan staf oleh Kwarcab
+(rancangan V5 §6) belum diimplementasikan.

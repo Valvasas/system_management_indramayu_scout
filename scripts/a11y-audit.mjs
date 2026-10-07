@@ -43,6 +43,7 @@ const PUBLIC = [
   '/masuk/lupa-sandi',
   '/masuk/kode',
   '/halaman-tidak-ada',
+  '/persetujuan-wali',
 ];
 const ADMIN = [
   '/dashboard',
@@ -76,6 +77,15 @@ const ADMIN = [
   '/dashboard/akses',
   '/dashboard/kontribusi',
   '/dashboard/kontribusi/baru',
+  '/dashboard/persetujuan',
+  '/dashboard/persetujuan?status=perlu',
+  '/dashboard/akun/mfa',
+  '/dashboard/log/integritas',
+  '/dashboard/log/integritas?periksa=1',
+  '/dashboard/backup',
+  // Rute dinamis: diambil dari tautan pertama yang cocok di halaman daftar.
+  { from: '/dashboard/anggota', match: /^\/dashboard\/anggota\/[0-9a-f-]{36}$/ },
+  { from: '/dashboard/pengguna', match: /^\/dashboard\/pengguna\/[0-9a-f-]{36}$/ },
 ];
 const PESERTA = ['/dashboard', '/dashboard/kegiatan', '/dashboard/profil', '/dashboard/akun'];
 
@@ -128,6 +138,15 @@ async function scan(page, path, width, findings) {
   for (const v of csp) findings.push(`[${width}px] ${path} :: pelanggaran CSP ${v}`);
 }
 
+/** `{ from, match }` → href pertama di halaman `from` yang cocok dengan pola. */
+async function resolveDynamic(page, { from, match }) {
+  await page.goto(`${BASE}${from}`, { waitUntil: 'networkidle' });
+  const hrefs = await page.$$eval('main a[href]', (as) => as.map((a) => a.getAttribute('href')));
+  const href = hrefs.find((h) => match.test(h ?? ''));
+  if (!href) throw new Error(`Tidak ada tautan ${match} di ${from}`);
+  return href;
+}
+
 /** Dipasang sebelum skrip halaman mana pun berjalan, di setiap navigasi. */
 function collectCspViolations() {
   window.__cspViolations = [];
@@ -151,7 +170,8 @@ for (const [user, paths] of [
     await context.addInitScript(collectCspViolations);
     const page = await context.newPage();
     if (user) await login(page, user);
-    for (const path of paths) {
+    for (const entry of paths) {
+      const path = typeof entry === 'string' ? entry : await resolveDynamic(page, entry);
       await scan(page, path, width, findings);
       pages++;
     }

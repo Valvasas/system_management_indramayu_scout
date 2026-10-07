@@ -392,6 +392,30 @@ export const auditLogs = pgTable(
   (t) => [index('audit_at_idx').on(t.at), index('audit_entity_idx').on(t.entityType, t.entityId)],
 );
 
+export const backupStatusEnum = pgEnum('backup_status', ['RUNNING', 'SUCCESS', 'FAILED']);
+
+/** Riwayat backup (manual dari portal atau `npm run db:backup`). Berkasnya di BACKUP_DIR. */
+export const backupRuns = pgTable(
+  'backup_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    status: backupStatusEnum('status').notNull().default('RUNNING'),
+    kind: text('kind').notNull(),
+    fileName: text('file_name'),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }),
+    sha256: text('sha256'),
+    /** Hasil uji pulih (restore) terakhir atas berkas ini; null = belum diuji. */
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    verifyNote: text('verify_note'),
+    triggeredById: uuid('triggered_by_id'),
+    triggeredByName: text('triggered_by_name').notNull(),
+    error: text('error'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [index('backup_runs_started_idx').on(t.startedAt)],
+);
+
 /**
  * Jangkar rantai audit setelah retensi menghapus entri tertua: `prev_hash` milik entri
  * pertama yang tersisa, dicatat oleh `npm run db:retention` (dijalankan pemilik skema).

@@ -21,17 +21,25 @@ export const metadata: Metadata = {
 const memberData = [
   'Identitas: nama lengkap, jenis kelamin, tanggal lahir, golongan, gugus depan, dan nomor KTA bila sudah terbit.',
   'Kontak (tergolong sensitif): nomor telepon dan alamat.',
-  'Data wali (tergolong sensitif): nama dan nomor telepon wali, serta tanggal persetujuan wali untuk anggota di bawah 18 tahun.',
+  'Data wali (tergolong sensitif): nama dan nomor telepon orang tua/wali untuk anggota di bawah 18 tahun.',
+  'Persetujuan orang tua/wali: pilihan per bagian (data pribadi, foto, kegiatan), waktu, versi teks persetujuan yang dibaca, nama yang diketik wali, dan sidik HMAC alamat IP pengirim (bukan IP-nya).',
   'Status verifikasi, catatan pembinaan, dan tanggal bergabung.',
   'Riwayat gugus depan: setiap mutasi antar-gudep (gudep asal dan tujuan, alasan, serta siapa yang mengajukan dan memutuskan).',
   'Pendaftaran kegiatan yang diikuti lewat portal.',
+];
+
+const protections = [
+  'Telepon, alamat, dan data wali anggota, nama wali pada catatan persetujuan, serta rahasia verifikasi dua langkah disimpan terenkripsi (AES-256-GCM) di basis data. Kuncinya berada di server aplikasi, terpisah dari basis data dan dari berkas cadangan.',
+  'Log aktivitas hanya bisa ditambah: basis data menolak pengubahan dan penghapusan, dan setiap entri terkunci dengan hash entri sebelumnya sehingga perubahan dapat dideteksi lewat pemeriksaan integritas.',
+  'Akun Super Admin, pengurus kwarcab, dan admin website wajib memakai verifikasi dua langkah (kode dari aplikasi autentikator) setelah masa tenggang. Akun lain boleh mengaktifkannya sukarela.',
+  'Percobaan masuk, kode akses, kode verifikasi, dan formulir publik dibatasi jumlahnya. Penghitungnya menyimpan sidik HMAC alamat IP atau nama pengguna, bukan nilai aslinya, dan dihapus oleh pembersihan otomatis setelah jangka pembatasan lewat.',
 ];
 
 const accessRules = [
   'Pengurus hanya melihat data di cakupannya: staf gudep untuk gudepnya, staf kwarran untuk wilayahnya, pengurus kwarcab untuk seluruh kabupaten.',
   'Peserta hanya melihat data dirinya sendiri, dan tidak melihat alamat, telepon, maupun data wali.',
   'Pengecekan izin dilakukan di server pada setiap halaman dan aksi, bukan sekadar menyembunyikan tombol.',
-  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP.',
+  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, meminta atau mencatat pencabutan persetujuan, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP.',
   'Daftar pendaftar kegiatan yang dapat dibuka pengurus hanya memuat nama, KTA, golongan, dan gugus depan, tanpa kontak maupun data wali.',
 ];
 
@@ -39,15 +47,32 @@ const accessData = [
   'Lupa kata sandi tidak memakai email. Permintaan (nama pengguna, keterangan opsional, dan waktunya) diteruskan ke pembina atau pengurus yang berwenang atas akun tersebut.',
   'Pengurus menyerahkan kode akses sekali pakai. Kode hanya disimpan dalam bentuk hash, berlaku 24 jam untuk reset dan 7 hari untuk aktivasi akun baru, lalu hangus setelah dipakai.',
   'Pemilik akun membuat kata sandinya sendiri. Pembina dan pengurus tidak pernah melihat atau menentukan kata sandi anggota.',
+  'Kode akses hanya menggantikan kata sandi. Akun yang memakai verifikasi dua langkah tetap diminta kodenya setelah itu.',
+];
+
+const consentFlow = [
+  'Pembina membuat kode persetujuan sekali pakai (berlaku 14 hari) dan menyerahkannya kepada orang tua/wali. Yang disimpan hanya hash kodenya.',
+  'Orang tua/wali membuka halaman Persetujuan wali, memasukkan kode, lalu memilih setuju atau tidak untuk setiap bagian: pengelolaan data pribadi, foto dan dokumentasi, serta keikutsertaan kegiatan. Pemegang kode hanya melihat nama depan anak dan nama gugus depannya.',
+  'Pembina tidak bisa memberikan persetujuan atas nama wali. Pembina hanya dapat mencatat pencabutan yang diminta wali; wali juga dapat mengubah pilihan dengan kode baru kapan saja.',
+  'Data anak di bawah 18 tahun baru dapat diverifikasi setelah wali menyetujui pengelolaan data pribadinya. Tanggal persetujuan yang dulu diketik pengurus tetap terlihat sebagai catatan lama yang belum terverifikasi.',
+];
+
+const retention = [
+  'Pesan formulir kontak: 365 hari.',
+  'Log aktivitas: 24 bulan.',
+  'Kode akses dan kode persetujuan yang tidak terpakai: 30 hari setelah kedaluwarsa. Permintaan reset kata sandi yang selesai: 90 hari.',
+  'Sesi masuk dan penghitung pembatasan percobaan: dihapus setelah kedaluwarsa.',
+  'Data anggota disimpan selama keanggotaan. Atas permintaan penghapusan, pengurus kwarcab menganonimkan anggota yang sudah nonaktif: identitas, kontak, data wali, dan akun portal dihapus, sedangkan statistik golongan dan riwayat gudep tetap ada tanpa nama.',
 ];
 
 const notYetInEffect = [
-  'Persetujuan elektronik terverifikasi dari orang tua/wali. Saat ini yang tercatat hanya tanggal persetujuan yang diisikan pengurus; sistem belum memverifikasi dokumen atau identitas wali.',
-  'Pengunci log aktivitas di tingkat basis data. Aplikasi hanya menambah dan membaca log, dan tidak menyediakan fitur ubah atau hapus, tetapi pengelola basis data secara teknis masih dapat mengubahnya.',
-  'Enkripsi tingkat kolom untuk data sensitif. Data dilindungi oleh kontrol akses dan koneksi terenkripsi, belum dienkripsi per kolom di basis data.',
+  'Verifikasi identitas wali. Sistem memastikan persetujuan datang dari pemegang kode yang diberikan pembina, tetapi tidak memeriksa dokumen identitas orang tua/wali.',
+  'Enkripsi nama dan tanggal lahir anggota. Kedua data ini dilindungi kontrol akses dan koneksi terenkripsi, belum dienkripsi per kolom.',
+  'Deteksi pemotongan entri log terbaru. Rantai hash mendeteksi perubahan di tengah, tetapi entri paling akhir yang dihapus hanya ketahuan bila pengurus mencatat kepala rantai secara berkala di luar sistem.',
+  'Penghapusan nama di log lama. Log aktivitas tidak dapat diubah, sehingga ringkasan log yang menyebut nama anggota baru hilang ketika masa simpan log (24 bulan) lewat, termasuk setelah anggota dianonimkan.',
+  'Jadwal retensi dan pencadangan di server produksi. Sistem menyediakan penghapusan terjadwal, pencadangan, dan uji pemulihan, tetapi jadwal otomatisnya diatur pengelola server dan belum kami verifikasi di server produksi.',
+  'Tautan foto galeri ke anak tertentu. Persetujuan foto dicatat per anak, tetapi foto galeri belum ditautkan ke anggota, sehingga pemeriksaan sebelum unggah masih dilakukan manual oleh pengurus.',
   'Klasifikasi data empat tingkat. Yang berlaku sekarang dua lapis: data umum dan data sensitif yang dibatasi izin khusus.',
-  'Retensi dan penghapusan otomatis. Belum ada jadwal penghapusan data otomatis; penghapusan atas permintaan dilakukan manual oleh pengurus kwarcab.',
-  'Pencadangan dan uji pemulihan basis data yang terjadwal dan terdokumentasi dalam sistem ini; hal itu bergantung pada penyedia hosting dan belum kami verifikasi.',
 ];
 
 export default function KebijakanPrivasiPage() {
@@ -58,7 +83,7 @@ export default function KebijakanPrivasiPage() {
         scene="lake"
         top={<Breadcrumbs items={[{ label: 'Kebijakan Privasi' }]} />}
         title="Kebijakan privasi"
-        description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 5 Oktober 2026."
+        description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 6 Oktober 2026."
       />
       <div className="civic-container pb-16 pt-6 sm:pb-24">
         <div className="max-w-3xl space-y-10">
@@ -96,9 +121,14 @@ export default function KebijakanPrivasiPage() {
                 mengaktifkan penerusan, salinan pesan juga dikirim ke saluran internal sekretariat.
               </li>
               <li>
-                <strong className="text-text-primary">Alamat IP pengirim formulir:</strong> hanya ditahan sementara di memori server untuk
-                membatasi pengiriman berulang (tiga kali per sepuluh menit), tidak ditulis ke basis data, dan hilang saat server dimulai
-                ulang.
+                <strong className="text-text-primary">Alamat IP pengirim formulir:</strong> dipakai untuk membatasi pengiriman berulang
+                (tiga kali per sepuluh menit). Yang disimpan di basis data hanya sidik HMAC-nya, bukan alamat IP, dan dihapus oleh
+                pembersihan otomatis setelah jangka sepuluh menit itu lewat.
+              </li>
+              <li>
+                <strong className="text-text-primary">Laporan galat (bila diaktifkan sekretariat):</strong> galat di server dapat dikirim ke
+                layanan pemantauan Sentry setelah pos-el, nomor telepon, alamat IP, kode akses, dan angka panjang disamarkan. Tidak ada data
+                peramban, cookie, atau isi formulir yang ikut dikirim.
               </li>
               <li>
                 <strong className="text-text-primary">Log server standar</strong> milik penyedia hosting untuk keamanan dan pemeliharaan.
@@ -120,6 +150,12 @@ export default function KebijakanPrivasiPage() {
             </p>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
               {memberData.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Cara data dilindungi</h3>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
+              {protections.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -152,16 +188,45 @@ export default function KebijakanPrivasiPage() {
               (GPS) pada foto otomatis dibuang saat diunggah. Peta publik hanya menampilkan lokasi sekretariat Kwarcab, tidak pernah alamat
               rumah anggota. Anggota di bawah 18 tahun disarankan mengirim pesan melalui orang tua, wali, atau pembina.
             </p>
+            <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Persetujuan orang tua/wali</h3>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
+              {consentFlow.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="mt-3 text-sm">
+              <Link
+                href="/persetujuan-wali"
+                className="inline-flex min-h-touch items-center rounded-md font-medium text-text-accent hover:underline"
+              >
+                Buka halaman Persetujuan wali
+              </Link>
+            </p>
+          </section>
+
+          <section aria-labelledby="retensi-title">
+            <h2 id="retensi-title" className="font-display text-2xl font-semibold text-text-primary">
+              5. Berapa lama data disimpan
+            </h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">
+              {retention.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="mt-3 civic-prose">
+              Sistem menyediakan pencadangan basis data beserta uji pemulihannya. Di dalam berkas cadangan, data sensitif tetap terenkripsi.
+            </p>
           </section>
 
           <section aria-labelledby="hak-title">
             <h2 id="hak-title" className="font-display text-2xl font-semibold text-text-primary">
-              5. Hak Anda dan cara menggunakannya
+              6. Hak Anda dan cara menggunakannya
             </h2>
             <p className="mt-3 civic-prose">
               Anda berhak meminta akses, koreksi, atau penghapusan data pribadi Anda, baik yang dikirim lewat formulir kontak maupun yang
               tercatat sebagai data keanggotaan. Ajukan melalui pos-el di bawah dengan menyebut nama dan gugus depan; kami menanggapi paling
               lambat 14 hari kerja. Untuk koreksi data anggota, Anda juga dapat meminta pembina gudep melakukannya langsung di portal.
+              Persetujuan wali dapat dicabut kapan saja melalui pembina atau dengan kode persetujuan baru.
             </p>
             <p className="mt-3 text-sm">
               <a

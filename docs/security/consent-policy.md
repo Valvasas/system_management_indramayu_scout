@@ -1,5 +1,24 @@
 # Kebijakan Persetujuan (Consent Policy)
 
+> **Status implementasi (6 Okt 2026)** — kebenaran ada di `src/features/consent/`.
+>
+> | Butir kebijakan | Status | Implementasi |
+> |---|---|---|
+> | Persetujuan wali wajib untuk anak & tercatat sistematis | **Berlaku** | `guardian_consents` (append-only): cakupan, setuju/tidak, versi teks, metode, waktu, nama wali (terenkripsi), HMAC IP |
+> | Cakupan: data pribadi, foto internal, partisipasi kegiatan | **Berlaku** | `DATA`, `PHOTO`, `ACTIVITY` (teks di `texts.ts`, versi `2026-10-v1`) |
+> | Cakupan: publikasi media umum, kontak medis | Belum | Tidak ada data medis di sistem; publikasi nama/prestasi belum dipisah |
+> | Persetujuan "per kegiatan" | Belum | `ACTIVITY` berlaku umum, bukan per acara |
+> | Permintaan → wali menyetujui digital | **Berlaku, tanpa akun wali** | Pembina membuat kode sekali pakai (14 hari) → wali di `/persetujuan-wali` (tanpa email/akun, V5 §10). Bukan "portal wali" |
+> | Penarikan kapan saja + tercatat di audit log | **Berlaku** | Pembina mencatat pencabutan atas permintaan wali, atau wali memakai kode baru; keduanya tercatat |
+> | Data baru diproses setelah consent | Sebagian | Verifikasi anggota < 18 tahun butuh persetujuan DATA; pendaftaran kegiatan belum diblokir tanpa `ACTIVITY` |
+> | Verifikasi identitas wali | Belum | Sistem memverifikasi kepemilikan kode, bukan dokumen identitas |
+> | Tanggal manual lama | Dimigrasi | Menjadi catatan `LEGACY_MANUAL` "belum terverifikasi" (`drizzle/0007_…`) |
+
+---
+
+*Bagian di bawah adalah kebijakan (niat). Yang belum tercantum di status di atas belum berlaku.*
+
+
 Dokumen ini mengatur kebijakan persetujuan penggunaan data pada sistem Rumah Pramuka Indramayu, yang didesain untuk melindungi privasi anggota, khususnya anggota di bawah umur.
 
 ## Dasar Hukum

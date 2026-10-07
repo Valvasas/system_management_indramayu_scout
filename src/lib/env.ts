@@ -224,9 +224,6 @@ export function serverEnv(): ServerEnv {
   return (cached ??= parseServerEnv(process.env));
 }
 
-/** Runtime Next yang sedang berjalan (`nodejs` | `edge`), di-inline saat build. */
-export const nextRuntime = process.env.NEXT_RUNTIME;
-
 /** Build pengembangan (`next dev`)? Di-inline saat build; aman di edge & klien. */
 export const isDevBuild = process.env.NODE_ENV !== 'production';
 
@@ -244,3 +241,16 @@ export function parsePublicEnv(source: Source) {
 
 /** Aman di klien. Override domain lewat NEXT_PUBLIC_SITE_URL saat pratinjau/staging. */
 export const publicEnv = parsePublicEnv({ NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL });
+
+/**
+ * Env untuk proses anak (pg_dump/pg_restore): PATH & locale ikut, ditambah `extra`.
+ * Rahasia (mis. PGPASSWORD) lewat env, bukan argumen — argumen terlihat di daftar proses.
+ */
+export function childProcessEnv(extra: Record<string, string> = {}): Record<string, string> {
+  const base: Record<string, string> = {};
+  for (const key of ['PATH', 'LANG', 'TZ'] as const) {
+    const v = process.env[key];
+    if (v) base[key] = v;
+  }
+  return { ...base, ...extra };
+}
