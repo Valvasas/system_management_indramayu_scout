@@ -11,6 +11,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { getDb, schema } from '../src/db';
 import { hashPassword, passwordProblem } from '../src/lib/auth/password';
+import { seedFeatures } from './seed-demo';
 
 const args = new Set(process.argv.slice(2));
 const DEMO = args.has('--demo');
@@ -494,6 +495,18 @@ async function seedDemo() {
     email: 'pengunjung@example.com',
     organization: 'Orang tua anggota',
     message: 'Bagaimana cara mendaftarkan anak saya ke gugus depan terdekat?',
+  });
+
+  // Data demo per fitur (scripts/seed-demo/NN-*.ts), tanpa mengubah berkas ini.
+  const allUsers = await db.select().from(schema.users);
+  await seedFeatures({
+    db,
+    users: Object.fromEntries(allUsers.map((u) => [u.username, u])),
+    kwarran: await db.select().from(schema.kwarran),
+    gudep: gudepRows,
+    members: await db.select().from(schema.members),
+    events: eventRows,
+    daysFromNow,
   });
 
   await db.insert(schema.siteSettings).values({ key: 'demo_seeded', value: sql`'true'::jsonb` });

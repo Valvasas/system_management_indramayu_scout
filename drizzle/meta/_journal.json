@@ -78,6 +78,20 @@
       "when": 1791305313414,
       "tag": "0010_app_reads_migrations",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791333622899,
+      "tag": "0011_operational_features",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791333623591,
+      "tag": "0012_gudep_postgis",
+      "breakpoints": true
     }
   ]
 }

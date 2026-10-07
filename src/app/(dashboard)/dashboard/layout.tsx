@@ -6,6 +6,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { buildNav, type BadgeKey } from '@/components/dashboard/nav';
 import { countOpenResetRequests } from '@/features/auth/access-codes';
 import { countNewsInReview } from '@/features/content/queries';
+import { unreadCount } from '@/features/notifications/notify';
 import { transfersAwaitingDecision } from '@/features/members/transfers';
 import { ROLE_LABELS } from '@/lib/auth/permissions';
 import { memberScope } from '@/lib/auth/scope';
@@ -48,6 +49,7 @@ async function badges(user: SessionUser) {
   if (can(user, 'members.verify')) out.pendingTransfers = (await transfersAwaitingDecision(user)).length;
   if (can(user, 'users.manage') || can(user, 'users.create_peserta')) out.resetRequests = await countOpenResetRequests(user);
   if (can(user, 'content.manage')) out.reviewNews = await countNewsInReview();
+  out.unreadNotifications = await unreadCount(user.id);
   return out;
 }
 

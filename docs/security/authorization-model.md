@@ -45,6 +45,12 @@ dengan `permissions.ts` — perbarui keduanya bersamaan.
 | `members.import` | ya | ya | — | ya | ya | — |
 | `members.view_sensitive` | ya | ya | — | ya | ya | — |
 | `members.anonymize` | ya | ya | — | — | — | — |
+| `attendance.record` | ya | ya | — | ya | ya | — |
+| `competency.manage` | ya | ya | — | — | — | — |
+| `competency.verify` | ya | ya | — | ya | ya | — |
+| `reports.view` | ya | ya | — | ya | ya | — |
+| `internal_docs.view` | ya | ya | ya | ya | ya | — |
+| `internal_docs.manage` | ya | ya | — | ya | — | — |
 | `gudep.read` | ya | ya | — | ya | ya | — |
 | `gudep.create` | ya | ya | — | ya | — | — |
 | `gudep.update` | ya | ya | — | ya | ya | — |

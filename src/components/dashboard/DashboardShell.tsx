@@ -5,6 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  Award,
+  BarChart3,
+  Bell,
+  Compass,
+  FolderLock,
   DatabaseBackup,
   FileCheck2,
   ArrowLeftRight,
@@ -54,6 +59,11 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   key: KeyRound,
   consent: FileCheck2,
   backup: DatabaseBackup,
+  bell: Bell,
+  chart: BarChart3,
+  award: Award,
+  folder: FolderLock,
+  compass: Compass,
 };
 
 const initials = (name: string) =>
