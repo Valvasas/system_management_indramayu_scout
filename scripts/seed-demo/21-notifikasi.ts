@@ -36,6 +36,18 @@ export async function seed(ctx: SeedContext): Promise<void> {
     });
   }
 
+  // Prioritas tinggi (selalu terkirim): pengingat MFA untuk peran yang wajib MFA (lib/auth/mfa-policy.ts).
+  for (const username of ['admin', 'kwarcab', 'humas']) {
+    add(username, {
+      kind: 'SYSTEM',
+      priority: 'HIGH',
+      title: 'Aktifkan verifikasi dua langkah sebelum masa tenggang berakhir',
+      body: 'Peran Anda wajib memakai MFA. Setelah masa tenggang habis, portal hanya membuka halaman pendaftaran MFA.',
+      href: '/dashboard/akun/mfa',
+      createdAt: daysFromNow(-2, 7),
+    });
+  }
+
   // Pendaftar demo (Dimas) pada Latihan Gabungan: satu kabar per hari per kegiatan.
   const latihan = events.find((e) => e.slug === 'latihan-gabungan-kwarran-indramayu');
   if (latihan) {
