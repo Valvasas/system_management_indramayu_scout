@@ -5,11 +5,13 @@
  * ditegakkan di sini (bukan hanya di UI) agar tidak bisa dilewati lewat Server Action/route lain:
  *   1. peran memegang izin `attendance.record`;
  *   2. anggota berada dalam `memberScope` pencatat (staf gudep = gudepnya, staf kwarran = kecamatannya);
- *   3. anggota memang terdaftar di kegiatan itu.
+ *   3. anggota memang terdaftar di kegiatan itu (dan datanya belum dianonimkan).
  * Gagal syarat 2 atau 3 → "tidak-ditemukan" (tidak dibedakan dari id yang tidak ada: tanpa kebocoran IDOR).
+ * Kegiatan harus tayang, tidak dibatalkan, dan sudah memasuki hari pelaksanaan (00.00 WIB).
  *
  * Satu baris per (kegiatan, anggota) — dicatat ulang = diperbarui (upsert) + pencatat & waktunya.
- * Catatan presensi tidak pernah masuk log audit, ringkasan, notifikasi, maupun CSV.
+ * Catatan presensi tidak pernah masuk log audit, ringkasan, notifikasi, maupun CSV, dan hanya tampil
+ * kepada pemegang `attendance.record`. Server Action memakai `recordAttendanceForm` (bisa diuji di Vitest).
  */
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
