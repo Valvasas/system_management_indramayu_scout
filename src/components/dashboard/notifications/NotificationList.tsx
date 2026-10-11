@@ -24,6 +24,7 @@ import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { ButtonLink } from '@/components/ui/Button';
 import type { NotificationKind, NotificationPriority, notifications } from '@/db/schema';
 import { openNotificationAction } from '@/features/notifications/actions';
+import type { InboxFilter } from '@/features/notifications/inbox';
 import { NOTIFICATION_KIND_LABELS, PRIORITY_LABELS } from '@/features/notifications/labels';
 import { formatDate, formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -60,7 +61,7 @@ export const PriorityBadge: React.FC<{ priority: NotificationPriority }> = ({ pr
  * Daftar notifikasi milik pengguna (data sudah dibatasi ke pemiliknya di server).
  * Status belum dibaca & prioritas selalu ikon + teks, tidak hanya warna.
  */
-export const NotificationList: React.FC<{ items: NotificationRow[]; page: number; filter: string }> = ({ items, page, filter }) => (
+export const NotificationList: React.FC<{ items: NotificationRow[]; page: number; filter: InboxFilter }> = ({ items, page, filter }) => (
   <ul className="divide-y divide-border-subtle">
     {items.map((n) => {
       const Icon = KIND_ICONS[n.kind];

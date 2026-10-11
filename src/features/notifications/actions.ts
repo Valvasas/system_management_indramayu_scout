@@ -2,12 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import { requireUser } from '@/lib/auth/session';
 import { fail, ok, type FormState } from '@/lib/forms';
 import { InboxQuerySchema, openNotification, savePreferences } from './inbox';
 import { markAllRead } from './notify';
 
 const BASE = '/dashboard/notifikasi';
+
+/** Argumen terikat (.bind) datang dari peramban: divalidasi ulang di server. */
+const OpenArgsSchema = z.object({ id: z.string().uuid().catch(''), halaman: z.unknown(), tampil: z.unknown() });
 
 function backTo(page: unknown, filter: unknown, extra: string): string {
   const q = InboxQuerySchema.parse({ halaman: page, tampil: filter });
@@ -24,11 +28,12 @@ function backTo(page: unknown, filter: unknown, extra: string): string {
  */
 export async function openNotificationAction(id: string, page: number, filter: string): Promise<void> {
   const user = await requireUser();
-  const result = await openNotification(user.id, String(id));
+  const args = OpenArgsSchema.parse({ id, halaman: page, tampil: filter });
+  const result = args.id ? await openNotification(user.id, args.id) : null;
   // Lencana belum dibaca ada di layout portal: segarkan seluruh layout.
   revalidatePath('/dashboard', 'layout');
-  if (!result) redirect(backTo(page, filter, 'tidak-ditemukan'));
-  redirect(result.href ?? backTo(page, filter, 'dibaca'));
+  if (!result) redirect(backTo(args.halaman, args.tampil, 'tidak-ditemukan'));
+  redirect(result.href ?? backTo(args.halaman, args.tampil, 'dibaca'));
 }
 
 export async function markAllReadAction(): Promise<void> {
