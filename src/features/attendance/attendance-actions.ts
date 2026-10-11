@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { requirePermission } from '@/lib/auth/session';
-import { fail, ok, parseForm, type FormState } from '@/lib/forms';
+import { fail, ok, type FormState } from '@/lib/forms';
 import { clientIp } from '@/lib/security/request';
-import { AttendanceFormSchema, recordAttendance, type RecordFailure } from './attendance';
+import { recordAttendanceForm, type RecordFailure } from './attendance';
 import { ATTENDANCE_LABELS } from './labels';
 
 const FAILURES: Record<RecordFailure, string> = {
@@ -17,13 +17,11 @@ const FAILURES: Record<RecordFailure, string> = {
 
 /**
  * Catat presensi satu pendaftar. Formulir biasa (berfungsi tanpa JavaScript); tombol yang ditekan
- * mengirim `status`. Izin, cakupan, dan status pendaftaran ditegakkan di `recordAttendance`.
+ * mengirim `status`. Validasi Zod, izin, cakupan, dan status pendaftaran ditegakkan di `recordAttendanceForm`.
  */
 export async function recordAttendanceAction(eventId: string, memberId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requirePermission('attendance.record');
-  const parsed = parseForm(AttendanceFormSchema, formData);
-  if (parsed.error) return parsed.error;
-  const result = await recordAttendance(user, { eventId, memberId, ...parsed.data }, { ip: clientIp() });
+  const result = await recordAttendanceForm(user, eventId, memberId, formData, { ip: clientIp() });
   if (!result.ok) return fail(FAILURES[result.reason], result.errors);
   revalidatePath(`/dashboard/pendaftaran/${eventId}`);
   return ok(

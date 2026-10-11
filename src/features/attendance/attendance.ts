@@ -11,7 +11,7 @@
  * Satu baris per (kegiatan, anggota) — dicatat ulang = diperbarui (upsert) + pencatat & waktunya.
  * Catatan presensi tidak pernah masuk log audit, ringkasan, notifikasi, maupun CSV.
  */
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb, schema, type Database } from '@/db';
 import type { AttendanceStatus } from '@/db/schema';
@@ -21,7 +21,7 @@ import { memberScope } from '@/lib/auth/scope';
 import type { SessionUser } from '@/lib/auth/session';
 import { toCsv } from '@/lib/csv';
 import { golonganLabel } from '@/lib/domain';
-import { optionalText } from '@/lib/forms';
+import { optionalText, parseForm } from '@/lib/forms';
 import { ATTENDANCE_LABELS, ATTENDANCE_NOTE_MAX, ATTENDANCE_STATUSES, attendanceLabel, recapOf } from './labels';
 
 export interface AttendanceOptions {
@@ -33,13 +33,17 @@ export interface AttendanceOptions {
 
 const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-/** Isian formulir presensi (status + catatan). Dipakai Server Action (parseForm) dan diulang di recordAttendance. */
-export const AttendanceFormSchema = z.object({
+/**
+ * Isian formulir presensi (Zod, di server). `note` menerima null/undefined (kolom kosong / tidak dikirim):
+ * nilai yang sudah dinormalisasi `parseForm` (catatan kosong → null) divalidasi ulang di `recordAttendance`
+ * dan tidak boleh ditolak di sana.
+ */
+const FormSchema = z.object({
   status: z.enum(ATTENDANCE_STATUSES, { errorMap: () => ({ message: 'Pilih status kehadiran: Hadir, Izin, atau Alpa.' }) }),
-  note: optionalText(ATTENDANCE_NOTE_MAX),
+  note: z.preprocess((v) => (v === null ? undefined : v), optionalText(ATTENDANCE_NOTE_MAX)),
 });
 
-const RecordSchema = AttendanceFormSchema.extend({
+const RecordSchema = FormSchema.extend({
   eventId: z.string().uuid('Kegiatan tidak valid.'),
   memberId: z.string().uuid('Anggota tidak valid.'),
 });
@@ -120,7 +124,15 @@ export async function recordAttendance(actor: SessionUser, input: RecordInput, o
     .innerJoin(schema.members, eq(schema.members.id, schema.eventRegistrations.memberId))
     .innerJoin(schema.gudep, eq(schema.gudep.id, schema.members.gudepId))
     .leftJoin(a, and(eq(a.eventId, schema.eventRegistrations.eventId), eq(a.memberId, schema.eventRegistrations.memberId)))
-    .where(and(eq(schema.eventRegistrations.eventId, eventId), eq(schema.eventRegistrations.memberId, memberId), memberScope(actor)))
+    .where(
+      and(
+        eq(schema.eventRegistrations.eventId, eventId),
+        eq(schema.eventRegistrations.memberId, memberId),
+        // Data anggota yang sudah dianonimkan tidak boleh mendapat catatan baru.
+        isNull(schema.members.anonymizedAt),
+        memberScope(actor),
+      ),
+    )
     .limit(1);
   if (!row || !row.published) return { ok: false, reason: 'tidak-ditemukan' };
   const blocked = recordingBlock(row, now);
@@ -146,6 +158,24 @@ export async function recordAttendance(actor: SessionUser, input: RecordInput, o
   return { ok: true, changed: true, status, previous, memberName: row.memberName };
 }
 
+/**
+ * Jalur formulir yang dipakai Server Action (bisa diuji tanpa konteks request Next): FormData divalidasi
+ * `parseForm`, lalu `recordAttendance` menegakkan izin, cakupan, dan pendaftaran. `eventId`/`memberId`
+ * berasal dari argumen terikat Server Action dan divalidasi ulang di sana.
+ */
+export async function recordAttendanceForm(
+  actor: SessionUser,
+  eventId: string,
+  memberId: string,
+  formData: FormData,
+  opts: AttendanceOptions = {},
+): Promise<RecordResult> {
+  if (!roleCan(actor.role, 'attendance.record')) return { ok: false, reason: 'tidak-diizinkan' };
+  const parsed = parseForm(FormSchema, formData);
+  if (parsed.error) return { ok: false, reason: 'tidak-valid', errors: parsed.error.errors };
+  return recordAttendance(actor, { eventId, memberId, ...parsed.data }, opts);
+}
+
 /* ------------------------------------------------------------------ */
 /* Membaca (staf)                                                       */
 /* ------------------------------------------------------------------ */
@@ -168,6 +198,7 @@ async function scopedSheetRows(d: Database, actor: SessionUser, eventId: string)
       gudepName: schema.gudep.name,
       kwarranName: schema.kwarran.name,
       registeredAt: schema.eventRegistrations.createdAt,
+      anonymizedAt: schema.members.anonymizedAt,
       status: a.status,
       note: a.note,
       recordedByName: a.recordedByName,
@@ -193,14 +224,20 @@ export async function attendanceSheet(actor: SessionUser, eventId: string, opts:
   const d = opts.db ?? (await getDb());
   const event = await publishedEvent(d, eventId);
   if (!event) return null;
-  const rows = await scopedSheetRows(d, actor, event.id);
+  const mayRecord = roleCan(actor.role, 'attendance.record');
+  // Catatan presensi hanya untuk pemegang izin pencatat; baris anonim tidak bisa dicatat lagi.
+  const rows = (await scopedSheetRows(d, actor, event.id)).map(({ anonymizedAt, ...r }) => ({
+    ...r,
+    note: mayRecord ? r.note : null,
+    recordable: anonymizedAt === null,
+  }));
   const blocked = recordingBlock(event, opts.now ?? new Date());
   return {
     event,
     rows,
     recap: recapOf(rows),
     /** Boleh menampilkan tombol presensi (izin + kegiatan sudah dimulai & tidak batal). */
-    canRecord: roleCan(actor.role, 'attendance.record') && blocked === null,
+    canRecord: mayRecord && blocked === null,
     blocked,
     opensAt: attendanceOpensAt(event.dateStart),
   };
@@ -259,7 +296,8 @@ export async function exportAttendanceCsv(actor: SessionUser, eventId: string, o
 
 /**
  * Riwayat kehadiran milik peserta yang sedang masuk — HANYA lewat `actor.memberId` (tidak menerima id dari
- * luar). Tanpa catatan & nama pencatat. Akun selain PESERTA → daftar kosong.
+ * luar). Tanpa catatan & nama pencatat. Akun selain PESERTA → daftar kosong. Sama dengan lembar staf,
+ * hanya kegiatan yang masih terdaftar atas namanya (pendaftaran yang dibatalkan tidak ikut).
  */
 export async function ownAttendanceHistory(actor: SessionUser, opts: AttendanceOptions & { limit?: number } = {}) {
   if (!roleCan(actor.role, 'self.portal') || !actor.memberId) return [];
@@ -275,6 +313,10 @@ export async function ownAttendanceHistory(actor: SessionUser, opts: AttendanceO
     })
     .from(a)
     .innerJoin(schema.events, eq(schema.events.id, a.eventId))
+    .innerJoin(
+      schema.eventRegistrations,
+      and(eq(schema.eventRegistrations.eventId, a.eventId), eq(schema.eventRegistrations.memberId, a.memberId)),
+    )
     .where(and(eq(a.memberId, actor.memberId), eq(schema.events.published, true)))
     .orderBy(desc(schema.events.dateStart))
     .limit(opts.limit ?? 50);

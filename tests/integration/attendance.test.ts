@@ -1,4 +1,4 @@
-import { eq, like } from 'drizzle-orm';
+import { and, eq, like } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { schema } from '@/db';
 import {
@@ -7,6 +7,7 @@ import {
   exportAttendanceCsv,
   ownAttendanceHistory,
   recordAttendance,
+  recordAttendanceForm,
   wibDateTime,
 } from '@/features/attendance/attendance';
 import { recapOf } from '@/features/attendance/labels';
@@ -149,6 +150,10 @@ describe('presensi kegiatan (2.2) — cakupan (IDOR)', () => {
     const a = await exportAttendanceCsv(staffA(), ids.past, o());
     expect(a?.csv).not.toContain('Dewi Anggota B');
     expect(a?.csv).not.toContain('Eko Anggota C');
+    const k2 = await exportAttendanceCsv(kwarran2(), ids.past, o());
+    expect(k2?.count).toBe(1);
+    expect(k2?.csv).toContain('Eko Anggota C');
+    expect(k2?.csv).not.toContain('Ayu Anggota A1');
   });
 });
 
@@ -178,6 +183,53 @@ describe('presensi kegiatan (2.2) — hanya pendaftar & keadaan kegiatan', () =>
     // 01.00 WIB 10 Okt (masih 9 Okt di UTC) → tetap hari WIB yang sama.
     expect(attendanceOpensAt(new Date('2026-10-09T18:00:00Z')).toISOString()).toBe('2026-10-09T17:00:00.000Z');
     expect(wibDateTime(new Date('2026-10-09T18:05:00Z'))).toBe('2026-10-10 01:05');
+  });
+
+  it('jalur formulir Server Action: catatan kosong diterima, isian buruk & peran tanpa izin ditolak', async () => {
+    const form = (fields: Record<string, string>) => {
+      const fd = new FormData();
+      for (const [k, v] of Object.entries(fields)) fd.append(k, v);
+      return fd;
+    };
+    // Catatan kosong (kasus paling umum di lapangan) dinormalisasi jadi null dan tetap tersimpan.
+    expect(await recordAttendanceForm(staffA(), ids.past, ids.mA1, form({ status: 'PRESENT', note: '' }), o())).toMatchObject({
+      ok: true,
+      changed: true,
+      status: 'PRESENT',
+    });
+    expect(await recordAttendanceForm(staffA(), ids.past, ids.mA2, form({ status: 'ABSENT' }), o())).toMatchObject({ ok: true });
+    expect((await attendanceRows()).map((r) => [r.status, r.note]).sort()).toEqual([
+      ['ABSENT', null],
+      ['PRESENT', null],
+    ]);
+    const noStatus = await recordAttendanceForm(staffA(), ids.past, ids.mA1, form({ note: 'x' }), o());
+    expect(!noStatus.ok && noStatus.errors?.status).toBeTruthy();
+    const longNote = await recordAttendanceForm(staffA(), ids.past, ids.mA1, form({ status: 'EXCUSED', note: 'x'.repeat(201) }), o());
+    expect(!longNote.ok && longNote.errors?.note).toMatch(/200/);
+    // Argumen terikat tetap divalidasi & dicek cakupannya.
+    expect(await recordAttendanceForm(staffB(), ids.past, ids.mA1, form({ status: 'ABSENT' }), o())).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
+    expect((await recordAttendanceForm(staffA(), 'bukan-uuid', ids.mA1, form({ status: 'ABSENT' }), o())).ok).toBe(false);
+    for (const who of [actor('ADMIN_WEBSITE'), actor('PESERTA', { memberId: ids.mA1 })]) {
+      expect(await recordAttendanceForm(who, ids.past, ids.mA1, form({ status: 'ABSENT' }), o())).toEqual({
+        ok: false,
+        reason: 'tidak-diizinkan',
+      });
+    }
+    expect((await attendanceRows()).map((r) => r.status).sort()).toEqual(['ABSENT', 'PRESENT']);
+  });
+
+  it('anggota yang sudah dianonimkan tidak bisa dicatat lagi', async () => {
+    await t.db.update(schema.members).set({ anonymizedAt: NOW }).where(eq(schema.members.id, ids.mA2));
+    expect(await rec(staffA(), ids.mA2, 'PRESENT')).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+    const sheet = await attendanceSheet(staffA(), ids.past, o());
+    expect(sheet?.rows.map((r) => [r.fullName, r.recordable])).toEqual([
+      ['Ayu Anggota A1', true],
+      ['Bima Anggota A2', false],
+    ]);
+    expect(await attendanceRows()).toHaveLength(0);
   });
 
   it('status & catatan divalidasi Zod di server', async () => {
@@ -267,6 +319,17 @@ describe('presensi kegiatan (2.2) — portal peserta', () => {
     await rec(kwarcab(), ids.mA1, 'PRESENT');
     await t.db.update(schema.events).set({ published: false }).where(eq(schema.events.id, ids.past));
     expect(await ownAttendanceHistory(actor('PESERTA', { memberId: ids.mA1 }), o())).toEqual([]);
+  });
+
+  it('pendaftaran yang sudah dihapus tidak menyisakan riwayat (sama dengan lembar staf)', async () => {
+    await rec(kwarcab(), ids.mA1, 'EXCUSED');
+    await rec(kwarcab(), ids.mA2, 'PRESENT');
+    await t.db
+      .delete(schema.eventRegistrations)
+      .where(and(eq(schema.eventRegistrations.eventId, ids.past), eq(schema.eventRegistrations.memberId, ids.mA1)));
+    expect(await ownAttendanceHistory(actor('PESERTA', { memberId: ids.mA1 }), o())).toEqual([]);
+    expect((await attendanceSheet(kwarcab(), ids.past, o()))?.rows.map((r) => r.fullName)).not.toContain('Ayu Anggota A1');
+    expect((await ownAttendanceHistory(actor('PESERTA', { memberId: ids.mA2 }), o())).map((h) => h.status)).toEqual(['PRESENT']);
   });
 });
 

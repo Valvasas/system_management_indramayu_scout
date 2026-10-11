@@ -94,7 +94,7 @@ export default async function PendaftarPage({ params }: { params: { id: string }
                   </div>
                   {r.note && <p className="mt-1.5 max-w-prose whitespace-pre-line text-sm text-text-secondary">Catatan: {r.note}</p>}
                 </div>
-                {canRecord && (
+                {canRecord && r.recordable && (
                   <div className="w-full shrink-0 lg:w-96">
                     <AttendanceControls
                       action={recordAttendanceAction.bind(null, event.id, r.memberId)}

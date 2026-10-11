@@ -79,7 +79,7 @@ export const AttendanceControls: React.FC<{
         <Field
           id={noteId}
           label={`Catatan untuk ${memberName}`}
-          hint={`Maksimal ${ATTENDANCE_NOTE_MAX} karakter. Tersimpan saat Anda menekan Hadir, Izin, atau Alpa.`}
+          hint={`Maksimal ${ATTENDANCE_NOTE_MAX} karakter, tanpa data kesehatan atau data pribadi lain. Tersimpan saat Anda menekan Hadir, Izin, atau Alpa.`}
           error={noteError}
           className="pt-1"
         >
