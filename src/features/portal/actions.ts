@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
+import { notifyEventRegistration } from '@/features/notifications/triggers';
 import { getOwnMember } from './peserta';
 
 /** Peserta mendaftar kegiatan. Syarat: anggota aktif, kegiatan tayang, pendaftaran dibuka, belum lewat. */
@@ -19,8 +20,14 @@ export async function registerEventAction(eventId: string): Promise<void> {
   if (!event || !event.published || event.cancelled || !event.registrationOpen || event.dateStart < new Date()) {
     redirect('/dashboard/kegiatan?gagal=tutup');
   }
-  await db.insert(schema.eventRegistrations).values({ eventId, memberId: own.m.id }).onConflictDoNothing();
+  const inserted = await db
+    .insert(schema.eventRegistrations)
+    .values({ eventId, memberId: own.m.id })
+    .onConflictDoNothing()
+    .returning({ id: schema.eventRegistrations.id });
   await audit(user, { action: 'event.register', summary: `Mendaftar kegiatan "${event.title}"`, entityType: 'event', entityId: eventId });
+  // Hanya pendaftaran yang benar-benar baru; maksimal satu kabar per kegiatan per hari WIB.
+  if (inserted.length > 0) await notifyEventRegistration({ eventId, eventTitle: event.title });
   revalidatePath('/dashboard/kegiatan');
   redirect('/dashboard/kegiatan?daftar=1');
 }
