@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
+import { notifyEventRegistration } from '@/features/notifications/triggers';
 import { getOwnMember } from './peserta';
 import { memberConsentSummary } from '@/features/consent/consent';
 import { dataConsentWithdrawn, needsGuardianConsent } from '@/features/consent/status';
@@ -26,8 +27,14 @@ export async function registerEventAction(eventId: string): Promise<void> {
     const { statuses } = await memberConsentSummary(own.m.id);
     if (statuses.ACTIVITY.kind !== 'GRANTED' || dataConsentWithdrawn(statuses)) redirect('/dashboard/kegiatan?gagal=persetujuan');
   }
-  await db.insert(schema.eventRegistrations).values({ eventId, memberId: own.m.id }).onConflictDoNothing();
+  const inserted = await db
+    .insert(schema.eventRegistrations)
+    .values({ eventId, memberId: own.m.id })
+    .onConflictDoNothing()
+    .returning({ id: schema.eventRegistrations.id });
   await audit(user, { action: 'event.register', summary: `Mendaftar kegiatan "${event.title}"`, entityType: 'event', entityId: eventId });
+  // Hanya pendaftaran yang benar-benar baru; maksimal satu kabar per kegiatan per hari WIB.
+  if (inserted.length > 0) await notifyEventRegistration({ eventId, eventTitle: event.title });
   revalidatePath('/dashboard/kegiatan');
   redirect('/dashboard/kegiatan?daftar=1');
 }

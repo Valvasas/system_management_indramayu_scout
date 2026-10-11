@@ -10,6 +10,7 @@ import { audit } from '@/lib/auth/audit';
 import { canAccessGudep } from '@/lib/auth/scope';
 import { requirePermission } from '@/lib/auth/session';
 import { fail, parseForm, requiredText, type FormState } from '@/lib/forms';
+import { notifyAnnouncementCreated } from '@/features/notifications/triggers';
 import { canTargetWholeKwarcab } from './queries';
 
 const AnnouncementSchema = z.object({
@@ -43,6 +44,7 @@ export async function createAnnouncementAction(_prev: FormState, formData: FormD
     entityType: 'announcement',
     entityId: row.id,
   });
+  await notifyAnnouncementCreated({ announcementId: row.id, title: v.title, audience: v.audience, gudepId, actorId: user.id });
   revalidatePath('/dashboard/pengumuman');
   redirect('/dashboard/pengumuman?tersimpan=1');
 }

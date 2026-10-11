@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { logoutAction } from '@/features/auth/actions';
 import { TreeLine } from '@/components/illustrations/Scenes';
 import type { NavGroup, NavIcon, NavItem } from './nav';
+import { NOTIFICATIONS_HREF, NotificationBell, NotificationLiveRegion } from './notifications/NotificationBell';
 
 const ICONS: Record<NavIcon, LucideIcon> = {
   home: Home,
@@ -80,6 +81,8 @@ export interface DashboardShellProps {
   /** Nama portal di kepala sidebar: peserta tidak memakai "Portal Pengurus". */
   portalLabel?: string;
   nav: NavGroup[];
+  /** Jumlah notifikasi belum dibaca milik pengguna ini (dihitung di server, layout portal). */
+  unreadNotifications?: number;
   children: React.ReactNode;
 }
 
@@ -89,7 +92,13 @@ export interface DashboardShellProps {
  * - Ponsel: bilah navigasi BAWAH berisi menu terpenting (terjangkau ibu jari) + tombol Menu
  *   yang membuka laci berisi semua menu. Satu pola untuk semua peran.
  */
-export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, portalLabel = 'Portal Pengurus', children }) => {
+export const DashboardShell: React.FC<DashboardShellProps> = ({
+  user,
+  nav,
+  portalLabel = 'Portal Pengurus',
+  unreadNotifications = 0,
+  children,
+}) => {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -242,7 +251,8 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
             )}
           </p>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell count={unreadNotifications} active={isActive(NOTIFICATIONS_HREF)} />
             <div className="hidden text-right leading-tight sm:block">
               <p className="text-sm font-semibold text-text-primary">{user.name}</p>
               <p className="text-xs text-text-secondary">{user.roleLabel}</p>
@@ -263,6 +273,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({ user, nav, porta
               </button>
             </form>
           </div>
+          <NotificationLiveRegion count={unreadNotifications} />
         </header>
 
         {/* pb besar di ponsel: konten tidak tertutup bilah navigasi bawah. */}

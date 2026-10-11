@@ -11,6 +11,7 @@ import { blindIndex } from '@/lib/security/crypto';
 import { clientIp } from '@/lib/security/request';
 import { createRateLimiter } from '@/lib/security/rate-limit';
 import { absoluteUrl } from '@/lib/site';
+import { notifyConsentDecided } from '@/features/notifications/triggers';
 import { issueConsentRequest, lookupConsentCode, recordStaffRevocation, submitGuardianDecision } from './consent';
 import { CONSENT_SCOPE_LABELS } from './texts';
 
@@ -120,6 +121,8 @@ export async function submitConsentAction(prev: GuardianState, formData: FormDat
     entityType: 'member',
     entityId: saved.memberId,
   });
+  // Ke pembina yang meminta kode + staf dalam cakupan gudep. Tanpa nama wali/anak atau pilihannya.
+  await notifyConsentDecided({ memberId: saved.memberId });
   revalidatePath('/dashboard/persetujuan');
   return {
     status: 'success',

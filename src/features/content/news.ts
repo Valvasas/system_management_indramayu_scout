@@ -10,6 +10,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, optionalIsoDate, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { deleteMedia } from '@/lib/storage';
+import { notifyNewsPublished, notifyNewsReturned } from '@/features/notifications/triggers';
 import { resolveCover, uniqueSlug, revalidatePublicSite } from './shared';
 
 const NewsSchema = z.object({
@@ -84,6 +85,16 @@ export async function saveNewsAction(id: string | null, _prev: FormState, formDa
     entityType: 'news',
     entityId: newsId!,
   });
+  if (existing && published) {
+    await notifyNewsPublished({
+      newsId: existing.id,
+      title: v.title,
+      slug: existing.slug,
+      authorId: existing.createdById,
+      publishedAt,
+      actorId: user.id,
+    });
+  }
   revalidatePath('/dashboard/konten/berita');
   revalidatePublicSite();
   redirect('/dashboard/konten/berita?tersimpan=1');
@@ -114,7 +125,7 @@ export async function returnNewsAction(id: string, _prev: FormState, formData: F
     .update(schema.news)
     .set({ status: 'DRAFT', reviewNote: parsed.data.reviewNote })
     .where(eq(schema.news.id, id))
-    .returning({ title: schema.news.title });
+    .returning({ title: schema.news.title, createdById: schema.news.createdById });
   if (!row) return fail('Berita tidak ditemukan.');
   await audit(user, {
     action: 'content.return',
@@ -122,6 +133,7 @@ export async function returnNewsAction(id: string, _prev: FormState, formData: F
     entityType: 'news',
     entityId: id,
   });
+  await notifyNewsReturned({ newsId: id, title: row.title, authorId: row.createdById, actorId: user.id });
   revalidatePath('/dashboard/konten/berita');
   redirect('/dashboard/konten/berita?dikembalikan=1');
 }
