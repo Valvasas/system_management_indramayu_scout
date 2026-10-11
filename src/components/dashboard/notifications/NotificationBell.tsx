@@ -7,7 +7,7 @@ export const NOTIFICATIONS_HREF = '/dashboard/notifikasi';
 
 /** Kalimat jumlah belum dibaca untuk pembaca layar. */
 export function unreadPhrase(count: number): string {
-  return count > 0 ? `${count} notifikasi belum dibaca` : 'Tidak ada notifikasi yang belum dibaca';
+  return count > 0 ? `${count.toLocaleString('id-ID')} notifikasi belum dibaca` : 'Tidak ada notifikasi yang belum dibaca';
 }
 
 /**
@@ -24,11 +24,11 @@ export const NotificationBell: React.FC<{ count: number; active: boolean }> = ({
     )}
   >
     <Bell className="h-5 w-5 shrink-0" aria-hidden="true" />
-    <span className="sr-only">Notifikasi: {unreadPhrase(count)}</span>
+    <span className="sr-only">Notifikasi. {unreadPhrase(count)}</span>
     {count > 0 && (
       <span
         aria-hidden="true"
-        className="min-w-[1.5rem] rounded-pill bg-action-accent px-1.5 text-center text-xs font-bold leading-6 tabular-nums text-text-on-brand"
+        className="min-w-6 rounded-pill bg-action-accent px-1.5 text-center text-xs font-bold leading-6 tabular-nums text-text-on-brand"
       >
         {count > 99 ? '99+' : count}
       </span>

@@ -202,7 +202,7 @@ describe('persetujuan wali diputuskan (2.1)', () => {
     expect(await notifyConsentDecided({ memberId: memberA }, t.db)).toBe(0);
   });
 
-  it('peminta di luar cakupan tetap diberi tahu; staf gudep lain tidak', async () => {
+  it('peminta yang kini di luar cakupan hanya mendapat tanda terima umum; staf gudep lain tidak menerima', async () => {
     await t.db.insert(schema.guardianConsentRequests).values({
       memberId: memberB,
       codeHash: 'y',
@@ -211,8 +211,20 @@ describe('persetujuan wali diputuskan (2.1)', () => {
       requestedById: ids.kwarran1,
       requestedByName: 'Nama kwarran1',
     });
-    await notifyConsentDecided({ memberId: memberB }, t.db);
+    expect(await notifyConsentDecided({ memberId: memberB }, t.db)).toBe(6);
     expect(await namesOf('CONSENT_DECIDED')).toEqual(['admin', 'admin2', 'gudepB', 'kwarcab', 'kwarran1', 'kwarran2']);
+    const all = await rows('CONSENT_DECIDED');
+    const receipt = all.find((r) => r.userId === ids.kwarran1)!;
+    // Tanpa nama gudep tujuan dan tanpa tautan ke data anggota yang tidak lagi bisa ia buka.
+    expect(receipt.body).not.toContain('Gudep Bakau');
+    expect(receipt.href).toBe('/dashboard/persetujuan');
+    expect(`${receipt.title} ${receipt.body}`).not.toContain(memberB);
+    const inScope = all.find((r) => r.userId === ids.kwarran2)!;
+    expect(inScope.body).toContain('Gudep Bakau');
+    expect(inScope.href).toBe(`/dashboard/anggota/${memberB}`);
+    // Sekali per permintaan, juga untuk tanda terima.
+    expect(await notifyConsentDecided({ memberId: memberB }, t.db)).toBe(0);
+    expect(all.some((r) => r.userId === ids.gudepA)).toBe(false);
   });
 
   it('galat (mis. id rusak) tidak pernah melempar ke aksi utama', async () => {

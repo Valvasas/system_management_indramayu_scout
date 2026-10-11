@@ -9,7 +9,7 @@ import { getDb, schema, type Database } from '@/db';
 import type { NotificationKind, Role } from '@/db/schema';
 import { checkbox, parseForm } from '@/lib/forms';
 import { preferenceKindsFor } from './labels';
-import { listNotifications, safeHref, setPreference, unreadCount } from './notify';
+import { listNotifications, markRead, safeHref, setPreference, unreadCount } from './notify';
 
 export const PAGE_SIZE = 20;
 
@@ -34,7 +34,9 @@ export async function inboxPage(userId: string, opts: { page: number; filter: In
   ]);
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(1, Math.trunc(opts.page) || 1), pageCount);
-  const items = await listNotifications(userId, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE, unreadOnly }, d);
+  const rows = await listNotifications(userId, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE, unreadOnly }, d);
+  // Tautan disaring ulang saat ditampilkan: baris lama/rusak tidak bisa menjadi tautan keluar.
+  const items = rows.map((r) => ({ ...r, href: safeHref(r.href) }));
   return { items, total, unread, page, pageCount };
 }
 
@@ -52,12 +54,8 @@ export async function openNotification(userId: string, notificationId: string, d
     .where(and(eq(t.id, notificationId), eq(t.userId, userId)))
     .limit(1);
   if (!row) return null;
-  if (!row.readAt) {
-    await d
-      .update(t)
-      .set({ readAt: new Date() })
-      .where(and(eq(t.id, notificationId), eq(t.userId, userId), isNull(t.readAt)));
-  }
+  // markRead() juga dibatasi `user_id = pemilik`; sudah dibaca = tidak berubah.
+  if (!row.readAt) await markRead(userId, notificationId, d);
   // Tautan disaring ulang saat dipakai: baris lama/rusak tidak bisa menjadi open redirect.
   return { href: safeHref(row.href) };
 }

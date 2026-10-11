@@ -275,6 +275,10 @@ export function notifyAccessRequested(
 /**
  * Ke staf yang meminta kode + pemegang members.update dalam cakupan gudep anggota.
  * Nama wali, nama anak, dan pilihan persetujuan tidak disertakan.
+ *
+ * Peminta yang KINI di luar cakupan (mis. anggota sudah dimutasi, atau penugasannya berubah)
+ * hanya menerima tanda terima umum: tanpa nama gudep dan tanpa tautan ke data anggota, supaya
+ * notifikasi tidak membocorkan ke mana anak itu pindah.
  */
 export function notifyConsentDecided(input: { memberId: string }, db?: Database): Promise<number> {
   return guarded('consent', db, async (d) => {
@@ -293,18 +297,32 @@ export function notifyConsentDecided(input: { memberId: string }, db?: Database)
       .orderBy(desc(r.usedAt))
       .limit(1);
     const staff = await resolveRecipients({ permission: 'members.update', gudepId: member.gudepId }, d);
-    const ids = [...new Set([...(req?.requestedById ? [req.requestedById] : []), ...staff])];
-    return notify(
+    const base = {
+      kind: 'CONSENT_DECIDED' as const,
+      title: 'Wali telah memberi keputusan persetujuan',
+      dedupeKey: req ? `consent:${req.id}` : undefined,
+    };
+    const inScope = await notify(
       {
-        kind: 'CONSENT_DECIDED',
-        title: 'Wali telah memberi keputusan persetujuan',
+        ...base,
         body: `Untuk seorang anggota ${member.gudepName}. Lihat status terbarunya di data anggota.`,
         href: `/dashboard/anggota/${input.memberId}`,
-        recipients: { userIds: ids },
-        dedupeKey: req ? `consent:${req.id}` : undefined,
+        recipients: { userIds: staff },
       },
       d,
     );
+    const requester = req?.requestedById && !staff.includes(req.requestedById) ? req.requestedById : null;
+    if (!requester) return inScope;
+    const receipt = await notify(
+      {
+        ...base,
+        body: 'Kode persetujuan yang Anda buat sudah dipakai orang tua/wali. Rinciannya dapat dilihat pembina yang berwenang atas anggota tersebut.',
+        href: '/dashboard/persetujuan',
+        recipients: { userIds: [requester] },
+      },
+      d,
+    );
+    return inScope + receipt;
   });
 }
 

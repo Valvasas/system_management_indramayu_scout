@@ -63,8 +63,19 @@ describe('kotak masuk hanya milik pemilik sesi (IDOR, 2.1)', () => {
       .insert(schema.notifications)
       .values({ userId: ids.pembina, kind: 'SYSTEM', title: 'Lama', href: '//jahat.example/masuk' })
       .returning();
+    // Daftar juga tidak pernah merender tautan keluar dari baris yang rusak.
+    expect((await inboxPage(ids.pembina, { page: 1, filter: 'semua' }, t.db)).items[0].href).toBeNull();
     expect(await openNotification(ids.pembina, row.id, t.db)).toEqual({ href: null });
     expect((await t.db.select().from(schema.notifications).where(eq(schema.notifications.id, row.id)))[0].readAt).not.toBeNull();
+  });
+
+  it('membuka milik sendiri tidak menyentuh notifikasi pengguna lain yang belum dibaca', async () => {
+    await notify({ kind: 'SYSTEM', title: 'Sama', recipients: { userIds: [ids.pembina, ids.peserta] } }, t.db);
+    const all = await t.db.select().from(schema.notifications);
+    const mine = all.find((n) => n.userId === ids.peserta)!;
+    expect(await openNotification(ids.peserta, mine.id, t.db)).toEqual({ href: null });
+    expect(await unreadCount(ids.peserta, t.db)).toBe(0);
+    expect(await unreadCount(ids.pembina, t.db)).toBe(1);
   });
 
   it('halaman & saringan hanya memuat milik sendiri; nomor halaman dijepit', async () => {
