@@ -38,8 +38,17 @@ const nextConfig = {
   images: {
     // Optimizer aktif (P4-1). Tanpa remotePatterns, hanya berkas dari
     // origin sendiri yang boleh dioptimalkan — host tak terdaftar ditolak (P1-7).
-    formats: ['image/avif', 'image/webp'],
+    // AVIF sengaja dimatikan: GHSA-2xp9-vwfh-vxw4 (RCE lewat libheif di sharp) belum punya
+    // perbaikan untuk Next 14; WebP tidak melewati libheif. Lihat docs/operations/keputusan-next-16.md.
+    formats: ['image/webp'],
     remotePatterns: [],
+    // Hanya folder foto hasil saveImage() (lib/storage.ts) + aset publik. Tanpa ini optimizer mau
+    // memuat berkas lokal APA PUN ke memori, mis. dokumen 15 MB (GHSA-h64f-5h5j-jqjh), dan jumlah
+    // variannya tak terbatas (GHSA-3x4c-7xq6-9pq8). `search: ''` menolak query string.
+    localPatterns: ['/media/foto/**', '/media/berita/**', '/media/situs/**', '/images/**'].map((pathname) => ({
+      pathname,
+      search: '',
+    })),
   },
   async headers() {
     return [

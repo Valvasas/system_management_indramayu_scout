@@ -250,6 +250,34 @@ await step('editor menerbitkan; berita langsung tayang publik', async () => {
   await ctx.close();
 });
 
+await step('header CSP kiriman klien tidak meracuni cache ISR (GHSA-ffhc-5mcf-pf4q)', async () => {
+  // Penerbitan barusan memanggil revalidatePublicSite(): permintaan pertama ke halaman publik membangun
+  // ulang halaman itu. Bila header ini sampai ke Next 14, nonce palsunya menyisipkan atribut ke setiap
+  // <script> inline dan versi beracun itu disajikan ke semua pengunjung (XSS tersimpan).
+  // Sasaran sengaja halaman yang tidak ditautkan header/footer: prefetch <Link> dari langkah sebelumnya
+  // bisa membangunnya ulang lebih dulu dan membuat langkah ini lulus palsu (dijaga oleh cek MISS/STALE).
+  const target = `${BASE}/wilayah/indramayu`;
+  const evil = `script-src 'nonce-x"src='x'/onerror='alert(1)'/a='`;
+  const attacker = await fetch(target, { headers: { 'Content-Security-Policy': evil } });
+  const cache = attacker.headers.get('x-nextjs-cache');
+  assert(attacker.ok, `halaman sasaran harus 200 (status ${attacker.status})`);
+  assert(['MISS', 'STALE'].includes(cache ?? ''), `prasyarat uji gagal: permintaan uji tidak memicu regenerasi (x-nextjs-cache=${cache})`);
+  assert(!(await attacker.text()).includes('onerror'), 'nonce palsu dari header permintaan dipantulkan');
+  for (let i = 0; i < 20 && (await fetch(target)).headers.get('x-nextjs-cache') !== 'HIT'; i++)
+    await new Promise((r) => setTimeout(r, 250));
+  const { ctx, page } = await session(browser);
+  let dialog = false;
+  page.on('dialog', async (d) => {
+    dialog = true;
+    await d.dismiss();
+  });
+  await page.goto(target);
+  assert(!(await page.content()).includes('onerror'), 'halaman cache beracun disajikan ke pengunjung biasa');
+  await page.waitForTimeout(500);
+  assert(!dialog, 'skrip sisipan berjalan di browser pengunjung');
+  await ctx.close();
+});
+
 await step('setelah terbit: halaman statis lain tetap 200, slug asing tetap 404', async () => {
   // Regresi: revalidatePublicSite() + dynamicParams=false membuat seluruh /golongan/* & /wilayah/* jadi 404.
   const { ctx, page } = await session(browser);

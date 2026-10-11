@@ -107,7 +107,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | **`konten`** (hub) + `konten/{berita,agenda,galeri,dokumen,pengurus,prestasi}` | `content.manage` | **CMS.** Tiap bagian: `page.tsx` daftar + `[id]/page.tsx` editor (`baru` = buat). Galeri `[id]` memuat unggah foto & keterangan |
 | **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan; profil tanpa alamat/telepon/wali |
 | `/media/[...path]` (di `app/`) | publik | Menyajikan berkas unggahan dari `STORAGE_DIR` |
-| `middleware.ts` | — | Penyaring awal (cookie ada?) — **bukan** kontrol akses — + CSP ber-nonce untuk `/dashboard/*` & `/masuk` (wajib dinamis) |
+| `middleware.ts` | — | Jalan di SEMUA rute halaman: buang header CSP kiriman klien (XSS via cache ISR, GHSA-ffhc), penyaring awal `/dashboard` (cookie ada?) — **bukan** kontrol akses — + CSP ber-nonce untuk `/dashboard/*` & `/masuk` (wajib dinamis) |
 | `instrumentation.ts` | — | Saat server start: validasi env (fail-fast) |
 
 `not-found.tsx`, `error.tsx`, `sitemap.ts`, `robots.ts` ada di `src/app/`.

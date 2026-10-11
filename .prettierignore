@@ -8,6 +8,7 @@ storage/
 playwright-report/
 test-results/
 .lighthouseci/
+.claude/
 
 # Dihasilkan alat lain — jangan diformat tangan
 package-lock.json

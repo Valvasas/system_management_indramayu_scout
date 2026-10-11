@@ -36,6 +36,14 @@
 | 1.7 Monitoring & backup | SELESAI, **produksi belum diverifikasi** | Sentry opsional tanpa SDK (galat server tersamar), `/api/health`, `npm run db:backup` + `/dashboard/backup` (Super Admin), uji pulih. Restore penuh pg_dump → DB baru terbukti lokal. **Temuan uji PostgreSQL:** user aplikasi tak bisa `pg_dump` (skema drizzle) → migrasi 0010; berkas gagal 0 byte → dihapus |
 | Dokumen | SELESAI | `/kebijakan-privasi` ditulis ulang (klaim "IP tidak ditulis ke DB" sudah tidak benar); `authorization-model.md` dari kode + tes sinkron; status implementasi di 4 kebijakan keamanan; `monitoring.md`, `retention.md` |
 
+**Titik Henti 1 — Next 14 → 16 (P1-6).** Migrasi **tidak** dilakukan; analisis + rekomendasi di `docs/operations/keputusan-next-16.md` (23 advisori `next` dipetakan satu per satu ke kode).
+
+| Task | Status | Catatan |
+|---|---|---|
+| Keputusan Next 16 | SELESAI (menunggu keputusan manusia) | Rekomendasi: migrasi langsung ke 16.4.x (±3–4 hari). Tidak ada patch 14.x untuk advisori 2026. Sisa terjangkau: 4 DoS tanpa autentikasi (tanpa workaround), DoS optimizer (sebagian diredam), SSRF WebSocket (diredam di proxy, belum terverifikasi) |
+| Temuan: XSS tersimpan via cache ISR (GHSA-ffhc) | SELESAI | **Terbukti di build produksi lokal:** satu permintaan dengan header `Content-Security-Policy` palsu sesudah konten disimpan → beranda & `/wilayah` tersaji dengan atribut `onerror` sisipan ke semua pengunjung, `alert()` berjalan di Chromium. Middleware kini jalan di semua rute dan membuang header itu; dibuktikan bersih di build yang sama. Tes unit (terbukti gagal bila dimutasi) + langkah e2e |
+| Mitigasi optimizer gambar | SELESAI | AVIF dimatikan (RCE libheif, GHSA-2xp9); `localPatterns` hanya folder foto WebP (GHSA-h64f/3x4c). Aturan reverse proxy di `deployment-guide.md` — **belum diverifikasi** (belum ada server produksi) |
+
 
 **Checkpoint P0 tercapai:** `tsc --noEmit` exit 0 · `next build` exit 0 · 15/15 halaman ter-generate.
 

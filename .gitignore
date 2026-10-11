@@ -35,3 +35,6 @@ start_server.bat
 .data/
 storage/
 server.log
+
+# Worktree sementara agen (Claude Code)
+/.claude/worktrees/
