@@ -51,6 +51,11 @@ interface NavDef extends Omit<NavItem, 'badge'> {
   badgeKey?: BadgeKey;
 }
 
+/**
+ * Setiap `href` WAJIB punya `page.tsx` (dijaga tests/unit/nav.test.ts). Menu ke halaman yang belum
+ * ada bukan sekadar tautan mati: prefetch 404-nya tidak pernah selesai di Chromium, sehingga
+ * `networkidle` (a11y & e2e) tidak tercapai. Entri Blok 2 ditambahkan saat halamannya di-merge.
+ */
 const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
   {
     items: [
@@ -67,10 +72,6 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
       { href: '/dashboard/mutasi', label: 'Mutasi anggota', icon: 'swap', permission: 'members.update', badgeKey: 'pendingTransfers' },
       { href: '/dashboard/pendaftaran', label: 'Pendaftaran kegiatan', icon: 'clipboard', permission: 'members.read' },
       { href: '/dashboard/persetujuan', label: 'Persetujuan wali', icon: 'consent', permission: 'members.read' },
-      { href: '/dashboard/sku', label: 'Syarat SKU/SKK', icon: 'award', permission: 'competency.manage' },
-      { href: '/dashboard/peta', label: 'Peta internal', icon: 'compass', permission: 'gudep.read' },
-      { href: '/dashboard/laporan', label: 'Laporan', icon: 'chart', permission: 'reports.view' },
-      { href: '/dashboard/dokumen-internal', label: 'Dokumen internal', icon: 'folder', permission: 'internal_docs.view' },
     ],
   },
   {

@@ -40,3 +40,6 @@ server.log
 
 # Worktree sementara agen (Claude Code)
 /.claude/worktrees/
+
+# Laporan Lighthouse CI lokal
+.lighthouseci/
