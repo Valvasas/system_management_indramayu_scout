@@ -89,11 +89,24 @@ export interface ButtonLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement>
 /**
  * Tautan bergaya tombol. Dipakai menggantikan pola `<Link tabIndex={-1}><Button/></Link>`
  * yang menyarangkan elemen interaktif di dalam elemen interaktif (pelanggaran a11y).
+ *
+ * Tautan unduhan (route handler: CSV, XLSX, ICS, berkas) WAJIB memakai prop `download`:
+ * dirender sebagai `<a>` biasa. `next/link` mem-prefetch target di produksi — untuk route
+ * ekspor itu berarti data anggota diekspor & tercatat di log audit setiap kali halaman dibuka,
+ * dan prefetch-nya tidak pernah selesai di Chromium (dijaga tests/unit/download-links.test.ts).
  */
 export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ href, variant = 'primary', size = 'md', className, children, ...props }, ref) => {
     const isExternal = /^https?:\/\//i.test(href);
     const classes = buttonStyles(variant, size, className);
+
+    if (props.download !== undefined) {
+      return (
+        <a ref={ref} href={href} className={classes} {...props}>
+          {children}
+        </a>
+      );
+    }
 
     if (isExternal) {
       return (

@@ -33,12 +33,12 @@ export default async function PendaftarPage({ params }: { params: { id: string }
         actions={
           canExport ? (
             <>
-              <ButtonLink href={`/dashboard/pendaftaran/${event.id}/ekspor`} variant="outline">
+              <ButtonLink download href={`/dashboard/pendaftaran/${event.id}/ekspor`} variant="outline">
                 <Download className="h-4 w-4" aria-hidden="true" />
                 Unduh CSV
               </ButtonLink>
               {can(user, 'attendance.record') && (
-                <ButtonLink href={`/dashboard/pendaftaran/${event.id}/presensi/ekspor`} variant="outline">
+                <ButtonLink download href={`/dashboard/pendaftaran/${event.id}/presensi/ekspor`} variant="outline">
                   <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
                   Unduh presensi
                 </ButtonLink>

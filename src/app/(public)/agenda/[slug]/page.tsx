@@ -153,7 +153,7 @@ export default async function AgendaDetailPage({ params }: Params) {
               ))}
             </dl>
             <div className="grid gap-2 p-5 pt-2">
-              <ButtonLink href={`/agenda/${agenda.slug}/kalender.ics`} variant="primary">
+              <ButtonLink download href={`/agenda/${agenda.slug}/kalender.ics`} variant="primary">
                 <CalendarPlus className="h-4 w-4" aria-hidden="true" />
                 Simpan ke kalender
               </ButtonLink>
