@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { OwnCompetencyPanel } from '@/components/dashboard/competency/CompetencyPanel';
 import { InfoList, MemberStatusBadge, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
 import { getOwnMember } from '@/features/portal/peserta';
 import { requirePermission } from '@/lib/auth/session';
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: 'Profil saya' };
 /**
  * Hanya data diri anggota itu sendiri. Alamat, nomor telepon, dan data wali sengaja tidak
  * ditampilkan di sini: perubahan & pemeriksaannya lewat pembina gudep (prinsip minimisasi data).
+ * Kemajuan SKU/SKK hanya-baca, diambil lewat `actor.memberId` (tanpa catatan pembina).
  */
 export default async function ProfilPage() {
   const user = await requirePermission('self.portal');
@@ -81,6 +83,10 @@ export default async function ProfilPage() {
             </p>
           </Panel>
         </div>
+      </div>
+
+      <div className="mt-6">
+        <OwnCompetencyPanel user={user} />
       </div>
     </>
   );
