@@ -9,6 +9,7 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { checkbox, fail, parseForm, requiredText, type FormState } from '@/lib/forms';
 import { deleteMedia } from '@/lib/storage';
+import { notifyNewsSubmitted } from '@/features/notifications/triggers';
 import { resolveCover, uniqueSlug } from './shared';
 
 /**
@@ -84,6 +85,10 @@ export async function saveContributionAction(id: string | null, _prev: FormState
     entityType: 'news',
     entityId: newsId!,
   });
+  // Hanya saat berpindah ke REVIEW: menyunting ulang berita yang sudah menunggu tidak mengirim ulang.
+  if (v.status === 'REVIEW' && existing?.status !== 'REVIEW') {
+    await notifyNewsSubmitted({ newsId: newsId!, title: v.title, actorId: user.id });
+  }
   revalidatePath('/dashboard/kontribusi');
   revalidatePath('/dashboard/konten/berita');
   redirect(`/dashboard/kontribusi?${v.status === 'REVIEW' ? 'terkirim' : 'tersimpan'}=1`);

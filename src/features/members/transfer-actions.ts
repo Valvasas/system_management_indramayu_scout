@@ -10,6 +10,7 @@ import { audit } from '@/lib/auth/audit';
 import { canAccessGudep } from '@/lib/auth/scope';
 import { can, requirePermission } from '@/lib/auth/session';
 import { fail, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
+import { notifyTransferDecided, notifyTransferRequested } from '@/features/notifications/triggers';
 import { getMember } from './queries';
 import { openTransferForMember } from './transfers';
 
@@ -77,6 +78,8 @@ export async function requestTransferAction(memberId: string, _prev: FormState, 
     revalidatePath(`/dashboard/anggota/${memberId}`);
     redirect(`/dashboard/anggota/${memberId}?tersimpan=mutasi`);
   }
+  // Ke verifikator gudep tujuan. Alasan mutasi TIDAK disertakan.
+  await notifyTransferRequested({ transferId: created.id, fromGudepId: created.fromGudepId, toGudepId, actorId: actor.id });
   revalidatePath(`/dashboard/anggota/${memberId}`);
   revalidatePath('/dashboard/mutasi');
   redirect(`/dashboard/anggota/${memberId}?tersimpan=mutasi-diajukan`);
@@ -122,6 +125,15 @@ export async function decideTransferAction(transferId: string, _prev: FormState,
       entityId: row.t.memberId,
     });
   }
+  // Ke pengaju. Catatan keputusan (alasan penolakan) TIDAK disertakan.
+  await notifyTransferDecided({
+    transferId: row.t.id,
+    requestedById: row.t.requestedById,
+    approved: parsed.data.decision === 'approve',
+    fromGudepId: row.t.fromGudepId,
+    toGudepId: row.t.toGudepId,
+    actorId: actor.id,
+  });
   revalidatePath('/dashboard/mutasi');
   redirect(`/dashboard/mutasi?keputusan=${parsed.data.decision === 'approve' ? 'setuju' : 'tolak'}`);
 }

@@ -71,6 +71,7 @@ export default async function PortalLayout({ children }: { children: React.React
       user={{ name: user.name, roleLabel: ROLE_LABELS[user.role], scopeLabel: label }}
       portalLabel={user.role === 'PESERTA' ? 'Portal Peserta' : 'Portal Pengurus'}
       nav={nav}
+      unreadNotifications={counts.unreadNotifications ?? 0}
     >
       {user.mfa.kind === 'grace' && path !== MFA_SETUP_PATH && <MfaGraceNotice daysLeft={user.mfa.daysLeft} />}
       {children}

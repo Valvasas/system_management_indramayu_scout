@@ -12,6 +12,7 @@ import { createSession, destroyUserSessions, requireUser } from '@/lib/auth/sess
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { clientIp } from '@/lib/security/request';
 import { createRateLimiter } from '@/lib/security/rate-limit';
+import { notifyAccessRequested } from '@/features/notifications/triggers';
 import { accessCodeMessage, canManageAccess, issueAccessCode } from './access-codes';
 import { getMfaRecord } from './mfa';
 
@@ -52,13 +53,19 @@ export async function requestPasswordResetAction(_prev: FormState, formData: For
       .where(and(eq(schema.passwordResetRequests.userId, user.id), eq(schema.passwordResetRequests.status, 'OPEN')))
       .limit(1);
     if (!open) {
-      await db.insert(schema.passwordResetRequests).values({ userId: user.id, note: parsed.data.note });
+      const [created] = await db
+        .insert(schema.passwordResetRequests)
+        .values({ userId: user.id, note: parsed.data.note })
+        .returning({ id: schema.passwordResetRequests.id });
       await audit(null, {
         action: 'auth.reset_requested',
         summary: `Permintaan reset sandi untuk "${user.username}"`,
         entityType: 'user',
         entityId: user.id,
       });
+      // Ke pembina/pengurus yang berwenang atas akun ini (prioritas tinggi). Catatan pemohon tidak
+      // disertakan; jawaban ke pemohon tetap GENERIC_REQUEST apa pun hasilnya.
+      await notifyAccessRequested({ requestId: created.id, target: user });
     }
   }
   return ok(GENERIC_REQUEST);
