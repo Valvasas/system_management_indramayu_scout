@@ -761,6 +761,141 @@ await step('penugasan staf: peran tanpa users.manage tidak bisa membuka halaman 
   await ctx.close();
 });
 
+/* ---------- 2.3 SKU/SKK digital ---------- */
+const skuPesertaPassword = typeof newPassword === 'string' ? newPassword : DEMO;
+const skuSum = async (page) => {
+  const t = (await page.locator('#sku').textContent()) ?? '';
+  return [...t.matchAll(/(\d+) dari (\d+) terverifikasi/g)].reduce((n, m) => n + Number(m[1]), 0);
+};
+let skuOwnGudepId = '';
+
+await step('SKU/SKK: daftar syarat hanya untuk Kwarcab (dicek di server); syarat contoh tampil', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'gudep.smp1');
+  for (const p of ['/dashboard/sku', '/dashboard/sku/baru']) {
+    const r = await page.goto(`${BASE}${p}`);
+    assert(r.status() === 404, `${p} seharusnya 404 untuk staf gudep, dapat ${r.status()}`);
+  }
+  await ctx.close();
+
+  const s2 = await session(browser);
+  await login(s2.page, 'admin');
+  const r = await s2.page.goto(`${BASE}/dashboard/sku?golongan=PENGGALANG`);
+  assert(r.status() === 200, `/dashboard/sku status ${r.status()}`);
+  const body = await text(s2.page);
+  assert(body.includes('DEMO-PG-RAMU-01'), 'syarat contoh seed tidak tampil');
+  assert(!body.includes('DEMO-PG-RAMU-99'), 'syarat nonaktif tampil di saringan bawaan (aktif)');
+  const v = await axeViolations(s2.page);
+  assert(v.length === 0, `axe /dashboard/sku: ${v.join(', ')}`);
+  await s2.ctx.close();
+});
+
+await step('Kwarcab menambah syarat; kode ganda ditolak di server', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'admin');
+  const fill = async (code) => {
+    await page.goto(`${BASE}/dashboard/sku/baru`);
+    await page.locator('#f-title').fill('Contoh syarat e2e — ganti dengan teks resmi SKU Kwarnas');
+    await page.locator('#f-kind').selectOption('SKU');
+    await page.locator('#f-golongan').selectOption('PENGGALANG');
+    await page.locator('#f-level').fill('Ramu');
+    await page.locator('#f-code').fill(code);
+    await page.locator('#f-sortOrder').fill('50');
+  };
+  await fill('e2e-pg-ramu-01');
+  await Promise.all([page.waitForURL('**tersimpan=baru'), page.getByRole('button', { name: /simpan syarat/i }).click()]);
+  assert((await text(page)).includes('E2E-PG-RAMU-01'), 'syarat baru tidak tampil (kode disimpan huruf besar)');
+  await fill('E2E-PG-RAMU-01');
+  await page.getByRole('button', { name: /simpan syarat/i }).click();
+  await page.getByText(/sudah dipakai syarat lain/i).waitFor();
+  await ctx.close();
+});
+
+await step('pembina memverifikasi lalu membatalkan syarat anggota gudepnya; kemajuan berubah', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'gudep.smp1');
+  await page.goto(`${BASE}/dashboard/anggota?status=ACTIVE&golongan=PENGGALANG`);
+  await page.locator('main table a').first().click();
+  await page.waitForURL(/\/dashboard\/anggota\/[0-9a-f-]{36}/);
+  await page.locator('#sku').waitFor();
+  const before = await skuSum(page);
+  await page
+    .getByRole('button', { name: /^Tandai terverifikasi/ })
+    .first()
+    .click();
+  await page
+    .locator('#sku')
+    .getByText(/tercatat terverifikasi/)
+    .waitFor();
+  await page.reload();
+  assert((await skuSum(page)) === before + 1, 'jumlah terverifikasi tidak bertambah');
+  const v = await axeViolations(page);
+  assert(v.length === 0, `axe detail anggota (panel SKU/SKK): ${v.join(', ')}`);
+
+  page.once('dialog', (d) => d.accept());
+  await page
+    .getByRole('button', { name: /^Batalkan verifikasi/ })
+    .first()
+    .click();
+  await page
+    .locator('#sku')
+    .getByText(/dibatalkan\./)
+    .waitFor();
+  await page.reload();
+  assert((await skuSum(page)) === before, 'pembatalan tidak mengurangi kemajuan');
+  const href = await page.locator('#sku a[href*="/dashboard/sku/ekspor?gudep="]').getAttribute('href');
+  skuOwnGudepId = new URL(href ?? '', BASE).searchParams.get('gudep') ?? '';
+  assert(skuOwnGudepId, 'tautan rekap gudep tidak ada di panel SKU/SKK');
+  await ctx.close();
+});
+
+await step('rekap CSV SKU/SKK: gudep sendiri boleh tanpa data sensitif, gudep lain 404 (IDOR)', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'admin');
+  await page.goto(`${BASE}/dashboard/sku`);
+  const ids = await page.locator('#rekap-gudep option').evaluateAll((os) => os.map((o) => o.value).filter(Boolean));
+  const other = ids.find((id) => id !== skuOwnGudepId);
+  assert(other, 'tidak ada gudep lain untuk uji IDOR');
+  await ctx.close();
+
+  const s2 = await session(browser);
+  await login(s2.page, 'gudep.smp1');
+  const own = await s2.page.request.get(`${BASE}/dashboard/sku/ekspor?gudep=${skuOwnGudepId}`);
+  assert(own.status() === 200, `ekspor gudep sendiri status ${own.status()}`);
+  assert((own.headers()['content-type'] ?? '').includes('text/csv'), 'ekspor bukan CSV');
+  const csv = await own.text();
+  assert(csv.includes('Jumlah Syarat') && csv.includes('Ramu'), 'isi rekap tidak sesuai');
+  for (const secret of ['Orang Tua', '0813-', 'Contoh catatan pembina', 'Contoh alasan pembatalan']) {
+    assert(!csv.includes(secret), `CSV memuat data yang tidak boleh: ${secret}`);
+  }
+  const foreign = await s2.page.request.get(`${BASE}/dashboard/sku/ekspor?gudep=${other}`);
+  assert(foreign.status() === 404, `ekspor gudep di luar cakupan seharusnya 404, dapat ${foreign.status()}`);
+  const bogus = await s2.page.request.get(`${BASE}/dashboard/sku/ekspor?gudep=bukan-uuid`);
+  assert(bogus.status() === 404, `id gudep asing seharusnya 404, dapat ${bogus.status()}`);
+  await s2.ctx.close();
+});
+
+await step('peserta melihat kemajuan SKU/SKK sendiri: hanya-baca, tanpa catatan pembina', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'peserta.dimas', skuPesertaPassword);
+  await page.goto(`${BASE}/dashboard/profil`);
+  const body = await text(page);
+  assert(body.includes('Kemajuan SKU/SKK saya'), 'panel SKU/SKK tidak tampil di profil');
+  assert(/\d+ dari \d+ terverifikasi/.test(body), 'kemajuan tidak tampil sebagai teks');
+  assert(!body.includes('Contoh catatan pembina'), 'catatan pembina bocor ke peserta');
+  const buttons = await page.getByRole('button', { name: /Tandai terverifikasi|Batalkan verifikasi/ }).count();
+  assert(buttons === 0, 'peserta melihat tombol verifikasi');
+  const v = await axeViolations(page);
+  assert(v.length === 0, `axe /dashboard/profil: ${v.join(', ')}`);
+  for (const p of ['/dashboard/sku', '/dashboard/sku/baru']) {
+    const r = await page.goto(`${BASE}${p}`);
+    assert(r.status() === 404, `${p} seharusnya 404 untuk peserta, dapat ${r.status()}`);
+  }
+  const exp = await page.request.get(`${BASE}/dashboard/sku/ekspor`);
+  assert(exp.status() === 403, `ekspor SKU untuk peserta seharusnya 403, dapat ${exp.status()}`);
+  await ctx.close();
+});
+
 await browser.close();
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} langkah lulus.`);

@@ -72,6 +72,7 @@ const STAFF_NAV: { title?: string; items: NavDef[] }[] = [
       { href: '/dashboard/mutasi', label: 'Mutasi anggota', icon: 'swap', permission: 'members.update', badgeKey: 'pendingTransfers' },
       { href: '/dashboard/pendaftaran', label: 'Pendaftaran kegiatan', icon: 'clipboard', permission: 'members.read' },
       { href: '/dashboard/persetujuan', label: 'Persetujuan wali', icon: 'consent', permission: 'members.read' },
+      { href: '/dashboard/sku', label: 'Syarat SKU/SKK', icon: 'award', permission: 'competency.manage' },
     ],
   },
   {

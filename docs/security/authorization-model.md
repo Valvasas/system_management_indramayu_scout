@@ -90,6 +90,12 @@ mendapat semua izin lain kecuali `self.portal`.
 | Log audit INSERT-only: trigger + `REVOKE` untuk user aplikasi; integritas dicek `audit.verify` | `drizzle/0004_…`, `audit-chain.ts` | `tests/integration/audit-chain.test.ts`, `retention.test.ts` |
 | Backup manual & uji pulih hanya `system.backup` | `features/backup/backup-actions.ts` | `tests/integration/backup.test.ts` |
 | Peserta tidak melihat alamat, telepon, data wali; menu staf 404 | `self.portal`, `features/portal` | e2e |
+| Akun portal anak butuh persetujuan DATA terverifikasi; koreksi tanggal lahir yang menjadikan anggota aktif tergolong anak tanpa persetujuan → kembali PENDING | `portalAccountBlock`, `statusAfterEdit` | `tests/unit/consent.test.ts` |
+| **Notifikasi (2.1)**: hanya pemilik membaca/menandai; penerima dihitung di server dari izin + cakupan | `features/notifications/*` | `tests/integration/notification-*.test.ts` |
+| **Presensi (2.2)**: `attendance.record` + anggota dalam cakupan + terdaftar di kegiatan; ekspor CSV butuh juga `members.export`; peserta hanya riwayatnya sendiri; batal daftar ditolak setelah presensi dicatat | `features/attendance/attendance.ts`, `features/portal/actions.ts` | `tests/integration/attendance.test.ts` |
+| **SKU/SKK (2.3)**: kelola syarat `competency.manage`; verifikasi `competency.verify` + cakupan; ekspor butuh `competency.verify` **dan** `members.export`; peserta hanya kemajuannya sendiri | `features/competency/competency.ts`, `export.ts` | `tests/integration/competency*.test.ts` |
+| **Masa jabatan (2.4)**: penugasan staf hanya `users.manage`, bukan untuk akun peserta, akun Super Admin hanya oleh Super Admin; penugasan tidak mengubah peran/cakupan | `features/terms/assignments.ts` | `tests/integration/terms.test.ts` |
+| Tautan unduhan (ekspor) tidak lewat `next/link` agar tidak di-prefetch (ekspor diam-diam) | `ButtonLink download` | `tests/unit/download-links.test.ts` |
 
 ## Cakupan per peran
 

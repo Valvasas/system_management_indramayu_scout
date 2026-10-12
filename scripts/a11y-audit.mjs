@@ -84,6 +84,8 @@ const ADMIN = [
   '/dashboard/log/integritas?periksa=1',
   '/dashboard/backup',
   '/dashboard/notifikasi',
+  '/dashboard/sku',
+  '/dashboard/sku/baru',
   '/dashboard/notifikasi?tampil=belum',
   // Rute dinamis: diambil dari tautan pertama yang cocok di halaman daftar.
   { from: '/dashboard/anggota', match: /^\/dashboard\/anggota\/[0-9a-f-]{36}$/ },
