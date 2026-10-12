@@ -61,6 +61,7 @@ export async function CompetencyPanel({ user, memberId }: { user: SessionUser; m
           <CompetencyGroups
             groups={groups}
             showInternal
+            collapseComplete={false}
             control={
               canVerify
                 ? (item) => (

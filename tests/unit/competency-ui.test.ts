@@ -65,4 +65,14 @@ describe('tampilan kemajuan SKU/SKK (2.3)', () => {
     expect(withControl.match(/data-kontrol=/g)).toHaveLength(3);
     expect(renderToStaticMarkup(React.createElement(CompetencyGroups, { groups, showInternal: true }))).not.toContain('data-kontrol');
   });
+
+  it('kelompok lengkap dilipat untuk peserta, tetap terbuka untuk staf (pesan hasil tidak tersembunyi)', () => {
+    const done = summarizeProgress('PENGGALANG', [req('S1', { kind: 'SKK', level: 'Contoh SKK' })], [ver('id-S1')]);
+    const openCount = (html: string) => (html.match(/<details[^>]* open=""/g) ?? []).length;
+    expect(openCount(renderToStaticMarkup(React.createElement(CompetencyGroups, { groups: done, showInternal: false })))).toBe(0);
+    expect(
+      openCount(renderToStaticMarkup(React.createElement(CompetencyGroups, { groups: done, showInternal: true, collapseComplete: false }))),
+    ).toBe(1);
+    expect(openCount(renderToStaticMarkup(React.createElement(CompetencyGroups, { groups, showInternal: false })))).toBe(1);
+  });
 });

@@ -50,20 +50,24 @@ function ItemRow({
 }
 
 /**
- * Kemajuan SKU/SKK per jenis + tingkatan. Kelompok yang belum lengkap terbuka; yang lengkap
- * dilipat. `showInternal` = staf (catatan & alasan pembatalan); peserta tidak pernah melihatnya
- * (datanya pun sudah dibuang di server, lihat features/competency/competency.ts).
+ * Kemajuan SKU/SKK per jenis + tingkatan. `collapseComplete`: kelompok yang sudah lengkap dilipat
+ * (tampilan peserta); di tampilan staf semua terbuka agar pesan hasil verifikasi tidak ikut
+ * tersembunyi saat kelompok menjadi lengkap. `showInternal` = staf (catatan & alasan pembatalan);
+ * peserta tidak pernah melihatnya (datanya pun sudah dibuang di server, lihat
+ * features/competency/competency.ts).
  */
 export function CompetencyGroups({
   groups,
   showInternal,
   control,
   idPrefix = 'sku',
+  collapseComplete = true,
 }: {
   groups: ProgressGroup[];
   showInternal: boolean;
   control?: (item: ProgressItem) => React.ReactNode;
   idPrefix?: string;
+  collapseComplete?: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -81,7 +85,7 @@ export function CompetencyGroups({
               )}
             </div>
             <ProgressMeter verified={g.verified} total={g.total} percent={g.percent} />
-            <details className="group rounded-xl border border-border-subtle" open={!complete}>
+            <details className="group rounded-xl border border-border-subtle" open={!(collapseComplete && complete)}>
               <summary className="flex min-h-touch cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 text-sm font-semibold text-text-primary hover:bg-surface-subtle [&::-webkit-details-marker]:hidden">
                 Rincian {g.total} syarat
                 <ChevronDown

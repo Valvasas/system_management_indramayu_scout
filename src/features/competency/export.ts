@@ -97,7 +97,6 @@ export async function progressExport(
         requirementId: schema.memberCompetencies.requirementId,
         verifiedAt: schema.memberCompetencies.verifiedAt,
         verifiedByName: schema.memberCompetencies.verifiedByName,
-        note: schema.memberCompetencies.note,
         revokedAt: schema.memberCompetencies.revokedAt,
         revokedByName: schema.memberCompetencies.revokedByName,
       })
@@ -110,6 +109,7 @@ export async function progressExport(
   const byMember = new Map<string, VerificationLike[]>();
   for (const v of verifications) {
     const list = byMember.get(v.memberId) ?? [];
+    // Catatan pembina tidak pernah dibaca untuk ekspor (kolomnya tidak dipilih).
     list.push({ ...v, note: null });
     byMember.set(v.memberId, list);
   }
