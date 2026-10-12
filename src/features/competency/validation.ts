@@ -53,8 +53,18 @@ export const RequirementSchema = z.object({
 });
 export type RequirementInput = z.infer<typeof RequirementSchema>;
 
-/** Catatan verifikasi/pembatalan: opsional, pendek, tanpa data pribadi (dijelaskan di formulir). */
-export const NoteSchema = z.object({ note: optionalText(300) });
+export const VERIFICATION_NOTE_MAX = 300;
+
+/**
+ * Formulir verifikasi satu syarat: tombol yang ditekan mengirim `intent` (tandai / batalkan).
+ * Catatan opsional, pendek, tanpa data pribadi (dijelaskan di formulir); tidak pernah masuk log
+ * audit, notifikasi, atau CSV.
+ */
+export const VerificationSchema = z.object({
+  intent: z.enum(['verify', 'revoke'], { errorMap: () => ({ message: 'Pilih tindakan: tandai terverifikasi atau batalkan.' }) }),
+  note: optionalText(VERIFICATION_NOTE_MAX),
+});
+export type VerificationIntent = z.infer<typeof VerificationSchema>['intent'];
 
 export const isUuid = (v: string | null | undefined): v is string =>
   !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);

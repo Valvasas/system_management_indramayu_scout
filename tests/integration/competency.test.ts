@@ -6,9 +6,12 @@ import {
   getRequirement,
   listRequirements,
   memberProgress,
+  ownProgress,
   revokeVerification,
   saveRequirement,
+  saveRequirementForm,
   setRequirementActive,
+  verificationForm,
   verifyRequirement,
 } from '@/features/competency/competency';
 import { progressExport } from '@/features/competency/export';
@@ -114,6 +117,14 @@ const pesertaA = () => actor('PESERTA', { id: pesertaUserA, memberId: memberA })
 const verifications = (memberId: string) =>
   t.db.select().from(schema.memberCompetencies).where(eq(schema.memberCompetencies.memberId, memberId));
 
+const form = (fields: Record<string, string>) => {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+  return fd;
+};
+
+const auditRows = () => t.db.select().from(schema.auditLogs).orderBy(schema.auditLogs.id);
+
 describe('daftar syarat SKU/SKK (competency.manage)', () => {
   it('hanya peran tingkat Kwarcab yang memegang competency.manage', () => {
     const holders = (['SUPER_ADMIN', 'ADMIN_KWARCAB', 'ADMIN_WEBSITE', 'STAFF_KWARRAN', 'STAFF_GUDEP', 'PESERTA'] as Role[]).filter(
@@ -124,12 +135,12 @@ describe('daftar syarat SKU/SKK (competency.manage)', () => {
 
   it('peran lain tidak bisa membuat, mengubah, menonaktifkan, atau membaca daftar kelola', async () => {
     for (const a of [staffA(), kwarran1(), actor('ADMIN_WEBSITE'), pesertaA()]) {
-      expect(await saveRequirement(a, null, input(), t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
-      expect(await saveRequirement(a, req.R1, input({ code: 'R1', title: 'Diubah' }), t.db)).toEqual({
+      expect(await saveRequirement(a, null, input(), { db: t.db })).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+      expect(await saveRequirement(a, req.R1, input({ code: 'R1', title: 'Diubah' }), { db: t.db })).toEqual({
         ok: false,
         reason: 'tidak-ditemukan',
       });
-      expect(await setRequirementActive(a, req.R1, false, t.db)).toBeNull();
+      expect(await setRequirementActive(a, req.R1, false, { db: t.db })).toBeNull();
       expect(await getRequirement(a, req.R1, t.db)).toBeNull();
       expect((await listRequirements(a, {}, t.db)).rows).toEqual([]);
     }
@@ -138,19 +149,22 @@ describe('daftar syarat SKU/SKK (competency.manage)', () => {
   });
 
   it('Kwarcab membuat & mengubah; kode unik tanpa beda huruf besar/kecil', async () => {
-    const created = await saveRequirement(kwarcab(), null, input({ code: 'uji-1' }), t.db);
+    const created = await saveRequirement(kwarcab(), null, input({ code: 'uji-1' }), { db: t.db });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
     expect((await getRequirement(kwarcab(), created.id, t.db))?.code).toBe('UJI-1');
-    expect(await saveRequirement(kwarcab(), null, input({ code: 'UJI-1' }), t.db)).toEqual({ ok: false, reason: 'kode-dipakai' });
-    expect(await saveRequirement(kwarcab(), req.R2, input({ code: 'uji-1' }), t.db)).toEqual({ ok: false, reason: 'kode-dipakai' });
+    expect(await saveRequirement(kwarcab(), null, input({ code: 'UJI-1' }), { db: t.db })).toEqual({ ok: false, reason: 'kode-dipakai' });
+    expect(await saveRequirement(kwarcab(), req.R2, input({ code: 'uji-1' }), { db: t.db })).toEqual({ ok: false, reason: 'kode-dipakai' });
     // Menyimpan ulang dengan kode sendiri tetap boleh.
-    expect(await saveRequirement(kwarcab(), created.id, input({ code: 'UJI-1', title: 'Judul baru', sortOrder: 7 }), t.db)).toEqual({
-      ok: true,
-      id: created.id,
-    });
+    expect(await saveRequirement(kwarcab(), created.id, input({ code: 'UJI-1', title: 'Judul baru', sortOrder: 7 }), { db: t.db })).toEqual(
+      {
+        ok: true,
+        id: created.id,
+        created: false,
+      },
+    );
     expect(await getRequirement(kwarcab(), created.id, t.db)).toMatchObject({ title: 'Judul baru', sortOrder: 7 });
-    expect(await saveRequirement(kwarcab(), crypto.randomUUID(), input({ code: 'BARU' }), t.db)).toEqual({
+    expect(await saveRequirement(kwarcab(), crypto.randomUUID(), input({ code: 'BARU' }), { db: t.db })).toEqual({
       ok: false,
       reason: 'tidak-ditemukan',
     });
@@ -166,12 +180,12 @@ describe('daftar syarat SKU/SKK (competency.manage)', () => {
   });
 
   it('golongan terkunci setelah syarat pernah diverifikasi; filter status & golongan bekerja', async () => {
-    expect((await verifyRequirement(staffA(), memberA, req.R1, null, NOW, t.db)).ok).toBe(true);
-    expect(await saveRequirement(kwarcab(), req.R1, input({ code: 'R1', golongan: 'PENEGAK' }), t.db)).toEqual({
+    expect((await verifyRequirement(staffA(), memberA, req.R1, null, { now: NOW, db: t.db })).ok).toBe(true);
+    expect(await saveRequirement(kwarcab(), req.R1, input({ code: 'R1', golongan: 'PENEGAK' }), { db: t.db })).toEqual({
       ok: false,
       reason: 'golongan-terkunci',
     });
-    expect((await saveRequirement(kwarcab(), req.R2, input({ code: 'R2', golongan: 'PENEGAK' }), t.db)).ok).toBe(true);
+    expect((await saveRequirement(kwarcab(), req.R2, input({ code: 'R2', golongan: 'PENEGAK' }), { db: t.db })).ok).toBe(true);
 
     const active = await listRequirements(kwarcab(), { golongan: 'PENGGALANG', kind: 'SKU' }, t.db);
     expect(active.rows.map((x) => x.code)).toEqual(['R1', 'R3', 'K1']);
@@ -184,50 +198,65 @@ describe('daftar syarat SKU/SKK (competency.manage)', () => {
 describe('verifikasi syarat anggota (competency.verify + cakupan)', () => {
   it('IDOR: staf gudep/kwarran lain, admin website, dan peserta tidak bisa memverifikasi', async () => {
     for (const a of [staffB(), kwarran2(), actor('ADMIN_WEBSITE'), pesertaA(), actor('STAFF_GUDEP'), actor('STAFF_KWARRAN')]) {
-      expect(await verifyRequirement(a, memberA, req.R1, null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+      expect(await verifyRequirement(a, memberA, req.R1, null, { now: NOW, db: t.db })).toEqual({ ok: false, reason: 'tidak-ditemukan' });
     }
     expect(await verifications(memberA)).toHaveLength(0);
     // Kwarran satu meliputi gudep A & B; kwarcab meliputi semuanya.
-    expect((await verifyRequirement(kwarran1(), memberB, req.R1, null, NOW, t.db)).ok).toBe(true);
-    expect((await verifyRequirement(kwarcab(), memberC, req.R1, null, NOW, t.db)).ok).toBe(true);
-    expect(await verifyRequirement(kwarran1(), memberC, req.R2, null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+    expect((await verifyRequirement(kwarran1(), memberB, req.R1, null, { now: NOW, db: t.db })).ok).toBe(true);
+    expect((await verifyRequirement(kwarcab(), memberC, req.R1, null, { now: NOW, db: t.db })).ok).toBe(true);
+    expect(await verifyRequirement(kwarran1(), memberC, req.R2, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
   });
 
   it('menolak syarat nonaktif, golongan lain, anggota diarsipkan, dan verifikasi ganda', async () => {
-    expect(await verifyRequirement(staffA(), memberA, req['R-OFF'], null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-berlaku' });
-    expect(await verifyRequirement(staffA(), memberA, req.SG1, null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-berlaku' });
-    expect(await verifyRequirement(staffA(), memberA, crypto.randomUUID(), null, NOW, t.db)).toEqual({
+    expect(await verifyRequirement(staffA(), memberA, req['R-OFF'], null, { now: NOW, db: t.db })).toEqual({
       ok: false,
       reason: 'tidak-berlaku',
     });
-    expect(await verifyRequirement(staffA(), archived, req.R1, null, NOW, t.db)).toEqual({ ok: false, reason: 'nonaktif' });
-    expect(await verifyRequirement(staffA(), memberA, req.R1, 'Praktik di latihan rutin', NOW, t.db)).toEqual({
+    expect(await verifyRequirement(staffA(), memberA, req.SG1, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-berlaku',
+    });
+    expect(await verifyRequirement(staffA(), memberA, crypto.randomUUID(), null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-berlaku',
+    });
+    expect(await verifyRequirement(staffA(), archived, req.R1, null, { now: NOW, db: t.db })).toEqual({ ok: false, reason: 'nonaktif' });
+    expect(await verifyRequirement(staffA(), memberA, req.R1, 'Praktik di latihan rutin', { now: NOW, db: t.db })).toEqual({
       ok: true,
-      memberName: 'Anggota A',
+      intent: 'verify',
       code: 'R1',
       title: 'Ramu satu',
     });
-    expect(await verifyRequirement(kwarran1(), memberA, req.R1, null, NOW, t.db)).toEqual({ ok: false, reason: 'sudah' });
+    expect(await verifyRequirement(kwarran1(), memberA, req.R1, null, { now: NOW, db: t.db })).toEqual({ ok: false, reason: 'sudah' });
     const [row] = await verifications(memberA);
     expect(row).toMatchObject({ verifiedByName: 'Kak Pembina A', note: 'Praktik di latihan rutin', revokedAt: null });
   });
 
   it('pembatalan: hanya dalam cakupan; verifikasi ulang memakai baris yang sama', async () => {
-    await verifyRequirement(staffA(), memberA, req.R1, 'catatan awal', NOW, t.db);
-    expect(await revokeVerification(staffB(), memberA, req.R1, null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
-    expect(await revokeVerification(kwarran2(), memberA, req.R1, null, NOW, t.db)).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+    await verifyRequirement(staffA(), memberA, req.R1, 'catatan awal', { now: NOW, db: t.db });
+    expect(await revokeVerification(staffB(), memberA, req.R1, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
+    expect(await revokeVerification(kwarran2(), memberA, req.R1, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
     expect((await verifications(memberA))[0].revokedAt).toBeNull();
 
     const later = new Date(NOW.getTime() + 3600_000);
-    expect((await revokeVerification(kwarran1(), memberA, req.R1, 'Salah anggota', later, t.db)).ok).toBe(true);
-    expect(await revokeVerification(kwarran1(), memberA, req.R1, null, later, t.db)).toEqual({ ok: false, reason: 'belum' });
-    expect(await revokeVerification(staffA(), memberA, req.R2, null, later, t.db)).toEqual({ ok: false, reason: 'belum' });
+    expect((await revokeVerification(kwarran1(), memberA, req.R1, 'Salah anggota', { now: later, db: t.db })).ok).toBe(true);
+    expect(await revokeVerification(kwarran1(), memberA, req.R1, null, { now: later, db: t.db })).toEqual({ ok: false, reason: 'belum' });
+    expect(await revokeVerification(staffA(), memberA, req.R2, null, { now: later, db: t.db })).toEqual({ ok: false, reason: 'belum' });
     let [row] = await verifications(memberA);
     expect(row).toMatchObject({ revokedByName: 'Kak Kwarran Satu', note: 'Salah anggota' });
     expect(row.revokedAt?.toISOString()).toBe(later.toISOString());
 
     const again = new Date(later.getTime() + 3600_000);
-    expect((await verifyRequirement(staffA(), memberA, req.R1, null, again, t.db)).ok).toBe(true);
+    expect((await verifyRequirement(staffA(), memberA, req.R1, null, { now: again, db: t.db })).ok).toBe(true);
     const rows = await verifications(memberA);
     expect(rows).toHaveLength(1);
     [row] = rows;
@@ -236,7 +265,7 @@ describe('verifikasi syarat anggota (competency.verify + cakupan)', () => {
   });
 
   it('peserta pemilik akun mendapat notifikasi tanpa catatan pembina', async () => {
-    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan internal pembina', NOW, t.db);
+    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan internal pembina', { now: NOW, db: t.db });
     const notes = await t.db.select().from(schema.notifications).where(eq(schema.notifications.userId, pesertaUserA));
     expect(notes).toHaveLength(1);
     expect(notes[0]).toMatchObject({ href: '/dashboard/profil', body: 'R1 — Ramu satu' });
@@ -264,13 +293,13 @@ describe('kemajuan SKU/SKK', () => {
     expect(p?.canVerify).toBe(true);
 
     // Menonaktifkan syarat yang sudah diverifikasi mengurangi pembilang DAN penyebut.
-    await setRequirementActive(kwarcab(), req.R1, false, t.db);
+    await setRequirementActive(kwarcab(), req.R1, false, { db: t.db });
     const after = await memberProgress(staffA(), memberA, t.db);
     expect(after?.groups[0]).toMatchObject({ level: 'Ramu', verified: 0, total: 2 });
   });
 
   it('peserta hanya melihat dirinya sendiri, hanya-baca, tanpa catatan pembina', async () => {
-    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan internal', NOW, t.db);
+    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan internal', { now: NOW, db: t.db });
     const own = await memberProgress(pesertaA(), memberA, t.db);
     expect(own).toMatchObject({ self: true, canVerify: false });
     expect(own?.groups[0].verified).toBe(1);
@@ -302,27 +331,27 @@ describe('ekspor rekap kemajuan (cakupan)', () => {
     ].sort();
 
   it('hanya pemegang competency.verify; gudep di luar cakupan = tidak ditemukan', async () => {
-    expect(await progressExport(actor('ADMIN_WEBSITE'), {}, t.db)).toBeNull();
-    expect(await progressExport(pesertaA(), {}, t.db)).toBeNull();
-    expect(await progressExport(staffA(), { gudepId: gudepB }, t.db)).toBeNull();
-    expect(await progressExport(kwarran1(), { gudepId: gudepC }, t.db)).toBeNull();
-    expect(await progressExport(staffA(), { gudepId: 'bukan-uuid' }, t.db)).toBeNull();
-    expect(await progressExport(staffA(), { gudepId: crypto.randomUUID() }, t.db)).toBeNull();
+    expect(await progressExport(actor('ADMIN_WEBSITE'), {}, { db: t.db })).toBeNull();
+    expect(await progressExport(pesertaA(), {}, { db: t.db })).toBeNull();
+    expect(await progressExport(staffA(), { gudepId: gudepB }, { db: t.db })).toBeNull();
+    expect(await progressExport(kwarran1(), { gudepId: gudepC }, { db: t.db })).toBeNull();
+    expect(await progressExport(staffA(), { gudepId: 'bukan-uuid' }, { db: t.db })).toBeNull();
+    expect(await progressExport(staffA(), { gudepId: crypto.randomUUID() }, { db: t.db })).toBeNull();
   });
 
   it('isi sesuai cakupan; arsip tidak ikut; kemajuan benar', async () => {
-    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan rahasia', NOW, t.db);
-    await verifyRequirement(staffA(), memberA, req.R2, null, NOW, t.db);
+    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan rahasia', { now: NOW, db: t.db });
+    await verifyRequirement(staffA(), memberA, req.R2, null, { now: NOW, db: t.db });
 
-    const a = await progressExport(staffA(), {}, t.db);
+    const a = await progressExport(staffA(), {}, { db: t.db });
     expect(namesIn(a!.csv)).toEqual(['Anggota A']);
     expect(a!.memberCount).toBe(1);
-    const k = await progressExport(kwarran1(), {}, t.db);
+    const k = await progressExport(kwarran1(), {}, { db: t.db });
     expect(namesIn(k!.csv)).toEqual(['Anggota A', 'Anggota B']);
-    const kb = await progressExport(kwarran1(), { gudepId: gudepB }, t.db);
+    const kb = await progressExport(kwarran1(), { gudepId: gudepB }, { db: t.db });
     expect(namesIn(kb!.csv)).toEqual(['Anggota B']);
     expect(kb!.gudep?.name).toBe('Gudep B');
-    const all = await progressExport(kwarcab(), {}, t.db);
+    const all = await progressExport(kwarcab(), {}, { db: t.db });
     expect(namesIn(all!.csv)).toEqual(['Anggota A', 'Anggota B', 'Anggota C']);
 
     const rows = parseCsv(a!.csv);
@@ -334,15 +363,153 @@ describe('ekspor rekap kemajuan (cakupan)', () => {
 
   it('aman dari injeksi formula', async () => {
     await t.db.update(schema.members).set({ fullName: '=HYPERLINK("http://x")' }).where(eq(schema.members.id, memberA));
-    const out = await progressExport(staffA(), { gudepId: gudepA }, t.db);
+    const out = await progressExport(staffA(), { gudepId: gudepA }, { db: t.db });
     expect(out!.csv).toContain(`"'=HYPERLINK(""http://x"")"`);
     expect(out!.csv.split('\r\n').some((line) => line.startsWith('='))).toBe(false);
   });
 
   it('staf tanpa penugasan gudep tidak mendapat data siapa pun', async () => {
-    const out = await progressExport(actor('STAFF_GUDEP'), {}, t.db);
+    const out = await progressExport(actor('STAFF_GUDEP'), {}, { db: t.db });
     expect(out?.memberCount).toBe(0);
     expect(parseCsv(out!.csv)).toHaveLength(1);
-    expect(await progressExport(actor('STAFF_KWARRAN'), { gudepId: gudepA }, t.db)).toBeNull();
+    expect(await progressExport(actor('STAFF_KWARRAN'), { gudepId: gudepA }, { db: t.db })).toBeNull();
+  });
+});
+
+describe('jalur formulir Server Action (Zod di server)', () => {
+  const requirementForm = (over: Record<string, string> = {}) =>
+    form({ kind: 'SKU', golongan: 'PENGGALANG', level: 'Ramu', code: 'demo-pg-ramu-09', title: 'Contoh syarat', sortOrder: '9', ...over });
+
+  it('simpan syarat: peran lain ditolak sebelum validasi; isian salah dikembalikan per kolom', async () => {
+    expect(await saveRequirementForm(staffA(), null, requirementForm(), { db: t.db })).toEqual({ ok: false, reason: 'tidak-ditemukan' });
+    const bad = await saveRequirementForm(kwarcab(), null, requirementForm({ code: 'ada spasi', title: '  ', kind: 'SKX' }), { db: t.db });
+    expect(bad.ok).toBe(false);
+    if (bad.ok || bad.reason !== 'tidak-valid') throw new Error('harus tidak-valid');
+    expect(Object.keys(bad.errors).sort()).toEqual(['code', 'kind', 'title']);
+
+    const created = await saveRequirementForm(kwarcab(), null, requirementForm({ description: '' }), { db: t.db });
+    expect(created).toMatchObject({ ok: true, created: true });
+    if (!created.ok) return;
+    expect(await getRequirement(kwarcab(), created.id, t.db)).toMatchObject({ code: 'DEMO-PG-RAMU-09', sortOrder: 9, description: null });
+    expect(await saveRequirementForm(kwarcab(), null, requirementForm({ code: 'DEMO-PG-RAMU-09' }), { db: t.db })).toEqual({
+      ok: false,
+      reason: 'kode-dipakai',
+    });
+  });
+
+  it('verifikasi lewat formulir: intent & catatan divalidasi; IDOR tetap ditolak', async () => {
+    const bad = await verificationForm(staffA(), memberA, req.R1, form({ intent: 'hapus' }), { now: NOW, db: t.db });
+    expect(bad).toMatchObject({ ok: false, reason: 'tidak-valid' });
+    const long = await verificationForm(staffA(), memberA, req.R1, form({ intent: 'verify', note: 'x'.repeat(301) }), {
+      now: NOW,
+      db: t.db,
+    });
+    expect(long.ok === false && long.errors?.note).toBeTruthy();
+    expect(await verifications(memberA)).toHaveLength(0);
+
+    for (const a of [staffB(), kwarran2(), pesertaA(), actor('ADMIN_WEBSITE')]) {
+      expect(await verificationForm(a, memberA, req.R1, form({ intent: 'verify' }), { now: NOW, db: t.db })).toMatchObject({
+        ok: false,
+        reason: 'tidak-ditemukan',
+      });
+    }
+    expect(await verifications(memberA)).toHaveLength(0);
+
+    expect(
+      await verificationForm(staffA(), memberA, req.R1, form({ intent: 'verify', note: '  Praktik tali-temali  ' }), {
+        now: NOW,
+        db: t.db,
+      }),
+    ).toEqual({ ok: true, intent: 'verify', code: 'R1', title: 'Ramu satu' });
+    expect((await verifications(memberA))[0]).toMatchObject({ note: 'Praktik tali-temali', revokedAt: null });
+    expect(await verificationForm(kwarran1(), memberA, req.R1, form({ intent: 'revoke', note: '' }), { now: NOW, db: t.db })).toMatchObject(
+      {
+        ok: true,
+        intent: 'revoke',
+      },
+    );
+    expect((await verifications(memberA))[0]).toMatchObject({ note: null, revokedByName: 'Kak Kwarran Satu' });
+  });
+});
+
+describe('log audit SKU/SKK', () => {
+  it('setiap penulisan & ekspor tercatat, tanpa nama anggota dan tanpa catatan pembina', async () => {
+    const created = await saveRequirement(kwarcab(), null, input({ code: 'AUDIT-1' }), { db: t.db, ip: '203.0.113.9' });
+    if (!created.ok) throw new Error('gagal membuat');
+    await saveRequirement(kwarcab(), created.id, input({ code: 'AUDIT-1', title: 'Diubah' }), { db: t.db });
+    await setRequirementActive(kwarcab(), created.id, false, { db: t.db });
+    await verifyRequirement(staffA(), memberA, req.R1, 'Catatan rahasia pembina', { now: NOW, db: t.db });
+    await revokeVerification(staffA(), memberA, req.R1, 'Alasan rahasia', { now: NOW, db: t.db });
+    await progressExport(staffA(), { gudepId: gudepA }, { db: t.db });
+    // Ditolak = tidak tercatat sebagai aksi berhasil.
+    await verifyRequirement(staffB(), memberA, req.R2, null, { now: NOW, db: t.db });
+
+    const rows = await auditRows();
+    expect(rows.map((x) => x.action)).toEqual([
+      'competency.requirement_created',
+      'competency.requirement_updated',
+      'competency.requirement_deactivated',
+      'competency.verified',
+      'competency.revoked',
+      'competency.export',
+    ]);
+    expect(rows[0]).toMatchObject({ entityType: 'competency_requirement', entityId: created.id, ip: '203.0.113.9' });
+    expect(rows[3]).toMatchObject({
+      entityType: 'member',
+      entityId: memberA,
+      actorName: 'Kak Pembina A',
+      summary: 'Memverifikasi syarat SKU R1',
+    });
+    expect(rows[4].summary).toBe('Membatalkan verifikasi syarat SKU R1');
+    expect(rows[5]).toMatchObject({ entityType: 'gudep', entityId: gudepA });
+    const all = JSON.stringify(rows);
+    for (const secret of ['Anggota A', 'Catatan rahasia', 'Alasan rahasia']) expect(all).not.toContain(secret);
+  });
+});
+
+describe('peserta & anggota dianonimkan', () => {
+  it('peserta: hanya lewat akunnya sendiri; verifikasi yang dibatalkan & catatannya tidak terlihat', async () => {
+    await verifyRequirement(staffA(), memberA, req.R1, null, { now: NOW, db: t.db });
+    await verifyRequirement(staffA(), memberA, req.R2, 'Catatan awal', { now: NOW, db: t.db });
+    await revokeVerification(staffA(), memberA, req.R2, 'Salah catat rahasia', { now: NOW, db: t.db });
+
+    const own = await ownProgress(pesertaA(), t.db);
+    expect(own?.self).toBe(true);
+    const ramu = own!.groups[0];
+    expect(ramu).toMatchObject({ verified: 1, total: 3 });
+    expect(ramu.items.find((i) => i.requirement.code === 'R2')).toMatchObject({ verified: null, revoked: null });
+    expect(JSON.stringify(own)).not.toContain('Salah catat');
+    // Staf dalam cakupan tetap melihat riwayat pembatalan beserta alasannya.
+    const staff = await memberProgress(staffA(), memberA, t.db);
+    expect(staff!.groups[0].items.find((i) => i.requirement.code === 'R2')?.revoked).toMatchObject({ note: 'Salah catat rahasia' });
+
+    expect(await ownProgress(staffA(), t.db)).toBeNull();
+    expect(await ownProgress(actor('PESERTA', { memberId: null }), t.db)).toBeNull();
+    expect(await ownProgress(actor('PESERTA', { memberId: 'bukan-uuid' }), t.db)).toBeNull();
+  });
+
+  it('anggota dianonimkan: catatan disembunyikan, tidak bisa diverifikasi, tidak terlihat sebagai profil sendiri', async () => {
+    await verifyRequirement(staffA(), memberA, req.R1, 'Ibu S. menelepon', { now: NOW, db: t.db });
+    await t.db.update(schema.members).set({ anonymizedAt: NOW, status: 'ARCHIVED' }).where(eq(schema.members.id, memberA));
+
+    const p = await memberProgress(kwarcab(), memberA, t.db);
+    expect(p?.canVerify).toBe(false);
+    expect(p?.groups[0].items[0].verified).toMatchObject({ note: null });
+    expect(JSON.stringify(p)).not.toContain('Ibu S.');
+    expect(await verifyRequirement(kwarcab(), memberA, req.R2, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
+    expect(await revokeVerification(kwarcab(), memberA, req.R1, null, { now: NOW, db: t.db })).toEqual({
+      ok: false,
+      reason: 'tidak-ditemukan',
+    });
+    expect(await ownProgress(pesertaA(), t.db)).toBeNull();
+  });
+
+  it('ekspor memberi nama berkas tanpa nama gudep/anggota', async () => {
+    const out = await progressExport(staffA(), { gudepId: gudepA }, { db: t.db, now: NOW });
+    expect(out?.filename).toBe(`rekap-sku-skk-gudep-${gudepA.slice(0, 8)}-2026-10-10.csv`);
+    expect((await progressExport(kwarcab(), {}, { db: t.db, now: NOW }))?.filename).toBe('rekap-sku-skk-cakupan-2026-10-10.csv');
   });
 });

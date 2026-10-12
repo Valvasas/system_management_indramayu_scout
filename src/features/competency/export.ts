@@ -2,9 +2,10 @@
  * SERVER-ONLY. Ekspor rekap kemajuan SKU/SKK (2.3) untuk anggota dalam cakupan.
  * Satu baris per anggota per kelompok (jenis + tingkatan). Hanya kolom non-sensitif: tanpa
  * kontak, alamat, data wali, tanggal lahir, atau catatan pembina. CSV aman injeksi (lib/csv).
+ * Setiap unduhan tercatat di log audit (jumlah anggota + gudep, tanpa nama).
  */
 import { and, asc, eq, isNull, ne } from 'drizzle-orm';
-import { getDb, schema, type Database } from '@/db';
+import { getDb, schema } from '@/db';
 import { roleCan } from '@/lib/auth/permissions';
 import { gudepScope, memberScope } from '@/lib/auth/scope';
 import type { SessionUser } from '@/lib/auth/session';
@@ -12,6 +13,7 @@ import { toCsv } from '@/lib/csv';
 import { golonganLabel } from '@/lib/domain';
 import { summarizeProgress, type VerificationLike } from './progress';
 import { KIND_LABELS, isUuid } from './validation';
+import { writeCompetencyAudit, type CompetencyOptions } from './audit';
 
 export const PROGRESS_CSV_HEADER = [
   'No KTA',
@@ -32,26 +34,32 @@ const wibDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', yea
 
 export interface ProgressExport {
   csv: string;
+  filename: string;
   memberCount: number;
   gudep: { id: string; name: string } | null;
 }
 
 /**
- * null = tidak berizin (`competency.verify`) atau gudep di luar cakupan / tidak ada — pemanggil
- * menjawab 404 tanpa membedakan keduanya. Tanpa `gudepId` = seluruh anggota dalam cakupan.
+ * null = tidak berizin atau gudep di luar cakupan / tidak ada — pemanggil menjawab 404 tanpa
+ * membedakan keduanya. Izin: `competency.verify` (yang memverifikasi) DAN `members.export` (ekspor
+ * massal nama anggota tetap ekspor data anggota). Tanpa `gudepId` = seluruh anggota dalam cakupan.
  * Anggota yang diarsipkan atau dianonimkan tidak ikut.
  */
-export async function progressExport(actor: SessionUser, opts: { gudepId?: string | null }, db?: Database): Promise<ProgressExport | null> {
-  if (!roleCan(actor.role, 'competency.verify')) return null;
-  const d = db ?? (await getDb());
+export async function progressExport(
+  actor: SessionUser,
+  filter: { gudepId?: string | null },
+  opts: CompetencyOptions = {},
+): Promise<ProgressExport | null> {
+  if (!roleCan(actor.role, 'competency.verify') || !roleCan(actor.role, 'members.export')) return null;
+  const d = opts.db ?? (await getDb());
 
   let gudep: ProgressExport['gudep'] = null;
-  if (opts.gudepId) {
-    if (!isUuid(opts.gudepId)) return null;
+  if (filter.gudepId) {
+    if (!isUuid(filter.gudepId)) return null;
     const [g] = await d
       .select({ id: schema.gudep.id, name: schema.gudep.name })
       .from(schema.gudep)
-      .where(and(eq(schema.gudep.id, opts.gudepId), gudepScope(actor)))
+      .where(and(eq(schema.gudep.id, filter.gudepId), gudepScope(actor)))
       .limit(1);
     if (!g) return null;
     gudep = g;
@@ -127,5 +135,18 @@ export async function progressExport(actor: SessionUser, opts: { gudepId?: strin
     }
   }
 
-  return { csv: toCsv(PROGRESS_CSV_HEADER, rows), memberCount: members.length, gudep };
+  await writeCompetencyAudit(d, actor, opts.ip, {
+    action: 'competency.export',
+    summary: `Mengekspor rekap SKU/SKK ${members.length} anggota${gudep ? ` (${gudep.name})` : ' (seluruh cakupan)'}`,
+    entityType: gudep ? 'gudep' : 'member',
+    entityId: gudep?.id ?? null,
+  });
+
+  const stamp = wibDate.format(opts.now ?? new Date());
+  return {
+    csv: toCsv(PROGRESS_CSV_HEADER, rows),
+    filename: `rekap-sku-skk-${gudep ? `gudep-${gudep.id.slice(0, 8)}` : 'cakupan'}-${stamp}.csv`,
+    memberCount: members.length,
+    gudep,
+  };
 }
