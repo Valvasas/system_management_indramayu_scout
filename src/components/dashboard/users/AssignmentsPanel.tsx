@@ -40,7 +40,7 @@ export function AssignmentsPanel({
       title="Penugasan & masa jabatan"
       description="Riwayat jabatan akun ini. Penugasan hanya catatan: peran, wilayah, dan akses akun tetap diatur dari formulir di atas."
     >
-      {notice === 'diakhiri' && <Notice>Penugasan diakhiri per hari ini. Akses akun tidak berubah.</Notice>}
+      {notice === 'diakhiri' && <Notice>Penugasan diakhiri. Akses akun tidak berubah.</Notice>}
       {notice === 'gagal' && <Notice tone="warning">Penugasan tidak ditemukan atau sudah berakhir.</Notice>}
 
       {assignments.length === 0 ? (

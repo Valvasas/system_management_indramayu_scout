@@ -36,7 +36,8 @@ export async function saveBoardMemberAction(id: string | null, _prev: FormState,
 export async function deleteBoardMemberAction(id: string): Promise<void> {
   const user = await requirePermission('content.manage');
   const result = await deleteBoardMember(user, id);
-  if (result.ok) await audit(user, { action: 'content.delete', summary: `Menghapus pengurus ${result.name}`, entityType: 'board', entityId: id });
+  if (result.ok)
+    await audit(user, { action: 'content.delete', summary: `Menghapus pengurus ${result.name}`, entityType: 'board', entityId: id });
   revalidatePath('/dashboard/konten/pengurus');
   revalidatePublicSite();
   redirect('/dashboard/konten/pengurus?dihapus=1');

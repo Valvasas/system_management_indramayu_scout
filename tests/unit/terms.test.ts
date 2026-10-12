@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDaysIso, daysLeft, isCurrentTerm, termState, wibToday } from '@/features/terms/dates';
+import { TERM_BADGE_LABELS, daysLeftLabel, termBadgeKind, termRangeLabel } from '@/features/terms/labels';
 import { ASSIGNMENT_FIELDS, AssignmentSchema, BoardMemberSchema } from '@/features/terms/validation';
 
 const form = (fields: Record<string, string>) => {
@@ -112,5 +113,22 @@ describe('validasi formulir penugasan staf', () => {
       termStart: '2026-07-01',
       termEnd: null,
     });
+  });
+});
+
+describe('label masa jabatan', () => {
+  it('status ditampilkan dengan teks; diakhiri manual dibedakan dari berakhir karena tanggal', () => {
+    expect(termBadgeKind({ state: 'ENDED', isActive: false })).toBe('DEACTIVATED');
+    expect(termBadgeKind({ state: 'ENDED', isActive: true })).toBe('ENDED');
+    expect(termBadgeKind({ state: 'ENDING', isActive: true })).toBe('ENDING');
+    expect(TERM_BADGE_LABELS.DEACTIVATED).toBe('Diakhiri');
+  });
+
+  it('rentang tanggal & sisa hari dalam bahasa Indonesia (WIB)', () => {
+    expect(termRangeLabel('2026-01-01', '2030-12-31')).toBe('1 Januari 2026 – 31 Desember 2030');
+    expect(termRangeLabel('2026-01-01', null)).toBe('Sejak 1 Januari 2026');
+    expect(termRangeLabel(null, '2026-11-10')).toBe('Sampai 10 November 2026');
+    expect(termRangeLabel(null, null)).toBe('Tanggal belum diisi');
+    expect([0, 1, 21].map(daysLeftLabel)).toEqual(['Hari ini hari terakhir', 'Berakhir besok', '21 hari lagi']);
   });
 });

@@ -12,9 +12,7 @@ import { roleCan } from '@/lib/auth/permissions';
 import type { SessionUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
 import { daysLeft, termState, wibToday, type TermState } from './dates';
-import { BoardMemberSchema } from './validation';
-
-const UUID = /^[0-9a-f-]{36}$/i;
+import { BoardMemberSchema, isRowId } from './validation';
 
 export type BoardMemberRow = typeof schema.boardMembers.$inferSelect;
 export type BoardMemberWithTerm = BoardMemberRow & { state: TermState; daysLeft: number | null };
@@ -47,7 +45,7 @@ const missing = (): BoardWriteResult => ({ ok: false, state: fail('Data pengurus
 /** Buat (`id` null) atau ubah pengurus. Validasi Zod di server, termasuk "berakhir ≥ mulai". */
 export async function saveBoardMember(actor: SessionUser, id: string | null, formData: FormData, db?: Database): Promise<BoardWriteResult> {
   if (!roleCan(actor.role, 'content.manage')) return forbidden();
-  if (id !== null && !UUID.test(id)) return missing();
+  if (id !== null && !isRowId(id)) return missing();
   const parsed = parseForm(BoardMemberSchema, formData);
   if (parsed.error) return { ok: false, state: parsed.error };
   const d = db ?? (await getDb());
@@ -68,7 +66,7 @@ export async function deleteBoardMember(
   db?: Database,
 ): Promise<{ ok: true; name: string } | { ok: false; reason: 'tidak-diizinkan' | 'tidak-ditemukan' }> {
   if (!roleCan(actor.role, 'content.manage')) return { ok: false, reason: 'tidak-diizinkan' };
-  if (!UUID.test(id)) return { ok: false, reason: 'tidak-ditemukan' };
+  if (!isRowId(id)) return { ok: false, reason: 'tidak-ditemukan' };
   const d = db ?? (await getDb());
   const [row] = await d.delete(schema.boardMembers).where(eq(schema.boardMembers.id, id)).returning({ name: schema.boardMembers.name });
   return row ? { ok: true, name: row.name } : { ok: false, reason: 'tidak-ditemukan' };

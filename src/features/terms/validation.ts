@@ -32,6 +32,10 @@ function endNotBeforeStart(v: { termStart: string | null; termEnd: string | null
   }
 }
 
+/** Id baris dari URL/argumen Server Action (bisa dimanipulasi klien). */
+export const RowId = z.string().uuid();
+export const isRowId = (v: unknown): v is string => RowId.safeParse(v).success;
+
 /* ---------------- Pengurus Kwarcab ---------------- */
 
 export const BoardMemberSchema = z

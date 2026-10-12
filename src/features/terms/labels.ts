@@ -2,7 +2,7 @@
 import { formatDate, formatDateRange } from '@/lib/format';
 import type { TermState } from './dates';
 
-/** Status tampilan: "berakhir" dibedakan dari "dinonaktifkan" (diganti sebelum tanggal berakhir). */
+/** Status tampilan: "berakhir" (tanggal lewat) dibedakan dari "diakhiri" (dinonaktifkan/diakhiri manual). */
 export type TermBadgeKind = TermState | 'DEACTIVATED';
 
 export const TERM_BADGE_LABELS: Record<TermBadgeKind, string> = {
@@ -10,7 +10,7 @@ export const TERM_BADGE_LABELS: Record<TermBadgeKind, string> = {
   ENDING: 'Hampir berakhir',
   UPCOMING: 'Belum mulai',
   ENDED: 'Berakhir',
-  DEACTIVATED: 'Dinonaktifkan',
+  DEACTIVATED: 'Diakhiri',
 };
 
 export function termBadgeKind(t: { state: TermState; isActive: boolean }): TermBadgeKind {

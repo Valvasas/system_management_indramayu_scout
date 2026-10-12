@@ -14,13 +14,11 @@ import { roleCan } from '@/lib/auth/permissions';
 import type { SessionUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
 import { daysLeft, termState, wibToday, type TermState } from './dates';
-import { ASSIGNMENT_FIELDS, AssignmentSchema } from './validation';
-
-const UUID = /^[0-9a-f-]{36}$/i;
+import { ASSIGNMENT_FIELDS, AssignmentSchema, isRowId } from './validation';
 
 /** Akun yang boleh dikelola penugasannya oleh aktor, atau null (tidak dibedakan alasannya). */
 async function manageableTarget(d: Database, actor: SessionUser, userId: string) {
-  if (!roleCan(actor.role, 'users.manage') || !UUID.test(userId)) return null;
+  if (!roleCan(actor.role, 'users.manage') || !isRowId(userId)) return null;
   const [u] = await d
     .select({ id: schema.users.id, name: schema.users.name, role: schema.users.role })
     .from(schema.users)
@@ -152,7 +150,7 @@ export async function endAssignment(
 ): Promise<EndAssignmentResult> {
   const d = db ?? (await getDb());
   const target = await manageableTarget(d, actor, userId);
-  if (!target || !UUID.test(assignmentId)) return { ok: false, reason: 'tidak-ditemukan' };
+  if (!target || !isRowId(assignmentId)) return { ok: false, reason: 'tidak-ditemukan' };
   const a = schema.staffAssignments;
   const [row] = await d
     .select()
