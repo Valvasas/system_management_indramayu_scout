@@ -39,7 +39,7 @@ export default async function SkuEditorPage({ params, searchParams }: { params: 
             action={saveRequirementAction.bind(null, row?.id ?? null)}
             golonganOptions={golonganOptions}
             levels={levels}
-            golonganLocked={Boolean(row && row.verifiedCount > 0)}
+            golonganLocked={Boolean(row?.golonganLocked)}
             defaults={
               row
                 ? {

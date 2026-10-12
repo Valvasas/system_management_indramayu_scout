@@ -72,7 +72,7 @@ export const VerificationControl: React.FC<{
     >
       <div className="flex flex-wrap items-center gap-2">
         <Submit verified={verified} code={code} />
-        <details className="group" open={Boolean(noteError)}>
+        <details open={Boolean(noteError)}>
           <summary className="inline-flex min-h-touch cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-text-secondary hover:text-text-primary [&::-webkit-details-marker]:hidden">
             <MessageSquareText className="h-4 w-4" aria-hidden="true" />
             {verified ? 'Alasan (opsional)' : 'Catatan (opsional)'}

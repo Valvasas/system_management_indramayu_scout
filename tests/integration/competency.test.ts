@@ -186,6 +186,15 @@ describe('daftar syarat SKU/SKK (competency.manage)', () => {
       reason: 'golongan-terkunci',
     });
     expect((await saveRequirement(kwarcab(), req.R2, input({ code: 'R2', golongan: 'PENEGAK' }), { db: t.db })).ok).toBe(true);
+    expect(await getRequirement(kwarcab(), req.R1, t.db)).toMatchObject({ verifiedCount: 1, golonganLocked: true });
+    // Tetap terkunci walau verifikasinya sudah dibatalkan (baris riwayat masih ada).
+    await revokeVerification(staffA(), memberA, req.R1, null, { now: NOW, db: t.db });
+    expect(await getRequirement(kwarcab(), req.R1, t.db)).toMatchObject({ verifiedCount: 0, golonganLocked: true });
+    expect(await saveRequirement(kwarcab(), req.R1, input({ code: 'R1', golongan: 'PENEGAK' }), { db: t.db })).toMatchObject({
+      reason: 'golongan-terkunci',
+    });
+    expect(await getRequirement(kwarcab(), req.R3, t.db)).toMatchObject({ verifiedCount: 0, golonganLocked: false });
+    await verifyRequirement(staffA(), memberA, req.R1, null, { now: NOW, db: t.db });
 
     const active = await listRequirements(kwarcab(), { golongan: 'PENGGALANG', kind: 'SKU' }, t.db);
     expect(active.rows.map((x) => x.code)).toEqual(['R1', 'R3', 'K1']);
@@ -268,7 +277,7 @@ describe('verifikasi syarat anggota (competency.verify + cakupan)', () => {
     await verifyRequirement(staffA(), memberA, req.R1, 'Catatan internal pembina', { now: NOW, db: t.db });
     const notes = await t.db.select().from(schema.notifications).where(eq(schema.notifications.userId, pesertaUserA));
     expect(notes).toHaveLength(1);
-    expect(notes[0]).toMatchObject({ href: '/dashboard/profil', body: 'R1 — Ramu satu' });
+    expect(notes[0]).toMatchObject({ href: '/dashboard/profil#sku', body: 'R1 — Ramu satu' });
     expect(JSON.stringify(notes[0])).not.toContain('Catatan internal');
   });
 });

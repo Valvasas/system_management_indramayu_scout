@@ -97,16 +97,24 @@ export async function requirementLevels(actor: SessionUser, f: { golongan?: Golo
   return rows.map((x) => x.level);
 }
 
-export async function getRequirement(actor: SessionUser, id: string, db?: Database): Promise<RequirementListRow | null> {
+/**
+ * Satu syarat untuk editor. `golonganLocked` = pernah diverifikasi (termasuk yang sudah dibatalkan),
+ * aturan yang sama dengan `saveRequirement`.
+ */
+export async function getRequirement(
+  actor: SessionUser,
+  id: string,
+  db?: Database,
+): Promise<(RequirementListRow & { golonganLocked: boolean }) | null> {
   if (!roleCan(actor.role, 'competency.manage') || !isUuid(id)) return null;
   const d = await db_(db);
   const [row] = await d.select().from(r).where(eq(r.id, id)).limit(1);
   if (!row) return null;
-  const [{ n }] = await d
-    .select({ n: count() })
+  const [{ all, current }] = await d
+    .select({ all: count(), current: sql<number>`count(*) filter (where ${mc.revokedAt} is null)`.mapWith(Number) })
     .from(mc)
-    .where(and(eq(mc.requirementId, id), isNull(mc.revokedAt)));
-  return { ...row, verifiedCount: n };
+    .where(eq(mc.requirementId, id));
+  return { ...row, verifiedCount: current, golonganLocked: all > 0 };
 }
 
 export type SaveRequirementResult =
@@ -372,7 +380,7 @@ export async function verifyRequirement(
         priority: 'LOW',
         title: `Syarat ${req.kind} terverifikasi`,
         body: `${req.code} — ${req.title}`,
-        href: '/dashboard/profil',
+        href: '/dashboard/profil#sku',
         recipients: { userIds: owners.map((o) => o.id) },
         dedupeKey: `competency:${row.id}:${now.getTime()}`,
         excludeUserId: actor.id,
