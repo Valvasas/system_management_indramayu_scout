@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
-import { AlertCircle, BadgeCheck, CalendarX2, Clock, MapPin, UserRound } from 'lucide-react';
+import { AlertCircle, BadgeCheck, CalendarX2, ClipboardList, Clock, MapPin, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { AttendanceStatusBadge } from '@/components/dashboard/attendance/AttendanceStatusBadge';
 import { ActionButton } from '@/components/dashboard/ConfirmButton';
 import { Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
+import { ownAttendanceHistory } from '@/features/attendance/attendance';
 import { cancelRegistrationAction, registerEventAction } from '@/features/portal/actions';
 import { getOwnMember, upcomingEventsFor } from '@/features/portal/peserta';
 import { requirePermission } from '@/lib/auth/session';
@@ -22,7 +24,8 @@ const FAIL_MESSAGES: Record<string, string> = {
 
 export default async function KegiatanPage({ searchParams = {} }: { searchParams?: Search }) {
   const user = await requirePermission('self.portal');
-  const [own, events] = await Promise.all([getOwnMember(user), upcomingEventsFor(user)]);
+  // Riwayat kehadiran: hanya presensi milik anggota akun ini (lewat user.memberId, tidak dari URL).
+  const [own, events, history] = await Promise.all([getOwnMember(user), upcomingEventsFor(user), ownAttendanceHistory(user)]);
   const canRegister = own?.m.status === 'ACTIVE';
   const failMessage = searchParams.gagal ? FAIL_MESSAGES[searchParams.gagal] : undefined;
 
@@ -112,6 +115,38 @@ export default async function KegiatanPage({ searchParams = {} }: { searchParams
           ))}
         </ul>
       )}
+
+      <Panel
+        id="riwayat-kehadiran"
+        title="Riwayat kehadiran"
+        description="Kehadiran Anda di kegiatan yang sudah dicatat pembina."
+        className="mt-8"
+        bodyClassName={history.length > 0 ? 'py-0 sm:py-0' : undefined}
+      >
+        {history.length === 0 ? (
+          <EmptyState
+            variant="icon"
+            icon={ClipboardList}
+            title="Belum ada catatan kehadiran"
+            description="Setelah Anda mengikuti kegiatan, pembina mencatat kehadiran dan hasilnya tampil di sini."
+          />
+        ) : (
+          <ul className="divide-y divide-border-subtle">
+            {history.map((h) => (
+              <li key={h.eventId} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-text-primary">{h.title}</h3>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-sm text-text-secondary">
+                    <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {formatDate(h.dateStart.toISOString())} · {h.location}
+                  </p>
+                </div>
+                <AttendanceStatusBadge status={h.status} className="self-start whitespace-nowrap sm:self-auto" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </>
   );
 }
