@@ -451,6 +451,8 @@ export const auditChainAnchors = pgTable('audit_chain_anchors', {
   firstLogId: bigint('first_log_id', { mode: 'number' }).notNull(),
   prevHash: text('prev_hash').notNull(),
   deletedCount: integer('deleted_count').notNull(),
+  /** HMAC(kunci rantai, jangkar) — jangkar tanpa MAC sah tidak diterima (src/lib/auth/audit-chain.ts). */
+  mac: text('mac'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

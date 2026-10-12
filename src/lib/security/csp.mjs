@@ -56,7 +56,10 @@ export function buildCsp({ dev, nonce }) {
  * @param {string} pathname
  */
 export function usesNonceCsp(pathname) {
-  return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/masuk' || pathname === '/masuk/verifikasi';
+  // Tanpa membedakan huruf besar/kecil, sama seperti pencocokan `headers()` next.config
+  // (caseSensitiveRoutes = false): /Dashboard dikecualikan dari CSP statis, jadi harus dapat nonce.
+  const p = pathname.toLowerCase();
+  return p === '/dashboard' || p.startsWith('/dashboard/') || p === '/masuk' || p === '/masuk/verifikasi';
 }
 
 /** Pola `source` next.config untuk semua rute SELAIN yang ditangani middleware. */

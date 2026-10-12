@@ -54,12 +54,15 @@ export default async function DetailAnggotaPage({
   const db = await getDb();
 
   const [history, registrations, transfers, targets] = await Promise.all([
-    db
-      .select()
-      .from(schema.auditLogs)
-      .where(and(eq(schema.auditLogs.entityType, 'member'), eq(schema.auditLogs.entityId, m.id)))
-      .orderBy(desc(schema.auditLogs.at))
-      .limit(15),
+    // Ringkasan log memuat nama lama: tidak ditampilkan untuk anggota yang sudah dianonimkan.
+    m.anonymizedAt
+      ? Promise.resolve([])
+      : db
+          .select()
+          .from(schema.auditLogs)
+          .where(and(eq(schema.auditLogs.entityType, 'member'), eq(schema.auditLogs.entityId, m.id)))
+          .orderBy(desc(schema.auditLogs.at))
+          .limit(15),
     db
       .select({ title: schema.events.title, dateStart: schema.events.dateStart })
       .from(schema.eventRegistrations)
@@ -346,7 +349,12 @@ export default async function DetailAnggotaPage({
           </Panel>
 
           <Panel title="Riwayat perubahan">
-            {history.length === 0 ? (
+            {m.anonymizedAt ? (
+              <p className="text-sm text-text-secondary">
+                Riwayat tidak ditampilkan karena ringkasannya memuat identitas sebelum anonimisasi. Log lengkap hanya dapat dibuka pemegang
+                izin log aktivitas dan terhapus sesuai jadwal retensi.
+              </p>
+            ) : history.length === 0 ? (
               <p className="text-sm text-text-secondary">Belum ada riwayat.</p>
             ) : (
               <ol className="space-y-3 text-sm">

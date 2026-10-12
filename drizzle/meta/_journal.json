@@ -99,6 +99,20 @@
       "when": 1791352713925,
       "tag": "0013_consent_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791737501353,
+      "tag": "0014_audit_anchor_mac",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791737502552,
+      "tag": "0015_audit_require_chain",
+      "breakpoints": true
     }
   ]
 }

@@ -29,8 +29,8 @@ const memberData = [
 ];
 
 const protections = [
-  'Telepon, alamat, dan data wali anggota, nama wali pada catatan persetujuan, serta rahasia verifikasi dua langkah disimpan terenkripsi (AES-256-GCM) di basis data. Kuncinya berada di server aplikasi, terpisah dari basis data dan dari berkas cadangan. Data yang tercatat sebelum enkripsi berlaku ikut dienkripsi setiap kali migrasi basis data dijalankan.',
-  'Log aktivitas hanya bisa ditambah: basis data menolak pengubahan dan penghapusan, dan setiap entri terkunci dengan hash entri sebelumnya sehingga perubahan dapat dideteksi lewat pemeriksaan integritas.',
+  'Telepon, alamat, dan data wali anggota, nama wali pada catatan persetujuan, serta rahasia verifikasi dua langkah disimpan terenkripsi (AES-256-GCM) di basis data. Kuncinya berada di server aplikasi, terpisah dari basis data dan dari berkas cadangan; di produksi, folder cadangan ditolak bila berada di dalam direktori aplikasi. Data yang tercatat sebelum enkripsi berlaku ikut dienkripsi setiap kali migrasi basis data dijalankan.',
+  'Log aktivitas hanya bisa ditambah: basis data menolak pengubahan dan penghapusan oleh aplikasi, setiap entri baru wajib terkunci dengan hash entri sebelumnya, dan jangkar penghapusan terjadwal ikut dikunci, sehingga perubahan dapat dideteksi lewat pemeriksaan integritas. Hak akses ini diterapkan ulang setiap migrasi basis data, dan halaman integritas memperingatkan bila hak itu hilang (misalnya setelah pemulihan cadangan).',
   'Akun Super Admin, pengurus kwarcab, dan admin website wajib memakai verifikasi dua langkah (kode dari aplikasi autentikator) setelah masa tenggang. Akun lain boleh mengaktifkannya sukarela.',
   'Percobaan masuk, kode akses, kode verifikasi, dan formulir publik dibatasi jumlahnya. Penghitungnya menyimpan sidik HMAC alamat IP atau nama pengguna, bukan nilai aslinya, dan dihapus oleh pembersihan otomatis setelah jangka pembatasan lewat.',
 ];
@@ -39,7 +39,7 @@ const accessRules = [
   'Pengurus hanya melihat data di cakupannya: staf gudep untuk gudepnya, staf kwarran untuk wilayahnya, pengurus kwarcab untuk seluruh kabupaten.',
   'Peserta hanya melihat data dirinya sendiri, dan tidak melihat alamat, telepon, maupun data wali.',
   'Pengecekan izin dilakukan di server pada setiap halaman dan aksi, bukan sekadar menyembunyikan tombol.',
-  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, meminta atau mencatat pencabutan persetujuan, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP.',
+  'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, meminta atau mencatat pencabutan persetujuan, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP pelaku. Entri dari formulir publik tanpa akun (keputusan wali, percobaan masuk yang gagal, permintaan reset) hanya menyimpan sidik HMAC alamat IP, bukan IP-nya.',
   'Daftar pendaftar kegiatan yang dapat dibuka pengurus hanya memuat nama, KTA, golongan, dan gugus depan, tanpa kontak maupun data wali.',
 ];
 
@@ -63,16 +63,16 @@ const retention = [
   'Log aktivitas: 24 bulan.',
   'Kode akses dan kode persetujuan yang tidak terpakai: 30 hari setelah kedaluwarsa. Permintaan reset kata sandi yang selesai: 90 hari.',
   'Sesi masuk dan penghitung pembatasan percobaan: dihapus setelah kedaluwarsa.',
-  'Data anggota disimpan selama keanggotaan. Atas permintaan penghapusan, pengurus kwarcab menganonimkan anggota yang sudah nonaktif: identitas, kontak, data wali, dan akun portal dihapus, sedangkan statistik golongan dan riwayat gudep tetap ada tanpa nama.',
+  'Data anggota disimpan selama keanggotaan. Atas permintaan penghapusan, pengurus kwarcab menganonimkan anggota yang sudah nonaktif: identitas, kontak, data wali, catatan bebas pengurus (alasan mutasi, catatan pencabutan persetujuan), dan akun portal dihapus, sedangkan statistik golongan dan riwayat gudep tetap ada tanpa nama.',
 ];
 
 const notYetInEffect = [
   'Verifikasi identitas wali. Sistem memastikan persetujuan datang dari pemegang kode yang diberikan pembina, tetapi tidak memeriksa dokumen identitas orang tua/wali. Karena kode diserahkan lewat pembina, pembina secara teknis masih bisa mengisinya sendiri dari perangkat lain; sistem hanya menolak perangkat yang sedang masuk ke portal dan menandai pengiriman dari jaringan yang sama.',
   'Enkripsi nama dan tanggal lahir anggota. Kedua data ini dilindungi kontrol akses dan koneksi terenkripsi, belum dienkripsi per kolom.',
   'Deteksi pemotongan entri log terbaru. Rantai hash mendeteksi perubahan di tengah, tetapi entri paling akhir yang dihapus hanya ketahuan bila pengurus mencatat kepala rantai secara berkala di luar sistem.',
-  'Penghapusan nama di log lama. Log aktivitas tidak dapat diubah, sehingga ringkasan log yang menyebut nama anggota baru hilang ketika masa simpan log (24 bulan) lewat, termasuk setelah anggota dianonimkan.',
+  'Penghapusan nama di log lama. Log aktivitas tidak dapat diubah, sehingga ringkasan log yang menyebut nama anggota baru hilang ketika masa simpan log (24 bulan) lewat, termasuk setelah anggota dianonimkan. Ringkasan itu tidak lagi ditampilkan di halaman anggota yang dianonimkan, tetapi tetap terbaca oleh pemegang izin log aktivitas sampai masa simpannya habis.',
   'Jadwal retensi dan pencadangan di server produksi. Sistem menyediakan penghapusan terjadwal, pencadangan, dan uji pemulihan, tetapi jadwal otomatisnya diatur pengelola server dan belum kami verifikasi di server produksi.',
-  'Tautan foto galeri ke anak tertentu. Persetujuan foto dicatat per anak, tetapi foto galeri belum ditautkan ke anggota, sehingga pemeriksaan sebelum unggah masih dilakukan manual oleh pengurus.',
+  'Pemeriksaan wajah otomatis. Sistem tidak mendeteksi wajah pada foto; larangan wajah anak di halaman publik ditegakkan lewat pernyataan pengunggah di setiap unggahan dan alur review, dan foto galeri belum ditautkan ke anggota tertentu.',
   'Klasifikasi data empat tingkat. Yang berlaku sekarang dua lapis: data umum dan data sensitif yang dibatasi izin khusus.',
 ];
 
@@ -84,7 +84,7 @@ export default function KebijakanPrivasiPage() {
         scene="lake"
         top={<Breadcrumbs items={[{ label: 'Kebijakan Privasi' }]} />}
         title="Kebijakan privasi"
-        description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 6 Oktober 2026."
+        description="Berlaku untuk situs publik dan portal Rumah Pramuka Indramayu. Diperbarui 11 Oktober 2026."
       />
       <div className="civic-container pb-16 pt-6 sm:pb-24">
         <div className="max-w-3xl space-y-10">
@@ -128,8 +128,9 @@ export default function KebijakanPrivasiPage() {
               </li>
               <li>
                 <strong className="text-text-primary">Laporan galat (bila diaktifkan sekretariat):</strong> galat di server dapat dikirim ke
-                layanan pemantauan Sentry setelah pos-el, nomor telepon, alamat IP, kode akses, dan angka panjang disamarkan. Tidak ada data
-                peramban, cookie, atau isi formulir yang ikut dikirim.
+                layanan pemantauan Sentry. Galat basis data dikirim tanpa nilai datanya (hanya teks perintah dan kode galat). Pesan galat
+                lain disamarkan dari pos-el, nomor telepon, alamat IP, kode akses, token, kredensial, dan angka panjang. Tidak ada data
+                peramban, cookie, atau header permintaan yang ikut dikirim.
               </li>
               <li>
                 <strong className="text-text-primary">Log server standar</strong> milik penyedia hosting untuk keamanan dan pemeliharaan.
@@ -184,10 +185,11 @@ export default function KebijakanPrivasiPage() {
               4. Perlindungan anggota anak
             </h2>
             <p className="mt-3 civic-prose">
-              Halaman publik tidak menampilkan foto wajah jarak dekat anggota di bawah 18 tahun tanpa persetujuan rilis media dari orang tua
-              atau wali. Setiap unggahan foto galeri mensyaratkan pengurus menyatakan foto tersebut aman dipublikasikan, dan metadata lokasi
-              (GPS) pada foto otomatis dibuang saat diunggah. Peta publik hanya menampilkan lokasi sekretariat Kwarcab, tidak pernah alamat
-              rumah anggota. Anggota di bawah 18 tahun disarankan mengirim pesan melalui orang tua, wali, atau pembina.
+              Halaman publik tidak menampilkan foto wajah anak di bawah 18 tahun yang dapat dikenali, juga bila orang tua atau wali
+              menyetujui foto dokumentasi (persetujuan foto hanya untuk arsip internal Kwarcab dan gugus depan). Setiap unggahan foto galeri
+              mensyaratkan pengurus menyatakan tidak ada wajah anak yang dapat dikenali, dan metadata lokasi (GPS) pada foto otomatis
+              dibuang saat diunggah. Peta publik hanya menampilkan lokasi sekretariat Kwarcab, tidak pernah alamat rumah anggota. Anggota di
+              bawah 18 tahun disarankan mengirim pesan melalui orang tua, wali, atau pembina.
             </p>
             <h3 className="mt-6 font-display text-lg font-semibold text-text-primary">Persetujuan orang tua/wali</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-text-secondary">

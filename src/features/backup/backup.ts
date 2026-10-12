@@ -27,6 +27,8 @@ export interface BackupOptions {
   databaseUrl?: string;
   keep?: number;
   now?: () => Date;
+  /** Override untuk tes; bawaan: produksi atau DATABASE_URL terisi. */
+  production?: boolean;
 }
 
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
@@ -49,20 +51,25 @@ function run(
   });
 }
 
-/** Argumen libpq tanpa sandi (sandi lewat PGPASSWORD). */
-function pgArgs(databaseUrl: string): { args: string[]; password: string } {
+/**
+ * Koneksi pg_dump: SATU argumen `--dbname=<URI tanpa sandi>` (sandi lewat PGPASSWORD).
+ * libpq menerima URI utuh, jadi sslmode/sslrootcert/host=… di query string tetap berlaku —
+ * membongkar URL ke --host/--port dulu membuang parameter itu (pg_dump turun ke sslmode=prefer).
+ * Bentuk `--opsi=nilai` juga mencegah nilai yang diawali '-' terbaca sebagai opsi.
+ */
+export function pgConnArgs(databaseUrl: string): { args: string[]; password: string } {
   const u = new URL(databaseUrl);
-  const args = [
-    '--host',
-    u.hostname,
-    '--port',
-    u.port || '5432',
-    '--username',
-    decodeURIComponent(u.username),
-    '--dbname',
-    u.pathname.slice(1),
-  ];
-  return { args, password: decodeURIComponent(u.password) };
+  const password = decodeURIComponent(u.password);
+  u.password = '';
+  return { args: [`--dbname=${u.toString()}`], password };
+}
+
+/** Di server (produksi/PostgreSQL), backup tidak boleh di dalam direktori aplikasi (bersama .env/kunci, rawan ikut ter-commit). */
+export function assertSafeBackupDir(dir: string, production: boolean, appDir = process.cwd()) {
+  const rel = path.relative(path.resolve(appDir), path.resolve(dir));
+  const inside = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+  if (production && inside)
+    throw new Error('BACKUP_DIR wajib diisi dengan folder di luar direktori aplikasi (terpisah dari .env dan kunci).');
 }
 
 const sha256File = async (file: string) =>
@@ -102,12 +109,20 @@ export async function runBackup(trigger: { id: string | null; name: string }, op
   const kind = databaseUrl ? 'postgres' : 'pglite';
   const [row] = await db.insert(t).values({ kind, triggeredById: trigger.id, triggeredByName: trigger.name, startedAt: now() }).returning();
   try {
+    // Server sungguhan = produksi ATAU DATABASE_URL terisi: cron `npm run db:backup` lewat tsx
+    // biasanya berjalan tanpa NODE_ENV=production.
+    assertSafeBackupDir(dir, opts.production ?? Boolean(env && (env.isProduction || env.DATABASE_URL)));
     await fs.mkdir(dir, { recursive: true, mode: 0o700 });
+    await fs.chmod(dir, 0o700).catch(() => undefined); // folder milik pengguna lain: berkasnya tetap 0600
     const fileName = `${PREFIX}${stamp(now())}.${kind === 'postgres' ? 'dump' : 'pglite.tar.gz'}`;
     const file = path.join(dir, fileName);
+    // Dibuat 0600 SEBELUM ditulis: pg_dump memotong berkas yang ada tanpa mengubah mode, jadi
+    // isi dump tidak pernah terbaca pengguna lain, juga bila proses mati di tengah jalan.
+    await (await fs.open(file, 'wx', 0o600)).close();
     if (databaseUrl) {
-      const { args, password } = pgArgs(databaseUrl);
-      const r = await run('pg_dump', ['--format=custom', '--no-owner', '--no-privileges', '--file', file, ...args], {
+      const { args, password } = pgConnArgs(databaseUrl);
+      // Tanpa --no-privileges: REVOKE pada log audit ikut terpulihkan (db:migrate juga menerapkannya ulang).
+      const r = await run('pg_dump', ['--format=custom', '--no-owner', '--file', file, ...args], {
         PGPASSWORD: password,
       });
       if (r.code !== 0) {

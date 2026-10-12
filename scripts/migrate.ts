@@ -5,11 +5,13 @@
  *
  * Backfill enkripsi (src/db/encrypt-backfill.ts) ikut dijalankan setiap kali: idempoten, dan
  * memastikan tidak ada baris lama yang tertinggal sebagai teks biasa setelah deploy.
+ * Hak akses user aplikasi (src/db/privileges.ts) juga diterapkan ulang setiap kali.
  * Validasi env (src/lib/env.ts) menolak DATABASE_URL tanpa kunci enkripsi.
  */
 import path from 'node:path';
 import type { Database } from '../src/db';
 import { backfillEncryptedColumns } from '../src/db/encrypt-backfill';
+import { applyAppRolePrivileges, APP_ROLE } from '../src/db/privileges';
 import { serverEnv } from '../src/lib/env';
 import { envKeyring } from '../src/lib/security/crypto';
 
@@ -34,6 +36,12 @@ async function main() {
     db = await getDb(); // PGlite bermigrasi otomatis saat koneksi pertama
   }
   console.log('Migrasi selesai.');
+  // Diulang setiap kali: hak user aplikasi bisa hilang setelah restore backup (src/db/privileges.ts).
+  console.log(
+    (await applyAppRolePrivileges(db))
+      ? `Hak akses ${APP_ROLE} diterapkan ulang (log audit INSERT-only).`
+      : `Peran ${APP_ROLE} tidak ada — atur hak user aplikasi manual (docs/security/audit-log-policy.md).`,
+  );
 
   const reports = await backfillEncryptedColumns(db, ring);
   const updated = reports.reduce((n, r) => n + r.updated, 0);

@@ -51,6 +51,28 @@ describe('Content-Security-Policy (P1-1)', () => {
     }
   });
 
+  it('tepat satu CSP per rute menurut pencocokan Next sungguhan (tanpa beda huruf besar/kecil)', async () => {
+    const { getPathMatch } = await import('next/dist/shared/lib/router/utils/path-match');
+    // Sama dengan pencocok header di next/dist/server/lib/router-utils/filesystem.js:
+    // sensitive = experimental.caseSensitiveRoutes (bawaan false).
+    const matchStatic = getPathMatch(STATIC_CSP_SOURCE, { removeUnnamedParams: true, strict: true, sensitive: false });
+    const staticRe = { test: (p: string) => matchStatic(p) !== false };
+    for (const p of [
+      '/',
+      '/berita',
+      '/Dashboard',
+      '/DASHBOARD/anggota',
+      '/MASUK',
+      '/Masuk/Verifikasi',
+      '/masuk/kode',
+      '/Kontak',
+      '/dashboards',
+    ]) {
+      const staticCsp = staticRe.test(p);
+      expect(staticCsp !== usesNonceCsp(p), `${p}: statis=${staticCsp} nonce=${usesNonceCsp(p)}`).toBe(true);
+    }
+  });
+
   it('next.config memasang header keamanan di semua rute + CSP di rute statis', async () => {
     const rules = await nextConfig.headers!();
     const all = rules.find((r) => r.source === '/:path*');

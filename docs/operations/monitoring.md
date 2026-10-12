@@ -67,9 +67,22 @@ DATABASE_URL=postgresql://postgres:…@<host>/restore_uji npm run db:migrate   #
 dropdb -h <host> -U postgres restore_uji
 ```
 
-Catat hasilnya (tanggal, berkas, jumlah baris) di agenda sekretariat. Pemulihan sesungguhnya: hentikan aplikasi,
-`pg_restore --clean --if-exists` ke database produksi, pulihkan `STORAGE_DIR`, jalankan aplikasi, periksa
-`/api/health` dan `/dashboard/log/integritas`.
+Catat hasilnya (tanggal, berkas, jumlah baris) di agenda sekretariat.
+
+**Pemulihan sesungguhnya** (urutan wajib):
+
+1. Hentikan aplikasi.
+2. `pg_restore -U <pemilik> --no-owner --clean --if-exists --dbname <db produksi> <berkas>.dump`; pulihkan `STORAGE_DIR`.
+   Bila memulihkan ke **database baru**, beri dulu hak dasar user aplikasi di database itu (default ACL berlaku
+   per database): jalankan isi `docker/db-init/01-app-user.sh` mulai `GRANT CONNECT`, lalu
+   `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO rumah_pramuka_app` dan
+   `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO rumah_pramuka_app`.
+3. **`DATABASE_URL=<pemilik> npm run db:migrate`, sebelum aplikasi dijalankan.** Tabel yang dibuat ulang `pg_restore`
+   mendapat hak bawaan database. Terbukti di PostgreSQL 16 (11 Okt 2026): sesudah `--clean`, user aplikasi kembali
+   memegang DELETE log audit dan INSERT jangkar, juga dengan dump yang menyimpan ACL. `db:migrate` mencabutnya lagi
+   (`src/db/privileges.ts`).
+4. Jalankan aplikasi, periksa `/api/health`, lalu buka `/dashboard/log/integritas`. Halaman itu memperingatkan bila user
+   koneksi aplikasi masih memegang hak berbahaya atas log audit. Jalankan juga **Periksa sekarang**.
 
 ## 5. Daftar periksa operasi
 
@@ -78,4 +91,5 @@ Catat hasilnya (tanggal, berkas, jumlah baris) di agenda sekretariat. Pemulihan 
 - [ ] cron retensi (`docs/operations/retention.md`) + backup harian aktif
 - [ ] kunci enkripsi tersimpan di brankas terpisah
 - [ ] uji pulih bulanan tercatat
+- [ ] `BACKUP_DIR` di luar direktori aplikasi (ditolak di produksi bila di dalamnya) dan tidak ikut repositori
 - [ ] kepala rantai log (`/dashboard/log/integritas`) dicatat mingguan

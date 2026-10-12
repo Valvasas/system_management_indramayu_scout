@@ -58,6 +58,35 @@ export const dataConsentSatisfied = (s: Record<ConsentScope, ConsentStatus>) => 
 export const initialMemberStatus = (canVerify: boolean, birthDate: string, now = new Date()) =>
   canVerify && !needsGuardianConsent(birthDate, now) ? ('ACTIVE' as const) : ('PENDING' as const);
 
+/**
+ * Status setelah data anggota diubah. Pengubah tanpa hak verifikasi → kembali ke antrean.
+ * Verifikator mempertahankan status, KECUALI perubahan (mis. tanggal lahir dikoreksi) menjadikan
+ * anggota AKTIF sebagai anak tanpa persetujuan DATA dari wali: ia kembali menunggu verifikasi.
+ */
+export function statusAfterEdit<S extends string>(input: {
+  current: S;
+  canVerify: boolean;
+  birthDate: string;
+  statuses: Record<ConsentScope, ConsentStatus>;
+  now?: Date;
+}): S | 'PENDING' {
+  if (!input.canVerify) return 'PENDING';
+  if (input.current === 'ACTIVE' && needsGuardianConsent(input.birthDate, input.now) && !dataConsentSatisfied(input.statuses))
+    return 'PENDING';
+  return input.current;
+}
+
+/**
+ * Alasan akun portal TIDAK boleh dibuat untuk anggota anak (null = boleh). Akun adalah pemrosesan
+ * baru atas data anak, jadi syaratnya sama dengan verifikasi: persetujuan DATA terverifikasi.
+ */
+export function portalAccountBlock(birthDate: string, statuses: Record<ConsentScope, ConsentStatus>, now = new Date()) {
+  if (!needsGuardianConsent(birthDate, now)) return null;
+  if (dataConsentWithdrawn(statuses)) return 'ditolak' as const;
+  if (!dataConsentSatisfied(statuses)) return 'belum' as const;
+  return null;
+}
+
 /** Wali menolak/mencabut persetujuan data pribadi → tidak boleh ada pemrosesan baru. */
 export const dataConsentWithdrawn = (s: Record<ConsentScope, ConsentStatus>) => s.DATA.kind === 'REVOKED' || s.DATA.kind === 'DECLINED';
 

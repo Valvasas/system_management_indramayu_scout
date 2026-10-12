@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Field';
 import { Pagination, Panel, PortalHeader, TableWrap, td, th, withQuery } from '@/components/dashboard/ui';
 import { ButtonLink } from '@/components/ui/Button';
+import { IP_FINGERPRINT_PREFIX } from '@/lib/auth/audit';
 import { can, requirePermission } from '@/lib/auth/session';
 import { formatDate, formatTime } from '@/lib/format';
 
@@ -126,7 +127,15 @@ export default async function LogPage({ searchParams = {} }: { searchParams?: { 
                       <p className="text-text-primary">{l.summary}</p>
                       <p className="font-mono text-xs text-text-muted">{l.action}</p>
                     </td>
-                    <td className={`${td} font-mono text-xs text-text-secondary`}>{l.ip ?? '—'}</td>
+                    <td className={`${td} font-mono text-xs text-text-secondary`}>
+                      {l.ip?.startsWith(IP_FINGERPRINT_PREFIX) ? (
+                        <span title="Sidik HMAC: alamat IP pengunjung formulir publik tidak disimpan">
+                          sidik {l.ip.slice(IP_FINGERPRINT_PREFIX.length, IP_FINGERPRINT_PREFIX.length + 8)}
+                        </span>
+                      ) : (
+                        (l.ip ?? '—')
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

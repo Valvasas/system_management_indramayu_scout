@@ -55,6 +55,24 @@ beforeEach(async () => {
     guardianName: 'Pak Samudra',
     ipHash: 'abc',
   });
+  await t.db.insert(schema.guardianConsents).values({
+    memberId,
+    scope: 'PHOTO',
+    granted: false,
+    textVersion: '2026-10-v1',
+    method: 'STAFF_REVOCATION',
+    recordedByName: 'Pembina',
+    note: 'Ibu Siti Samudra menelepon dari 0812-1111-2222',
+  });
+  await t.db.insert(schema.memberTransfers).values({
+    memberId,
+    fromGudepId: gudepA,
+    toGudepId: gudepB,
+    reason: 'Bayu pindah ke SMPN 2 karena ayahnya dinas',
+    status: 'REJECTED',
+    requestedByName: 'Pembina',
+    decisionNote: 'Bayu belum lulus SKU',
+  });
   const [ev] = await t.db
     .insert(schema.events)
     .values({ title: 'Kemah', slug: 'kemah', dateStart: NOW, location: 'Lapangan', organizer: 'Kwarcab' })
@@ -107,9 +125,14 @@ describe('anonimisasi anggota nonaktif (hak subjek data, 1.4)', () => {
     const raw = JSON.stringify((await t.db.execute(sql`SELECT * FROM members`)) as unknown);
     expect(raw).not.toMatch(/Bayu|Samudra|0812|Jl\. Uji|Alergi/);
 
-    const consents = await t.db.select().from(schema.guardianConsents);
-    expect(consents).toHaveLength(1);
-    expect(consents[0]).toMatchObject({ granted: true, guardianName: null, ipHash: null });
+    const consents = await t.db.select().from(schema.guardianConsents).orderBy(schema.guardianConsents.scope);
+    expect(consents).toHaveLength(2);
+    expect(consents[0]).toMatchObject({ scope: 'DATA', granted: true, guardianName: null, ipHash: null });
+    expect(consents[1]).toMatchObject({ scope: 'PHOTO', granted: false, method: 'STAFF_REVOCATION', note: null });
+    const [tr] = await t.db.select().from(schema.memberTransfers);
+    expect(tr).toMatchObject({ status: 'REJECTED', fromGudepId: gudepA, toGudepId: gudepB, decisionNote: null });
+    const rawOther = JSON.stringify(await t.db.execute(sql`SELECT * FROM guardian_consents, member_transfers`));
+    expect(rawOther).not.toMatch(/Bayu|Samudra|0812|SMPN/);
     expect(await t.db.select().from(schema.eventRegistrations)).toHaveLength(1);
 
     const [u] = await t.db.select().from(schema.users).where(eq(schema.users.id, userId));

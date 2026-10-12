@@ -6,6 +6,8 @@ import {
   firstNameOf,
   initialMemberStatus,
   needsGuardianConsent,
+  portalAccountBlock,
+  statusAfterEdit,
   type ConsentDecision,
 } from '@/features/consent/status';
 import { minorBirthCutoffDate } from '@/features/consent/consent';
@@ -84,5 +86,30 @@ describe('perbaikan hasil review persetujuan', () => {
     expect(initialMemberStatus(true, '1990-01-01', now)).toBe('ACTIVE');
     expect(initialMemberStatus(true, '2012-05-01', now)).toBe('PENDING');
     expect(initialMemberStatus(false, '1990-01-01', now)).toBe('PENDING');
+  });
+
+  it('verifikator mengubah tanggal lahir dewasa → anak: tanpa persetujuan DATA kembali menunggu', () => {
+    const now = new Date(2026, 9, 6);
+    const none = consentStatuses([]);
+    const granted = consentStatuses([dec({})]);
+    const legacy = consentStatuses([dec({ method: 'LEGACY_MANUAL' })]);
+    const edit = (over: Partial<Parameters<typeof statusAfterEdit>[0]>) =>
+      statusAfterEdit({ current: 'ACTIVE', canVerify: true, birthDate: '2013-06-01', statuses: none, now, ...over });
+    expect(edit({})).toBe('PENDING');
+    expect(edit({ statuses: legacy })).toBe('PENDING'); // tanggal manual lama bukan persetujuan terverifikasi
+    expect(edit({ statuses: granted })).toBe('ACTIVE');
+    expect(edit({ birthDate: '2005-01-01' })).toBe('ACTIVE'); // tetap dewasa
+    expect(edit({ current: 'PENDING' })).toBe('PENDING');
+    expect(edit({ canVerify: false, birthDate: '1990-01-01', statuses: granted })).toBe('PENDING');
+  });
+
+  it('akun portal anak hanya dengan persetujuan DATA terverifikasi; dewasa bebas', () => {
+    const now = new Date(2026, 9, 6);
+    expect(portalAccountBlock('2013-06-01', consentStatuses([]), now)).toBe('belum');
+    expect(portalAccountBlock('2013-06-01', consentStatuses([dec({ method: 'LEGACY_MANUAL' })]), now)).toBe('belum');
+    expect(portalAccountBlock('2013-06-01', consentStatuses([dec({ granted: false })]), now)).toBe('ditolak');
+    expect(portalAccountBlock('2013-06-01', consentStatuses([dec({}), dec({ granted: false, decidedAt: d(3) })]), now)).toBe('ditolak');
+    expect(portalAccountBlock('2013-06-01', consentStatuses([dec({})]), now)).toBeNull();
+    expect(portalAccountBlock('1990-01-01', consentStatuses([]), now)).toBeNull();
   });
 });

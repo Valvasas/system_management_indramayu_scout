@@ -138,7 +138,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 |---|---|
 | `db/index.ts`, `db/schema.ts` | Drizzle. `DATABASE_URL` → Postgres; kosong → PGlite di `.data/pglite` (ditolak di produksi kecuali `ALLOW_PGLITE=1`). Koneksi malas |
 | `db/encrypted-text.ts`, `db/encrypt-backfill.ts` | `encryptedText()` customType (AES-GCM transparan, kolom tak bisa dicari) + `ENCRYPTED_COLUMNS` · backfill/rotasi |
-| `lib/auth/` | `permissions.ts` (matriks 6 peran, `SUPER_ADMIN_ONLY`), `permission-matrix.ts`, `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`, sesi `mfaPending`, kunci tenggang MFA), `audit.ts` → `audit-chain.ts` (rantai HMAC, verifikasi), `password.ts`, `access-code.ts`, `totp.ts` (RFC 6238), `mfa-policy.ts` |
+| `db/privileges.ts` | `applyAppRolePrivileges()` — REVOKE log audit + GRANT jurnal migrasi untuk `rumah_pramuka_app`, diulang setiap `db:migrate` (hak hilang setelah restore) |
+| `lib/auth/` | `permissions.ts` (matriks 6 peran, `SUPER_ADMIN_ONLY`), `permission-matrix.ts`, `scope.ts`, `session.ts` (`requireUser`/`requirePermission`/`can`, sesi `mfaPending`, kunci tenggang MFA), `audit.ts` (IP pelaku / sidik HMAC untuk entri publik) → `audit-chain.ts` (rantai HMAC, jangkar ber-MAC, `storableText`, `auditPrivileges`, verifikasi), `password.ts`, `access-code.ts`, `totp.ts` (RFC 6238), `mfa-policy.ts` |
 | `lib/env.ts` | **Satu-satunya pembaca `process.env`.** `publicEnv` (aman di klien) · `serverEnv()` Zod, di-cache; galat tanpa nilai |
 | `lib/security/request.ts` | `clientIp`, `userAgent` |
 | `lib/security/rate-limit.ts` | `createRateLimiter(max, ms, { scope, failClosed })` di tabel `rate_limits` (bersama antar-instance, kunci HMAC) |
@@ -157,7 +158,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 ## `tests/`
 
 `tests/unit/*.test.ts` — izin & eskalasi hak, formulir, CSV (injeksi), domain/golongan/slug, kata sandi, validasi anggota (UU PDP), waktu WIB, iCalendar, pencarian, kode akses, env, CSP & JSON-LD, kripto, TOTP (vektor RFC), MFA, persetujuan, monitoring, sinkron dokumen otorisasi.
-`tests/integration/*.test.ts` — **SQL sungguhan** di PGlite in-memory (`tests/helpers/test-db.ts`, migrasi asli, clone per tes): rate limit bersama, enkripsi + backfill, rantai audit & trigger, MFA, persetujuan wali (IDOR), retensi (termasuk `SET ROLE` tanpa hak DELETE), anonimisasi, backup. Alur portal: `npm run e2e`. Jalankan `npm test`.
+`tests/integration/*.test.ts` — **SQL sungguhan** di PGlite in-memory (`tests/helpers/test-db.ts`, migrasi asli, clone per tes): rate limit bersama, enkripsi + backfill, rantai audit & trigger (jangkar palsu, sisipan tanpa hash, emoji terpotong), IP audit, hak user aplikasi setelah restore, MFA, persetujuan wali (IDOR), retensi (termasuk `SET ROLE` tanpa hak DELETE), anonimisasi, backup. `useAsAppDb(db)` mengarahkan `getDb()` ke DB uji. Alur portal: `npm run e2e`. Jalankan `npm test`.
 
 ## `public/`
 

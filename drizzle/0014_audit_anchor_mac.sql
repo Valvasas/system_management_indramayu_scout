@@ -1,0 +1,1 @@
+ALTER TABLE "audit_chain_anchors" ADD COLUMN "mac" text;

@@ -31,6 +31,8 @@ npm-debug.log*
 push_to_github.bat
 start_server.bat
 
+# hasil npm run db:backup (bawaan BACKUP_DIR saat pengembangan) — dump berisi data anak
+backups/
 # database lokal (PGlite) & berkas unggahan — sertakan storage/ dalam backup produksi
 .data/
 storage/

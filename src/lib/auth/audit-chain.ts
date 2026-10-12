@@ -55,6 +55,22 @@ export function computeAuditHash(e: ChainFields, key: Buffer = auditChainKey()):
   return createHmac('sha256', key).update(canonical).digest('hex');
 }
 
+/**
+ * Nilai yang di-hash HARUS sama persis dengan yang tersimpan. PostgreSQL menyimpan teks UTF-8:
+ * surrogate tunggal (mis. emoji yang terpotong `slice`) menjadi U+FFFD dan NUL ditolak. Tanpa
+ * normalisasi ini, HMAC dihitung atas string yang berbeda dari isi basis data → rantai tampak
+ * rusak, dan verifikasi berhenti di situ (menutupi perusakan sesudahnya).
+ */
+export function storableText(s: string): string;
+export function storableText(s: string | null): string | null;
+export function storableText(s: string | null): string | null {
+  if (s === null) return null;
+  return s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|\u0000/g, '\uFFFD');
+}
+
+/** Potong per code point (bukan per code unit UTF-16) lalu normalisasi. */
+export const truncateStorable = (s: string, max: number) => storableText(Array.from(s).slice(0, max).join(''));
+
 const sameHash = (a: string | null, b: string) => {
   if (!a || a.length !== b.length) return false;
   return timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -74,9 +90,38 @@ export async function appendAuditEntry(db: Database, input: AuditInput, key: Buf
     const next = (await tx.execute(sql`SELECT nextval(pg_get_serial_sequence('audit_logs', 'id'))::text AS id`)) as unknown as {
       rows: { id: string }[];
     };
-    const entry: ChainFields = { ...input, id: Number(next.rows[0].id), at: new Date(), prevHash: last?.hash ?? AUDIT_GENESIS };
+    const entry: ChainFields = {
+      ...input,
+      actorName: storableText(input.actorName),
+      action: storableText(input.action),
+      entityType: storableText(input.entityType),
+      entityId: storableText(input.entityId),
+      summary: storableText(input.summary),
+      ip: storableText(input.ip),
+      id: Number(next.rows[0].id),
+      at: new Date(),
+      prevHash: last?.hash ?? AUDIT_GENESIS,
+    };
     await tx.insert(t).values({ ...entry, hash: computeAuditHash(entry, key) });
   });
+}
+
+export interface AnchorFields {
+  firstLogId: number;
+  prevHash: string;
+  deletedCount: number;
+}
+
+/**
+ * MAC jangkar retensi. Tanpa ini, siapa pun yang bisa menghapus log (pemilik skema) cukup
+ * menambah baris jangkar berisi prev_hash entri pertama yang tersisa untuk menyembunyikan
+ * penghapusan awal rantai — termasuk entri terbaru. Jangkar hanya sah bila MAC-nya cocok dan
+ * `firstLogId` = entri berantai pertama yang ada.
+ */
+export function computeAnchorMac(a: AnchorFields, key: Buffer = auditChainKey()): string {
+  return createHmac('sha256', key)
+    .update(JSON.stringify(['anchor', HASH_VERSION, a.firstLogId, a.prevHash, a.deletedCount]))
+    .digest('hex');
 }
 
 export interface ChainReport {
@@ -125,7 +170,6 @@ export function verifyChainRows(rows: ChainRow[], anchors: ReadonlySet<string>, 
 /** Verifikasi seluruh rantai di basis data, per batch (memori tetap kecil). */
 export async function verifyAuditChain(db: Database, key: Buffer = auditChainKey(), batchSize = 1000): Promise<ChainReport> {
   const t = schema.auditLogs;
-  const anchors = new Set((await db.select({ h: schema.auditChainAnchors.prevHash }).from(schema.auditChainAnchors)).map((a) => a.h));
   const [{ legacy }] = await db
     .select({ legacy: sql<number>`count(*)::int` })
     .from(t)
@@ -134,6 +178,10 @@ export async function verifyAuditChain(db: Database, key: Buffer = auditChainKey
   // Entri berantai pertama: setelah itu semua entri wajib punya hash (tidak boleh ada lubang).
   const [first] = await db.select({ id: t.id }).from(t).where(isNotNull(t.hash)).orderBy(asc(t.id)).limit(1);
   if (!first) return { ok: true, checked: 0, legacy, headHash: null, headId: null };
+  const anchorRows = await db.select().from(schema.auditChainAnchors);
+  const anchors = new Set(
+    anchorRows.filter((a) => a.firstLogId === first.id && sameHash(a.mac, computeAnchorMac(a, key))).map((a) => a.prevHash),
+  );
 
   let checked = 0;
   let lastId = first.id - 1;
@@ -159,4 +207,48 @@ export async function verifyAuditChain(db: Database, key: Buffer = auditChainKey
     headId = lastId;
   }
   return { ok: true, checked, legacy, headHash: prev, headId };
+}
+
+export interface AuditPrivilegeReport {
+  role: string;
+  /** Superuser/pemilik bisa mematikan trigger: perlindungan tingkat DB tidak berlaku untuknya. */
+  superuser: boolean;
+  owner: boolean;
+  /** Hak berbahaya yang dipegang user koneksi aplikasi saat ini. */
+  risky: string[];
+}
+
+/**
+ * Hak user koneksi SAAT INI atas log audit. Perlindungan INSERT-only bergantung pada REVOKE
+ * (migrasi 0004 + src/db/privileges.ts); restore backup dengan `--clean` ke basis data ber-
+ * default ACL diam-diam mengembalikan DELETE (terbukti di PostgreSQL 16). Halaman integritas
+ * menampilkan peringatan bila ini terjadi.
+ */
+export async function auditPrivileges(db: Database): Promise<AuditPrivilegeReport> {
+  const res = (await db.execute(sql`
+    SELECT current_user AS role,
+      (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) AS superuser,
+      (SELECT pg_has_role(current_user, tableowner, 'USAGE') FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_logs') AS owner,
+      has_table_privilege('audit_logs', 'UPDATE') AS log_update,
+      has_table_privilege('audit_logs', 'DELETE') AS log_delete,
+      has_table_privilege('audit_logs', 'TRUNCATE') AS log_truncate,
+      has_table_privilege('audit_chain_anchors', 'INSERT') AS anchor_insert,
+      has_table_privilege('audit_chain_anchors', 'UPDATE') AS anchor_update,
+      has_table_privilege('audit_chain_anchors', 'DELETE') AS anchor_delete
+  `)) as unknown as { rows: Record<string, string | boolean>[] };
+  const r = res.rows[0];
+  const labels: [string, string][] = [
+    ['log_update', 'UPDATE log audit'],
+    ['log_delete', 'DELETE log audit'],
+    ['log_truncate', 'TRUNCATE log audit'],
+    ['anchor_insert', 'INSERT jangkar retensi'],
+    ['anchor_update', 'UPDATE jangkar retensi'],
+    ['anchor_delete', 'DELETE jangkar retensi'],
+  ];
+  return {
+    role: String(r.role),
+    superuser: r.superuser === true,
+    owner: r.owner === true,
+    risky: labels.filter(([k]) => r[k] === true).map(([, label]) => label),
+  };
 }

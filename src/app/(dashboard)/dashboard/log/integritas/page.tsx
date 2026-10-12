@@ -4,7 +4,8 @@ import { getDb } from '@/db';
 import { Button } from '@/components/ui/Button';
 import { InfoList, Notice, Panel, PortalHeader } from '@/components/dashboard/ui';
 import { audit } from '@/lib/auth/audit';
-import { verifyAuditChain } from '@/lib/auth/audit-chain';
+import { auditPrivileges, verifyAuditChain } from '@/lib/auth/audit-chain';
+import { serverEnv } from '@/lib/env';
 import { requirePermission } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: 'Integritas log audit' };
@@ -19,7 +20,11 @@ const REASONS = {
 export default async function AuditIntegrityPage({ searchParams = {} }: { searchParams?: { periksa?: string } }) {
   const user = await requirePermission('audit.verify');
   const run = searchParams.periksa === '1';
-  const report = run ? await verifyAuditChain(await getDb()) : null;
+  const db = await getDb();
+  const report = run ? await verifyAuditChain(db) : null;
+  // PGlite (pengembangan) berjalan sebagai superuser: pemisahan hak memang tidak berlaku di sana.
+  const privileges = serverEnv().DATABASE_URL ? await auditPrivileges(db) : null;
+  const unprotected = privileges && (privileges.superuser || privileges.owner || privileges.risky.length > 0);
   if (report) {
     await audit(user, {
       action: 'audit.verified',
@@ -34,6 +39,19 @@ export default async function AuditIntegrityPage({ searchParams = {} }: { search
         back={{ href: '/dashboard/log', label: 'Log aktivitas' }}
         description="Setiap entri log terkunci dengan hash entri sebelumnya. Pemeriksaan ini menghitung ulang seluruh rantai untuk mendeteksi entri yang diubah, dihapus, atau disisipkan."
       />
+
+      {unprotected && (
+        <Notice tone="warning">
+          Log audit tidak terlindungi di tingkat basis data: user koneksi aplikasi <code className="font-mono">{privileges.role}</code>{' '}
+          {privileges.superuser
+            ? 'adalah superuser'
+            : privileges.owner
+              ? 'adalah pemilik tabel log'
+              : `memegang hak ${privileges.risky.join(', ')}`}
+          . Biasanya terjadi setelah restore backup. Jalankan <code className="font-mono">npm run db:migrate</code> dengan pemilik skema,
+          lalu muat ulang halaman ini.
+        </Notice>
+      )}
 
       {report?.ok && (
         <Notice>Rantai utuh: {report.checked.toLocaleString('id-ID')} entri terverifikasi, tidak ada yang diubah atau dihapus.</Notice>

@@ -259,7 +259,7 @@ export const PhotoUploadForm: React.FC<{ action: Action }> = ({ action }) => (
     <CheckboxField
       name="consent"
       label="Foto ini aman dipublikasikan"
-      description="Saya sudah memastikan tidak ada wajah anak yang dapat dikenali tanpa izin wali, dan tidak ada data pribadi yang terlihat."
+      description="Saya sudah memastikan tidak ada wajah anak yang dapat dikenali (persetujuan foto dari wali hanya untuk arsip internal), dan tidak ada data pribadi yang terlihat."
     />
     <SubmitButton pendingLabel="Mengunggah">
       <Upload className="h-4 w-4" aria-hidden="true" />

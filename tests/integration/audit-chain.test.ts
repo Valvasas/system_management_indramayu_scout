@@ -2,8 +2,20 @@ import { randomBytes } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { schema } from '@/db';
-import { appendAuditEntry, AUDIT_GENESIS, auditChainKey, computeAuditHash, verifyAuditChain } from '@/lib/auth/audit-chain';
+import {
+  appendAuditEntry,
+  AUDIT_GENESIS,
+  auditChainKey,
+  computeAnchorMac,
+  computeAuditHash,
+  truncateStorable,
+  verifyAuditChain,
+} from '@/lib/auth/audit-chain';
 import { createTestDb, type TestDb } from '../helpers/test-db';
+
+/** Karakter di luar BMP (pasangan surrogate), dibangun dari kode titik agar sumber bebas emoji. */
+const ASTRAL = String.fromCodePoint(0x1f3d5);
+const VS16 = String.fromCodePoint(0xfe0f);
 
 let t: TestDb;
 const key = auditChainKey(randomBytes(32));
@@ -100,8 +112,52 @@ describe('log audit tahan-ubah (1.6)', () => {
       await tx.execute(sql`DELETE FROM audit_logs WHERE id <= ${rows[1].id}`);
     });
     expect((await verifyAuditChain(t.db, key)).broken).toEqual({ id: rows[2].id, reason: 'awal-tidak-dikenal' });
-    await t.db.insert(schema.auditChainAnchors).values({ firstLogId: rows[2].id, prevHash: rows[2].prevHash!, deletedCount: 2 });
+    const anchor = { firstLogId: rows[2].id, prevHash: rows[2].prevHash!, deletedCount: 2 };
+    await t.db.insert(schema.auditChainAnchors).values({ ...anchor, mac: computeAnchorMac(anchor, key) });
     expect(await verifyAuditChain(t.db, key)).toMatchObject({ ok: true, checked: 2 });
+  });
+
+  it('jangkar palsu (tanpa MAC, MAC kunci lain, atau entri pertama berbeda) tidak menyembunyikan penghapusan', async () => {
+    await append(5);
+    const rows = await t.db.select().from(schema.auditLogs).orderBy(schema.auditLogs.id);
+    // Pemilik skema tanpa kunci HMAC menghapus awal rantai (termasuk entri baru) lalu menambah jangkar.
+    await t.db.transaction(async (tx) => {
+      await tx.execute(sql`SET LOCAL rumah_pramuka.audit_retention = 'on'`);
+      await tx.execute(sql`DELETE FROM audit_logs WHERE id <= ${rows[2].id}`);
+    });
+    const anchor = { firstLogId: rows[3].id, prevHash: rows[3].prevHash!, deletedCount: 3 };
+    const unknownStart = { ok: false, broken: { id: rows[3].id, reason: 'awal-tidak-dikenal' } };
+    await t.db.insert(schema.auditChainAnchors).values(anchor);
+    expect(await verifyAuditChain(t.db, key)).toMatchObject(unknownStart);
+    await t.db.insert(schema.auditChainAnchors).values({ ...anchor, mac: computeAnchorMac(anchor, auditChainKey(randomBytes(32))) });
+    expect(await verifyAuditChain(t.db, key)).toMatchObject(unknownStart);
+    const shifted = { ...anchor, firstLogId: rows[1].id };
+    await t.db.insert(schema.auditChainAnchors).values({ ...shifted, mac: computeAnchorMac(shifted, key) });
+    expect(await verifyAuditChain(t.db, key)).toMatchObject(unknownStart);
+  });
+
+  it('basis data menolak entri baru tanpa hash rantai (tidak bisa menyamar sebagai entri lama)', async () => {
+    await append(2);
+    const msg = await rejection(
+      t.db.execute(
+        sql`INSERT INTO audit_logs (id, at, actor_name, action, summary) VALUES (-1, now(), 'Admin Kwarcab', 'member.export', 'Mengekspor 1200 data anggota')`,
+      ),
+    );
+    expect(msg).toMatch(/audit_logs_chained/);
+    expect(await verifyAuditChain(t.db, key)).toMatchObject({ ok: true, checked: 2, legacy: 0 });
+  });
+
+  it('ringkasan yang terpotong di tengah emoji tetap terverifikasi (hash = isi tersimpan)', async () => {
+    const summary = truncateStorable(`${'a'.repeat(499)}${ASTRAL}${VS16} sisa`, 500);
+    expect(summary.endsWith(ASTRAL)).toBe(true);
+    const lone = `${'b'.repeat(10)}\uD83C`; // surrogate tunggal dari pemanggil lain
+    await appendAuditEntry(t.db, { ...entry(1), summary }, key);
+    await appendAuditEntry(t.db, { ...entry(2), summary: lone, actorName: 'Nama\u0000Palsu' }, key);
+    await appendAuditEntry(t.db, entry(3), key);
+    expect(await verifyAuditChain(t.db, key)).toMatchObject({ ok: true, checked: 3 });
+    const stored = await t.db.select().from(schema.auditLogs).orderBy(schema.auditLogs.id);
+    expect(stored[1].summary).toBe(`${'b'.repeat(10)}\uFFFD`);
+    expect(stored[1].actorName).toBe('Nama\uFFFDPalsu');
   });
 
   it('penulisan bersamaan tidak membentuk cabang', async () => {
@@ -112,7 +168,12 @@ describe('log audit tahan-ubah (1.6)', () => {
   });
 
   it('entri lama sebelum rantai dihitung terpisah dan tidak menggagalkan verifikasi', async () => {
+    // Simulasi instalasi lama: baris ditulis sebelum constraint rantai (migrasi 0015) ada.
+    await t.db.execute(sql`ALTER TABLE audit_logs DROP CONSTRAINT audit_logs_chained`);
     await t.db.execute(sql`INSERT INTO audit_logs (actor_name, action, summary) VALUES ('Lama', 'lama', 'sebelum rantai')`);
+    await t.db.execute(
+      sql`ALTER TABLE audit_logs ADD CONSTRAINT audit_logs_chained CHECK (hash IS NOT NULL AND prev_hash IS NOT NULL) NOT VALID`,
+    );
     await append(2);
     expect(await verifyAuditChain(t.db, key)).toMatchObject({ ok: true, checked: 2, legacy: 1 });
   });

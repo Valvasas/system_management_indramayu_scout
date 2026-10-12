@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { schema } from '@/db';
-import { runBackup, verifyBackup } from '@/features/backup/backup';
+import { assertSafeBackupDir, pgConnArgs, runBackup, verifyBackup } from '@/features/backup/backup';
 import { createTestDb, type TestDb } from '../helpers/test-db';
 
 let t: TestDb;
@@ -61,5 +61,33 @@ describe('backup & uji pulih (1.7)', () => {
     const run = await runBackup(who, { db: t.db, dir, databaseUrl: 'postgresql://app:sandi-rahasia@127.0.0.1:1/tidak_ada' });
     expect(run.status).toBe('FAILED');
     expect(run.error ?? '').not.toContain('sandi-rahasia');
+    expect(await fs.readdir(dir)).toEqual([]); // berkas setengah jadi dihapus
+  });
+
+  it('berkas backup 0600 sejak dibuat, juga bila folder sudah ada dengan mode longgar', async () => {
+    await fs.chmod(dir, 0o755);
+    const run = await runBackup(who, { db: t.db, dir, databaseUrl: '' });
+    expect(run.status).toBe('SUCCESS');
+    expect((await fs.stat(path.join(dir, run.fileName!))).mode & 0o777).toBe(0o600);
+    expect((await fs.stat(dir)).mode & 0o777).toBe(0o700);
+  });
+
+  it('di produksi, folder backup di dalam direktori aplikasi ditolak', async () => {
+    const app = path.join(dir, 'app');
+    expect(() => assertSafeBackupDir(path.join(app, 'backups'), true, app)).toThrow(/di luar direktori aplikasi/);
+    expect(() => assertSafeBackupDir(app, true, app)).toThrow(/di luar direktori aplikasi/);
+    expect(() => assertSafeBackupDir(path.join(dir, 'backups'), true, app)).not.toThrow();
+    expect(() => assertSafeBackupDir(path.join(app, 'backups'), false, app)).not.toThrow();
+    const run = await runBackup(who, { db: t.db, dir: path.join(process.cwd(), 'backups-uji'), databaseUrl: '', production: true });
+    expect(run).toMatchObject({ status: 'FAILED', error: expect.stringMatching(/BACKUP_DIR/) });
+  });
+
+  it('koneksi pg_dump mempertahankan sslmode dkk., tanpa sandi, dalam satu argumen --dbname=', () => {
+    const { args, password } = pgConnArgs(
+      'postgresql://app:p%40ss@db.internal:6543/-rumah?sslmode=verify-full&sslrootcert=/etc/ssl/db-ca.pem',
+    );
+    expect(password).toBe('p@ss');
+    expect(args).toEqual(['--dbname=postgresql://app@db.internal:6543/-rumah?sslmode=verify-full&sslrootcert=/etc/ssl/db-ca.pem']);
+    expect(args.join(' ')).not.toContain('p%40ss');
   });
 });

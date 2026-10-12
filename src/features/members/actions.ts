@@ -13,7 +13,13 @@ import { can, destroyUserSessions, requirePermission } from '@/lib/auth/session'
 import { fail, ok, optionalText, parseForm, type FormState } from '@/lib/forms';
 import { findDuplicates, getMember } from './queries';
 import { memberConsentSummary } from '@/features/consent/consent';
-import { dataConsentSatisfied, dataConsentWithdrawn, initialMemberStatus, needsGuardianConsent } from '@/features/consent/status';
+import {
+  dataConsentSatisfied,
+  initialMemberStatus,
+  needsGuardianConsent,
+  portalAccountBlock,
+  statusAfterEdit,
+} from '@/features/consent/status';
 import { MemberSchema, type MemberInput } from './validation';
 import { anonymizeMember } from './anonymize';
 
@@ -123,14 +129,21 @@ export async function updateMemberAction(id: string, _prev: FormState, formData:
   );
   if (changed.length === 0) return ok('Tidak ada perubahan.');
 
-  // Perubahan oleh pengisi tanpa hak verifikasi dikirim ulang ke antrean verifikasi.
+  // Pengisi tanpa hak verifikasi → antrean verifikasi. Verifikator juga, bila perubahan menjadikan
+  // anggota aktif sebagai anak tanpa persetujuan DATA wali (lihat statusAfterEdit).
   const verifier = can(user, 'members.verify');
+  const status = statusAfterEdit({
+    current: current.m.status,
+    canVerify: verifier,
+    birthDate: input.birthDate,
+    statuses: (await memberConsentSummary(id)).statuses,
+  });
   const db = await getDb();
   await db
     .update(schema.members)
     .set({
       ...row,
-      ...(verifier ? {} : { status: 'PENDING' as const, reviewNote: null }),
+      ...(status !== current.m.status ? { status, reviewNote: null } : {}),
     })
     .where(eq(schema.members.id, id));
   // Akun portal peserta mengikuti gudep anggotanya (menentukan pengumuman yang ia terima).
@@ -278,9 +291,11 @@ export async function createPortalAccountAction(id: string, _prev: FormState, _f
   if (!current) return fail('Data anggota tidak ditemukan atau di luar wilayah Anda.');
   if (current.m.status !== 'ACTIVE') return fail('Akun portal hanya untuk anggota berstatus Aktif (sudah diverifikasi).');
   if (current.portalUserId) return fail('Anggota ini sudah memiliki akun portal.');
-  if (needsGuardianConsent(current.m.birthDate) && dataConsentWithdrawn((await memberConsentSummary(id)).statuses)) {
+  const block = portalAccountBlock(current.m.birthDate, (await memberConsentSummary(id)).statuses);
+  if (block === 'ditolak')
     return fail('Orang tua/wali menolak atau mencabut persetujuan pengelolaan data anak ini. Akun portal tidak dapat dibuat.');
-  }
+  if (block === 'belum')
+    return fail('Akun portal untuk anak membutuhkan persetujuan data pribadi dari orang tua/wali. Minta persetujuan lewat kode wali dulu.');
 
   const username = await uniqueUsername(current.m.fullName);
   const db = await getDb();

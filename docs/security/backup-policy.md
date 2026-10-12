@@ -1,6 +1,6 @@
 # Kebijakan Backup (Backup Policy)
 
-> **Status implementasi (6 Okt 2026)** — prosedur rinci: `docs/operations/monitoring.md`.
+> **Status implementasi (11 Okt 2026)** — prosedur rinci: `docs/operations/monitoring.md`.
 >
 > | Butir kebijakan | Status | Implementasi |
 > |---|---|---|
@@ -11,6 +11,8 @@
 > | Penyimpanan terpisah (off-site) & enkripsi berkas | Belum otomatis | Kolom sensitif di dalam backup sudah terenkripsi (AES-256-GCM); salin berkas ke luar server dengan `age`/`gpg` (manual) |
 > | Peringatan backup usang | Sebagian | Peringatan di `/dashboard/backup` bila backup terakhir ≥ 2 hari; belum ada penundaan (snooze) beralasan |
 > | Berkas unggahan (`STORAGE_DIR`) | Belum | Harus dibackup terpisah (restic/rsync) |
+> | Keamanan berkas | **Berlaku** | Berkas dibuat 0600 sebelum ditulis, folder 0700; di produksi `BACKUP_DIR` di dalam direktori aplikasi ditolak; `backups/` di `.gitignore`; koneksi `pg_dump` lewat URI utuh (sslmode tetap berlaku) |
+> | Hak akses setelah restore | **Berlaku** (wajib langkah manual) | Dump menyimpan ACL; tetap wajib `npm run db:migrate` sesudah restore (lihat `monitoring.md` §4) |
 
 ---
 

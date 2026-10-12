@@ -20,6 +20,9 @@ export type AnonymizeResult = { ok: true; label: string } | { ok: false; reason:
 
 export const anonymousLabel = (memberId: string) => `Anggota dianonimkan #${memberId.slice(0, 8)}`;
 
+/** Pengganti teks bebas wajib (NOT NULL) yang mungkin memuat identitas. */
+export const ANONYMIZED_TEXT = '[dihapus saat anonimisasi]';
+
 export async function anonymizeMember(actor: SessionUser, memberId: string, now = new Date(), db?: Database): Promise<AnonymizeResult> {
   const d = db ?? (await getDb());
   if (!/^[0-9a-f-]{36}$/i.test(memberId)) return { ok: false, reason: 'tidak-ditemukan' };
@@ -58,7 +61,15 @@ export async function anonymizeMember(actor: SessionUser, memberId: string, now 
         anonymizedAt: now,
       })
       .where(eq(schema.members.id, m.id));
-    await tx.update(schema.guardianConsents).set({ guardianName: null, ipHash: null }).where(eq(schema.guardianConsents.memberId, m.id));
+    // Catatan bebas staf sering memuat identitas wali/anak ("Ibu S. menelepon 0812…"): ikut dihapus.
+    await tx
+      .update(schema.guardianConsents)
+      .set({ guardianName: null, ipHash: null, note: null })
+      .where(eq(schema.guardianConsents.memberId, m.id));
+    await tx
+      .update(schema.memberTransfers)
+      .set({ reason: ANONYMIZED_TEXT, decisionNote: null })
+      .where(eq(schema.memberTransfers.memberId, m.id));
     await tx
       .update(schema.guardianConsentRequests)
       .set({ cancelledAt: now })

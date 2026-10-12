@@ -36,5 +36,9 @@ export async function createTestDb(): Promise<TestDb> {
 
 /** Jadikan `getDb()` mengembalikan basis data uji ini (singleton global di src/db/index.ts). */
 export function useAsAppDb(db: Database): void {
-  (globalThis as unknown as { __rumahPramukaDb?: { db?: Promise<Database> } }).__rumahPramukaDb = { db: Promise.resolve(db) };
+  // Mutasi holder yang SAMA: src/db/index.ts menyimpan referensinya saat modul dimuat, jadi
+  // mengganti objeknya (versi lama helper ini) tidak berpengaruh pada getDb().
+  const g = globalThis as unknown as { __rumahPramukaDb?: { db?: Promise<Database> } };
+  g.__rumahPramukaDb ??= {};
+  g.__rumahPramukaDb.db = Promise.resolve(db);
 }

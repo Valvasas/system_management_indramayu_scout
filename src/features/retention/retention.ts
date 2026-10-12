@@ -13,7 +13,7 @@
 import { and, asc, gte, isNotNull, isNull, lt, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import { schema, type Database } from '@/db';
-import { appendAuditEntry } from '@/lib/auth/audit-chain';
+import { appendAuditEntry, auditChainKey, computeAnchorMac } from '@/lib/auth/audit-chain';
 
 export interface RetentionPolicy {
   accessCodesDays: number;
@@ -39,7 +39,7 @@ const monthsAgo = (now: Date, months: number) => {
   return d;
 };
 
-async function purgeAuditLogs(db: Database, cutoff: Date, dryRun: boolean): Promise<number | 'tidak-diizinkan'> {
+async function purgeAuditLogs(db: Database, cutoff: Date, dryRun: boolean, key: Buffer): Promise<number | 'tidak-diizinkan'> {
   const t = schema.auditLogs;
   const [{ n }] = await db
     .select({ n: sql<number>`count(*)::int` })
@@ -61,7 +61,8 @@ async function purgeAuditLogs(db: Database, cutoff: Date, dryRun: boolean): Prom
         .where(first ? and(lt(t.at, cutoff), lt(t.id, first.id)) : lt(t.at, cutoff))
         .returning({ id: t.id });
       if (first?.prevHash && deleted.length > 0) {
-        await tx.insert(schema.auditChainAnchors).values({ firstLogId: first.id, prevHash: first.prevHash, deletedCount: deleted.length });
+        const anchor = { firstLogId: first.id, prevHash: first.prevHash, deletedCount: deleted.length };
+        await tx.insert(schema.auditChainAnchors).values({ ...anchor, mac: computeAnchorMac(anchor, key) });
       }
       return deleted.length;
     });
@@ -76,9 +77,10 @@ async function purgeAuditLogs(db: Database, cutoff: Date, dryRun: boolean): Prom
 export async function runRetention(
   db: Database,
   policy: RetentionPolicy,
-  opts: { now?: Date; dryRun?: boolean } = {},
+  opts: { now?: Date; dryRun?: boolean; key?: Buffer } = {},
 ): Promise<RetentionReport> {
   const now = opts.now ?? new Date();
+  const key = opts.key ?? auditChainKey();
   const dry = Boolean(opts.dryRun);
   const purge = async (table: PgTable, where: SQL | undefined) => {
     if (dry) {
@@ -119,19 +121,23 @@ export async function runRetention(
     ),
     rateLimits: await purge(schema.rateLimits, lt(schema.rateLimits.windowEndsAt, now)),
     contactMessages: await purge(schema.contactMessages, lt(schema.contactMessages.createdAt, daysAgo(now, policy.contactMessagesDays))),
-    auditLogs: await purgeAuditLogs(db, monthsAgo(now, policy.auditLogMonths), dry),
+    auditLogs: await purgeAuditLogs(db, monthsAgo(now, policy.auditLogMonths), dry, key),
   };
 
   if (!dry) {
-    await appendAuditEntry(db, {
-      userId: null,
-      actorName: 'Sistem',
-      action: 'retention.run',
-      summary: `Retensi: sesi ${report.sessions}, kode akses ${report.accessCodes}, permintaan reset ${report.resetRequests}, kode persetujuan ${report.consentRequests}, rate limit ${report.rateLimits}, pesan kontak ${report.contactMessages}, log audit ${report.auditLogs}`,
-      entityType: null,
-      entityId: null,
-      ip: null,
-    });
+    await appendAuditEntry(
+      db,
+      {
+        userId: null,
+        actorName: 'Sistem',
+        action: 'retention.run',
+        summary: `Retensi: sesi ${report.sessions}, kode akses ${report.accessCodes}, permintaan reset ${report.resetRequests}, kode persetujuan ${report.consentRequests}, rate limit ${report.rateLimits}, pesan kontak ${report.contactMessages}, log audit ${report.auditLogs}`,
+        entityType: null,
+        entityId: null,
+        ip: null,
+      },
+      key,
+    );
   }
   return report;
 }

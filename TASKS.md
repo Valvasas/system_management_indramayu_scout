@@ -36,6 +36,23 @@
 | 1.7 Monitoring & backup | SELESAI, **produksi belum diverifikasi** | Sentry opsional tanpa SDK (galat server tersamar), `/api/health`, `npm run db:backup` + `/dashboard/backup` (Super Admin), uji pulih. Restore penuh pg_dump → DB baru terbukti lokal. **Temuan uji PostgreSQL:** user aplikasi tak bisa `pg_dump` (skema drizzle) → migrasi 0010; berkas gagal 0 byte → dihapus |
 | Dokumen | SELESAI | `/kebijakan-privasi` ditulis ulang (klaim "IP tidak ditulis ke DB" sudah tidak benar); `authorization-model.md` dari kode + tes sinkron; status implementasi di 4 kebijakan keamanan; `monitoring.md`, `retention.md` |
 
+**Review adversarial Blok 1 (lanjutan, 11 Okt 2026).** Dua dimensi (audit/retensi/backup, permukaan web & klaim publik) menghasilkan 15 temuan; verifikator otomatis gagal karena limit sesi, jadi **ke-15 diverifikasi manual ke kode — semuanya nyata** — dan diperbaiki dengan tes yang terbukti bisa gagal (mutasi). Dimensi *fix-recheck* untuk 13 perbaikan sebelumnya **belum berjalan** (limit) — masuk review Blok 2. Gerbang cepat: `tsc` 0 · lint · format · `vitest` 190/190 (29 berkas).
+
+| Temuan | Status | Catatan |
+|---|---|---|
+| Restore backup mengembalikan DELETE log audit (high) | SELESAI | **Diuji di PostgreSQL 16:** `pg_restore --clean` memberi user aplikasi DELETE log + INSERT jangkar, *juga* dengan dump ber-ACL (saran reviewer "hapus `--no-privileges`" tidak cukup). Perbaikan: `src/db/privileges.ts` di setiap `db:migrate` (terbukti mencabutnya), halaman integritas memperingatkan bila hak berbahaya terdeteksi, prosedur restore diperbarui. Restore ke DB baru: user aplikasi tanpa hak sama sekali (default ACL per database) — kini terdokumentasi |
+| Entri palsu ber-hash NULL lolos sebagai "entri lama" | SELESAI | Constraint `audit_logs_chained` NOT VALID (migrasi 0015) |
+| Jangkar retensi tanpa MAC | SELESAI | Kolom `mac` (migrasi 0014); jangkar sah hanya bila MAC cocok + entri pertama sama. Jangkar lama tanpa MAC tidak diterima |
+| Emoji terpotong/NUL membuat rantai tampak rusak | SELESAI | Potong per code point + `storableText` untuk semua kolom yang di-hash |
+| Sentry menerima parameter kueri Drizzle (nama, tgl lahir anak) (high) | SELESAI | Galat kueri hanya SQL + kode PG; frame stack hanya baris `at`; pola telepon/IPv6/kredensial/token/JWT diperluas (15 probe) |
+| IP mentah wali di log audit | SELESAI | Entri tanpa pelaku menyimpan `hmac:…`; klaim privasi diselaraskan |
+| Verifikator ubah tgl lahir → anak AKTIF tanpa persetujuan | SELESAI | `statusAfterEdit`; akun portal anak wajib persetujuan DATA terverifikasi (`portalAccountBlock`) |
+| Riwayat anggota dianonimkan memuat nama lama | SELESAI | Ringkasan tidak ditampilkan; catatan bebas (pencabutan, mutasi) ikut dihapus saat anonimisasi |
+| Teks persetujuan FOTO vs checkbox galeri vs halaman privasi bertentangan | SELESAI | Satu aturan: wajah anak tidak pernah di situs publik; persetujuan foto hanya arsip internal |
+| Backup: folder di repo, berkas 0644 saat ditulis, sslmode hilang | SELESAI | `backups/` di-ignore, produksi menolak folder di dalam aplikasi, berkas 0600 sejak dibuat, `--dbname=<URI>` (diuji di PG16) |
+| `/Dashboard`, `/MASUK` tanpa CSP sama sekali | SELESAI | `usesNonceCsp` tanpa beda huruf besar/kecil; tes memakai pencocok header Next sungguhan |
+| Bug helper tes `useAsAppDb()` (tak pernah berfungsi) | SELESAI | Ditemukan saat menulis tes IP; holder dimutasi, bukan diganti |
+
 **Titik Henti 1 — Next 14 → 16 (P1-6).** Migrasi **tidak** dilakukan; analisis + rekomendasi di `docs/operations/keputusan-next-16.md` (23 advisori `next` dipetakan satu per satu ke kode).
 
 | Task | Status | Catatan |
