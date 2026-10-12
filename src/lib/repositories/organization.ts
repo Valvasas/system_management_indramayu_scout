@@ -1,10 +1,22 @@
 import { asc, count, eq, sql } from 'drizzle-orm';
-import { getDb, schema } from '@/db';
+import { getDb, schema, type Database } from '@/db';
+import { currentTermWhere } from '@/features/terms/conditions';
+import { wibToday } from '@/features/terms/dates';
 import type { KwarranInfo, OrganizationMember } from '@/types';
 
-export async function getOrganizationMembers(): Promise<OrganizationMember[]> {
-  const db = await getDb();
-  const rows = await db.select().from(schema.boardMembers).orderBy(asc(schema.boardMembers.sortOrder), asc(schema.boardMembers.name));
+/**
+ * Pengurus yang SEDANG menjabat saja (2.4): aktif DAN (berakhir kosong ATAU berakhir ≥ hari ini
+ * WIB) DAN (mulai kosong ATAU sudah mulai). Data lama tanpa tanggal tetap tampil (default aman).
+ * Riwayat periode hanya di CMS (features/terms/board.ts).
+ */
+export async function getOrganizationMembers(now: Date = new Date(), db?: Database): Promise<OrganizationMember[]> {
+  const d = db ?? (await getDb());
+  const t = schema.boardMembers;
+  const rows = await d
+    .select()
+    .from(t)
+    .where(currentTermWhere(t, wibToday(now)))
+    .orderBy(asc(t.sortOrder), asc(t.name));
   return rows.map((m) => ({
     id: m.id,
     name: m.name,
@@ -17,9 +29,12 @@ export async function getOrganizationMembers(): Promise<OrganizationMember[]> {
 }
 
 /** Pengurus dikelompokkan per departemen, urutan mengikuti `sortOrder` pertama tiap departemen. */
-export async function getOrganizationByDepartment(): Promise<{ department: string; members: OrganizationMember[] }[]> {
+export async function getOrganizationByDepartment(
+  now: Date = new Date(),
+  db?: Database,
+): Promise<{ department: string; members: OrganizationMember[] }[]> {
   const groups = new Map<string, OrganizationMember[]>();
-  for (const member of await getOrganizationMembers()) {
+  for (const member of await getOrganizationMembers(now, db)) {
     const list = groups.get(member.department) ?? [];
     list.push(member);
     groups.set(member.department, list);

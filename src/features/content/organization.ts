@@ -9,39 +9,24 @@ import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
 import { ACHIEVEMENT_LEVEL_OPTIONS } from '@/lib/domain';
 import { checkbox, fail, optionalText, parseForm, requiredText, type FormState } from '@/lib/forms';
+import { deleteBoardMember, saveBoardMember } from '@/features/terms/board';
 import { revalidatePublicSite } from './shared';
 
 /* ---------------- Pengurus (Struktur Organisasi) ---------------- */
 
-const BoardSchema = z.object({
-  name: requiredText('Nama', 150),
-  position: requiredText('Jabatan', 150),
-  department: requiredText('Bidang', 100),
-  period: requiredText('Masa bakti', 30),
-  sortOrder: z.coerce.number({ invalid_type_error: 'Urutan harus angka.' }).int().min(0).max(999),
-});
-
+/**
+ * Logika & validasi (termasuk masa jabatan, 2.4) ada di features/terms/board.ts agar bisa diuji;
+ * di sini hanya izin sesi, audit, dan pembuangan cache situs publik.
+ */
 export async function saveBoardMemberAction(id: string | null, _prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requirePermission('content.manage');
-  const parsed = parseForm(BoardSchema, formData);
-  if (parsed.error) return parsed.error;
-  const db = await getDb();
-  if (id) {
-    const [row] = await db
-      .update(schema.boardMembers)
-      .set(parsed.data)
-      .where(eq(schema.boardMembers.id, id))
-      .returning({ id: schema.boardMembers.id });
-    if (!row) return fail('Data pengurus tidak ditemukan.');
-  } else {
-    const [row] = await db.insert(schema.boardMembers).values(parsed.data).returning({ id: schema.boardMembers.id });
-    id = row.id;
-  }
+  const result = await saveBoardMember(user, id, formData);
+  if (!result.ok) return result.state;
   await audit(user, {
     action: 'content.save',
-    summary: `Menyimpan pengurus ${parsed.data.name} (${parsed.data.position})`,
+    summary: `Menyimpan pengurus ${result.name} (${result.position})`,
     entityType: 'board',
-    entityId: id,
+    entityId: result.id,
   });
   revalidatePath('/dashboard/konten/pengurus');
   revalidatePublicSite();
@@ -50,9 +35,9 @@ export async function saveBoardMemberAction(id: string | null, _prev: FormState,
 
 export async function deleteBoardMemberAction(id: string): Promise<void> {
   const user = await requirePermission('content.manage');
-  const db = await getDb();
-  const [row] = await db.delete(schema.boardMembers).where(eq(schema.boardMembers.id, id)).returning({ name: schema.boardMembers.name });
-  if (row) await audit(user, { action: 'content.delete', summary: `Menghapus pengurus ${row.name}`, entityType: 'board', entityId: id });
+  const result = await deleteBoardMember(user, id);
+  if (result.ok)
+    await audit(user, { action: 'content.delete', summary: `Menghapus pengurus ${result.name}`, entityType: 'board', entityId: id });
   revalidatePath('/dashboard/konten/pengurus');
   revalidatePublicSite();
   redirect('/dashboard/konten/pengurus?dihapus=1');

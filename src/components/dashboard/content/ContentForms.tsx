@@ -344,6 +344,9 @@ export interface BoardDefaults {
   department?: string;
   period?: string;
   sortOrder?: number;
+  termStart?: string | null;
+  termEnd?: string | null;
+  isActive?: boolean;
 }
 
 export const BoardForm: React.FC<{ action: Action; defaults?: BoardDefaults }> = ({ action, defaults = {} }) => (
@@ -373,6 +376,27 @@ export const BoardForm: React.FC<{ action: Action; defaults?: BoardDefaults }> =
           required
         />
       </div>
+    </FieldGroup>
+    <FieldGroup
+      title="Masa jabatan"
+      description="Situs publik hanya menampilkan pengurus yang masih menjabat. Setelah tanggal berakhir lewat (WIB), data pindah ke riwayat periode."
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField name="termStart" label="Tanggal mulai" type="date" defaultValue={defaults.termStart ?? ''} hint="Opsional." />
+        <TextField
+          name="termEnd"
+          label="Tanggal berakhir"
+          type="date"
+          defaultValue={defaults.termEnd ?? ''}
+          hint="Opsional. Tidak boleh sebelum tanggal mulai; hari terakhir masih dihitung menjabat."
+        />
+      </div>
+      <CheckboxField
+        name="isActive"
+        label="Masih menjabat"
+        description="Hilangkan centang bila pengurus sudah diganti sebelum masa jabatannya berakhir."
+        defaultChecked={defaults.isActive ?? true}
+      />
     </FieldGroup>
     <SaveButton />
   </ActionForm>

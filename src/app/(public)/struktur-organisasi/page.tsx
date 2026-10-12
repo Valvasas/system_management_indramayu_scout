@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   alternates: { canonical: '/struktur-organisasi' },
 };
 
+/**
+ * Hanya pengurus yang sedang menjabat (2.4). Masa jabatan berakhir tanpa ada penulisan CMS, jadi
+ * halaman dibangun ulang tiap jam agar pengurus yang tanggal berakhirnya lewat (WIB) tidak tertahan
+ * di cache; penulisan CMS tetap membuang cache seketika lewat revalidatePublicSite().
+ */
+export const revalidate = 3600;
+
 export default async function StrukturOrganisasiPage() {
   const departments = await getOrganizationByDepartment();
   const kwarrans = await getKwarran();
@@ -28,25 +35,29 @@ export default async function StrukturOrganisasiPage() {
           <h2 id="pengurus-title" className="font-display text-2xl font-semibold text-text-primary">
             Susunan pengurus kwarcab
           </h2>
-          <ul className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {departments.map(({ department, members }) => (
-              <li key={department}>
-                <Card className="h-full">
-                  <CardContent>
-                    <h3 className="font-display text-lg font-semibold text-text-accent">{department}</h3>
-                    <ul className="mt-3 space-y-3">
-                      {members.map((member) => (
-                        <li key={member.id}>
-                          <p className="font-medium text-text-primary">{member.name}</p>
-                          <p className="text-sm text-text-secondary">{member.role}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          {departments.length === 0 ? (
+            <p className="mt-4 max-w-prose text-text-secondary">Susunan pengurus periode berjalan sedang diperbarui.</p>
+          ) : (
+            <ul className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {departments.map(({ department, members }) => (
+                <li key={department}>
+                  <Card className="h-full">
+                    <CardContent>
+                      <h3 className="font-display text-lg font-semibold text-text-accent">{department}</h3>
+                      <ul className="mt-3 space-y-3">
+                        {members.map((member) => (
+                          <li key={member.id}>
+                            <p className="font-medium text-text-primary">{member.name}</p>
+                            <p className="text-sm text-text-secondary">{member.role}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section aria-labelledby="kwarran-title">

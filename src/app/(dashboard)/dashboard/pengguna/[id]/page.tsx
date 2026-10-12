@@ -10,11 +10,20 @@ import { getUser } from '@/features/users/queries';
 import { ROLE_DESCRIPTIONS, ROLE_LABELS, assignableRoles } from '@/lib/auth/permissions';
 import { requirePermission } from '@/lib/auth/session';
 import { MfaAdminPanel } from '@/components/dashboard/users/MfaAdminPanel';
+import { AssignmentsPanel } from '@/components/dashboard/users/AssignmentsPanel';
+import { listAssignments } from '@/features/terms/assignments';
+import { ASSIGNMENT_ROLES } from '@/features/terms/validation';
 
 export const metadata: Metadata = { title: 'Akun pengguna' };
 
 /** `/dashboard/pengguna/baru` → buat akun; `/dashboard/pengguna/<id>` → ubah akun. */
-export default async function AkunPenggunaPage({ params, searchParams = {} }: { params: { id: string }; searchParams?: { mfa?: string } }) {
+export default async function AkunPenggunaPage({
+  params,
+  searchParams = {},
+}: {
+  params: { id: string };
+  searchParams?: { mfa?: string; penugasan?: string };
+}) {
   const actor = await requirePermission('users.manage');
   const isNew = params.id === 'baru';
   const target = isNew ? null : await getUser(params.id);
@@ -35,6 +44,9 @@ export default async function AkunPenggunaPage({ params, searchParams = {} }: { 
   // Peran target saat ini tetap tampil walau tidak bisa diberikan aktor (mis. admin melihat akun admin lain).
   const roleList: Role[] = target && !(editable as Role[]).includes(target.role) ? [target.role, ...editable] : editable;
   const locked = !!target && target.role === 'SUPER_ADMIN' && actor.role !== 'SUPER_ADMIN';
+  // Penugasan (2.4): cakupan ditegakkan ulang di listAssignments (null = di luar wewenang).
+  const assignments = target && !locked ? await listAssignments(actor, target.id) : null;
+  const assignmentRoles = ASSIGNMENT_ROLES.filter((r) => r !== 'SUPER_ADMIN' || actor.role === 'SUPER_ADMIN');
 
   return (
     <>
@@ -70,6 +82,19 @@ export default async function AkunPenggunaPage({ params, searchParams = {} }: { 
                 <ResetPasswordForm action={resetPasswordAction.bind(null, target!.id)} />
               </Panel>
               <MfaAdminPanel actor={actor} target={target!} reset={searchParams.mfa === 'direset'} />
+            </div>
+          )}
+          {target && assignments && (
+            <div className="min-w-0 lg:col-span-3">
+              <AssignmentsPanel
+                userId={target.id}
+                userName={target.name}
+                assignments={assignments}
+                roles={assignmentRoles}
+                kwarranOptions={kwarrans.map((k) => ({ value: k.id, label: k.name }))}
+                gudepOptions={gudeps.map((g) => ({ value: g.id, label: `${g.name} — ${g.kwarran}` }))}
+                notice={searchParams.penugasan}
+              />
             </div>
           )}
         </div>
