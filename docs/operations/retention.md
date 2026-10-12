@@ -44,6 +44,14 @@ Jalankan **harian** di server yang sama dengan aplikasi (koneksi DB lokal, tanpa
 15 2 * * * deploy cd /srv/rumah-pramuka && DATABASE_URL="$(cat /etc/rumah-pramuka/owner-db-url)" npm run db:retention >> /var/log/rumah-pramuka-retensi.log 2>&1
 ```
 
+Pengingat masa jabatan (2.4) — pengurus/penugasan yang berakhir ≤ 30 hari lagi dikirim sebagai notifikasi portal,
+sekali per penerima per tanggal berakhir (aman dijalankan ulang). Pakai user aplikasi biasa, bukan pemilik skema:
+
+```cron
+# 06.50 WIB setiap hari
+50 6 * * * deploy cd /srv/rumah-pramuka && npm run db:term-reminders >> /var/log/rumah-pramuka-pengingat.log 2>&1
+```
+
 ### systemd timer
 
 ```ini

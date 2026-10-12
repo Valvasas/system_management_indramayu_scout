@@ -46,6 +46,9 @@ const accessRules = [
   'Presensi kegiatan hanya dapat dicatat staf berizin untuk anggota di wilayahnya yang terdaftar di kegiatan itu. Unduhan presensi dibatasi wilayah pengunduh dan hanya memuat nama, KTA, golongan, gudep, status, pencatat, dan waktu; tidak memuat catatan, kontak, maupun data wali, dan isinya diamankan dari injeksi formula. Pencatatan, perubahan, dan unduhan presensi tercatat di log aktivitas.',
   'Peserta hanya melihat riwayat kehadirannya sendiri (berdasarkan akunnya), tanpa catatan dan nama pembina pencatat. Setelah kehadiran dicatat, pendaftaran kegiatan itu tidak dapat dibatalkan peserta.',
   'Notifikasi hanya dapat dibaca dan ditandai dibaca oleh pemilik akunnya. Penerimanya ditentukan di server dari izin peran dan cakupan wilayah yang sama dengan aturan akses data. Tautan notifikasi hanya boleh menuju halaman di situs ini, dan halaman tujuan memeriksa izinnya sendiri.',
+  'Halaman Struktur Organisasi hanya menampilkan pengurus yang sedang menjabat (aktif, sudah mulai, dan belum lewat tanggal berakhir menurut tanggal WIB); periode lalu hanya terlihat di CMS oleh pengelola konten. Data masa jabatan hanya tanggal mulai, tanggal berakhir, dan status aktif.',
+  'Riwayat penugasan staf (jabatan, peran, wilayah, tanggal) hanya dapat dibaca dan diubah pemegang izin pengelolaan pengguna, tidak berlaku untuk akun peserta, dan setiap penambahan atau pengakhiran tercatat di log aktivitas. Penugasan bersifat catatan: tidak mengubah peran, wilayah, atau status akun.',
+  'Pengingat masa jabatan hanya memuat nama, jabatan, dan tanggal berakhir, dan hanya dikirim kepada pengelola konten (pengurus) atau pengelola pengguna (penugasan staf).',
 ];
 
 const accessData = [

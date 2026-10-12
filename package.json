@@ -17,6 +17,7 @@
     "db:encrypt-backfill": "tsx scripts/encrypt-backfill.ts",
     "db:retention": "tsx scripts/retention.ts",
     "db:backup": "tsx scripts/backup.ts",
+    "db:term-reminders": "tsx scripts/term-reminders.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "a11y": "node scripts/a11y-audit.mjs",

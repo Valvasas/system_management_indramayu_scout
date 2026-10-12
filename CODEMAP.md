@@ -50,6 +50,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `encrypt-backfill.ts` | `npm run db:encrypt-backfill` (`--dry-run`): enkripsi data lama & rotasi kunci, idempoten |
 | `retention.ts` | `npm run db:retention` (`--dry-run`): retensi terjadwal; jalankan dengan pemilik skema |
 | `backup.ts` | `npm run db:backup` (`--verify`): pg_dump / dump PGlite + checksum + uji pulih |
+| `term-reminders.ts` | `npm run db:term-reminders`: pengingat masa jabatan ≤ 30 hari (harian, idempoten) |
 | `permission-matrix.ts` | `npm run docs:matrix`: tabel izin untuk `authorization-model.md` (dicek tes) |
 
 ## Dokumentasi
@@ -130,6 +131,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `dashboard/content/ContentForms.tsx` | Formulir CMS klien: Berita, Agenda, Album, Foto, Dokumen, Pengurus, Prestasi |
 | `dashboard/consent/` | `ConsentBadge` (ikon + teks), `ConsentPanel` (status, riwayat, minta kode, catat pencabutan) |
 | `dashboard/notifications/` | `NotificationBell` (ikon + angka teks + `aria-live`), `NotificationList` |
+| `dashboard/terms/TermStateBadge.tsx`, `dashboard/users/AssignmentsPanel.tsx` | Status masa jabatan (ikon + teks) · riwayat & formulir penugasan staf di `pengguna/[id]` |
 | `dashboard/attendance/` | `AttendanceControls` (tombol `aria-pressed`, tanpa JS tetap jalan), `AttendanceRecapTiles`, `AttendanceStatusBadge` |
 | `dashboard/QrCode.tsx`, `MfaForms.tsx`, `MfaGraceNotice.tsx`, `users/MfaAdminPanel.tsx` | QR SVG dari matriks (server) · formulir kode yang menampilkan kode pemulihan sekali · pengingat tenggang · reset MFA Super Admin |
 | `maps/` | `GudepMap`, `GudepMapCanvas`, `LocationPicker` (Leaflet, `ssr:false`) |
@@ -138,7 +140,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 ## `src/features/` — Logika per fitur (Server Action + query)
 
-`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset; **`mfa.ts` + `mfa-actions.ts`** = TOTP, kode pemulihan, verifikasi masuk, reset Super Admin) · **`consent`** (`texts.ts` teks berversi, `status.ts` aturan murni, `consent.ts` + `consent-actions.ts`) · **`notifications/`** (`notify.ts` inti penerima+dedupe+preferensi, `triggers.ts` pemicu per peristiwa, `inbox.ts` baca/tandai milik sendiri, `labels.ts`, `actions.ts`) · **`attendance/`** (`attendance.ts` catat/lembar/CSV/riwayat, `attendance-actions.ts`, `labels.ts`) · **`retention/retention.ts`** · **`backup/`** (`backup.ts`, `backup-actions.ts`) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi, `anonymize.ts` = hak subjek data) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
+`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset; **`mfa.ts` + `mfa-actions.ts`** = TOTP, kode pemulihan, verifikasi masuk, reset Super Admin) · **`consent`** (`texts.ts` teks berversi, `status.ts` aturan murni, `consent.ts` + `consent-actions.ts`) · **`notifications/`** (`notify.ts` inti penerima+dedupe+preferensi, `triggers.ts` pemicu per peristiwa, `inbox.ts` baca/tandai milik sendiri, `labels.ts`, `actions.ts`) · **`attendance/`** (`attendance.ts` catat/lembar/CSV/riwayat, `attendance-actions.ts`, `labels.ts`) · **`terms/`** (2.4: `dates.ts` aturan tanggal WIB murni, `conditions.ts` SQL `currentTermWhere`, `validation.ts`, `board.ts` pengurus CMS, `assignments.ts` penugasan staf, `reminders.ts` `sendTermReminders`) + `users/assignment-actions.ts` · **`retention/retention.ts`** · **`backup/`** (`backup.ts`, `backup-actions.ts`) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi, `anonymize.ts` = hak subjek data) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
 
 ## `src/lib/`, `src/db/`, `src/styles/`, `src/types/`
 
