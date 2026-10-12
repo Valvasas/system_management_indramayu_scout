@@ -1,0 +1,61 @@
+/**
+ * Skema Zod SKU/SKK (2.3). Dipakai jalur formulir di competency.ts (validasi server) dan tes.
+ * Teks syarat resmi diketik apa adanya dari dokumen Kwarnas oleh pengelola; aplikasi tidak
+ * pernah mengarang atau memparafrasekan isi SKU/SKK, Tri Satya, maupun Dasa Darma.
+ * Label & batas panjang ada di labels.ts (aman untuk komponen klien).
+ */
+import { z } from 'zod';
+import { competencyKindEnum, golonganEnum } from '@/db/schema';
+import { optionalText, requiredText } from '@/lib/forms';
+import {
+  REQUIREMENT_CODE_MAX,
+  REQUIREMENT_DESCRIPTION_MAX,
+  REQUIREMENT_LEVEL_MAX,
+  REQUIREMENT_TITLE_MAX,
+  VERIFICATION_NOTE_MAX,
+} from './labels';
+
+export { KIND_LABELS, KIND_LONG_LABELS, REQUIREMENT_STATUS_OPTIONS, VERIFICATION_NOTE_MAX, type RequirementStatusFilter } from './labels';
+
+export const COMPETENCY_KINDS = competencyKindEnum.enumValues;
+
+/** Kode syarat: huruf besar, angka, titik, tanda hubung. Disimpan huruf besar agar unik tanpa beda kapital. */
+const code = z
+  .union([z.string(), z.undefined()])
+  .transform((s) => (s ?? '').trim().toUpperCase())
+  .pipe(
+    z
+      .string()
+      .min(2, 'Kode wajib diisi (minimal 2 karakter).')
+      .max(REQUIREMENT_CODE_MAX, `Kode maksimal ${REQUIREMENT_CODE_MAX} karakter.`)
+      .regex(/^[A-Z0-9][A-Z0-9.-]*$/, 'Kode hanya boleh huruf, angka, titik, dan tanda hubung (tanpa spasi).'),
+  );
+
+export const RequirementSchema = z.object({
+  kind: z.enum(COMPETENCY_KINDS, { errorMap: () => ({ message: 'Pilih jenis syarat.' }) }),
+  golongan: z.enum(golonganEnum.enumValues, { errorMap: () => ({ message: 'Pilih golongan.' }) }),
+  level: requiredText('Tingkatan', REQUIREMENT_LEVEL_MAX),
+  code,
+  title: requiredText('Judul syarat', REQUIREMENT_TITLE_MAX),
+  description: optionalText(REQUIREMENT_DESCRIPTION_MAX),
+  sortOrder: z.coerce
+    .number({ invalid_type_error: 'Urutan harus angka.' })
+    .int('Urutan harus bilangan bulat.')
+    .min(0, 'Urutan minimal 0.')
+    .max(9999, 'Urutan maksimal 9999.'),
+});
+export type RequirementInput = z.infer<typeof RequirementSchema>;
+
+/**
+ * Formulir verifikasi satu syarat: tombol yang ditekan mengirim `intent` (tandai / batalkan).
+ * Catatan opsional, pendek, tanpa data pribadi (dijelaskan di formulir); tidak pernah masuk log
+ * audit, notifikasi, atau CSV.
+ */
+export const VerificationSchema = z.object({
+  intent: z.enum(['verify', 'revoke'], { errorMap: () => ({ message: 'Pilih tindakan: tandai terverifikasi atau batalkan.' }) }),
+  note: optionalText(VERIFICATION_NOTE_MAX),
+});
+export type VerificationIntent = z.infer<typeof VerificationSchema>['intent'];
+
+export const isUuid = (v: string | null | undefined): v is string =>
+  !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);

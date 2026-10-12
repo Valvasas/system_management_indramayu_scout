@@ -20,6 +20,7 @@ import { cancelTransferAction, requestTransferAction } from '@/features/members/
 import { transferTargetOptions, transfersForMember } from '@/features/members/transfers';
 import { TransferRequestForm } from '@/components/dashboard/members/TransferForms';
 import { ConsentPanel } from '@/components/dashboard/consent/ConsentPanel';
+import { CompetencyPanel } from '@/components/dashboard/competency/CompetencyPanel';
 import { resetPesertaPasswordAction } from '@/features/users/actions';
 import { can, requirePermission } from '@/lib/auth/session';
 import { GENDER_LABELS, ageOn, golonganLabel } from '@/lib/domain';
@@ -209,6 +210,8 @@ export default async function DetailAnggotaPage({
             canManage={can(user, 'members.update') && !archived}
             sensitive={sensitive}
           />
+
+          <CompetencyPanel user={user} memberId={m.id} />
 
           {m.notes && (
             <Panel title="Catatan internal">
