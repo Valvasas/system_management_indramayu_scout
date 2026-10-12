@@ -662,6 +662,105 @@ await step('peserta melihat riwayat kehadirannya sendiri di Kegiatan', async () 
   await ctx.close();
 });
 
+/* ---------- 2.4 Masa jabatan ---------- */
+await step('masa jabatan: situs publik hanya pengurus menjabat; CMS menampilkan hampir berakhir & riwayat periode', async () => {
+  const { ctx, page } = await session(browser);
+  await page.goto(`${BASE}/struktur-organisasi`);
+  const pub = await text(page);
+  assert(pub.includes('Kak Contoh Sekretaris'), 'pengurus yang masih menjabat tidak tampil di situs publik');
+  assert(!pub.includes('Periode Lalu'), 'pengurus periode lalu tampil di situs publik');
+  await login(page, 'admin');
+  await page.goto(`${BASE}/dashboard/konten/pengurus`);
+  const cms = await text(page);
+  assert(
+    cms.includes('Jabatan hampir berakhir') && /\d+ hari lagi|Berakhir besok|Hari ini hari terakhir/.test(cms),
+    'panel jabatan hampir berakhir tidak tampil',
+  );
+  assert(cms.includes('Riwayat periode') && cms.includes('Kak Contoh Sekretaris Periode Lalu'), 'riwayat periode kosong');
+  const v = await axeViolations(page);
+  assert(v.length === 0, `axe /dashboard/konten/pengurus: ${v.join(', ')}`);
+  await page.goto(`${BASE}/dashboard/notifikasi`);
+  assert((await text(page)).includes('Masa jabatan Kak Contoh Sekretaris berakhir'), 'pengingat masa jabatan (seed) tidak tampil');
+  await ctx.close();
+});
+
+await step('masa jabatan: berakhir < mulai ditolak; pengurus dinonaktifkan langsung hilang dari situs publik', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'admin');
+  await page.goto(`${BASE}/dashboard/konten/pengurus`);
+  await page.getByRole('link', { name: 'Kak Contoh Ketua DKC', exact: true }).first().click();
+  await page.waitForURL(/\/dashboard\/konten\/pengurus\/[0-9a-f-]{36}$/);
+  await page.locator('#f-termStart').fill('2026-05-01');
+  await page.locator('#f-termEnd').fill('2026-04-30');
+  await page.getByRole('button', { name: /^simpan$/i }).click();
+  await page.getByText('Tanggal berakhir tidak boleh sebelum tanggal mulai.').first().waitFor();
+  await page.locator('#f-termEnd').fill('');
+  await page.locator('#f-isActive').uncheck();
+  await Promise.all([page.waitForURL('**tersimpan=1'), page.getByRole('button', { name: /^simpan$/i }).click()]);
+  const cms = await text(page);
+  const riwayat = cms.slice(cms.indexOf('Riwayat periode'));
+  assert(riwayat.includes('Kak Contoh Ketua DKC') && riwayat.includes('Diakhiri'), 'pengurus nonaktif tidak pindah ke riwayat periode');
+  await page.goto(`${BASE}/struktur-organisasi`);
+  assert(!(await text(page)).includes('Kak Contoh Ketua DKC'), 'pengurus nonaktif masih tampil (revalidatePublicSite tidak berjalan?)');
+  await ctx.close();
+});
+
+await step('penugasan staf: catat & akhiri (teraudit) tanpa mengubah wilayah akun', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'admin');
+  await page.goto(`${BASE}/dashboard/pengguna`);
+  await page
+    .getByRole('link', { name: /rina kartika/i })
+    .first()
+    .click();
+  await page.waitForURL(/\/dashboard\/pengguna\/[0-9a-f-]{36}$/);
+  let body = await text(page);
+  assert(body.includes('Penugasan & masa jabatan') && body.includes('Pembina Gudep'), 'riwayat penugasan seed tidak tampil');
+  const gudepBefore = await page.locator('#f-gudepId').inputValue();
+  await page.locator('#f-assignmentPosition').fill('Pelatih Regu Uji');
+  await page.locator('#f-assignmentRole').selectOption('STAFF_GUDEP');
+  const gudepValue = await page.locator('#f-assignmentGudepId option').nth(1).getAttribute('value');
+  await page.locator('#f-assignmentGudepId').selectOption(gudepValue);
+  await page.locator('#f-assignmentStart').fill('2026-07-01');
+  await page.locator('#f-assignmentEnd').fill('2026-06-30');
+  await page.getByRole('button', { name: /catat penugasan/i }).click();
+  await page.getByText('Tanggal berakhir tidak boleh sebelum tanggal mulai.').first().waitFor();
+  await page.locator('#f-assignmentEnd').fill('');
+  await page.getByRole('button', { name: /catat penugasan/i }).click();
+  await page
+    .getByText(/Penugasan tercatat/)
+    .first()
+    .waitFor();
+  await page.reload();
+  body = await text(page);
+  assert(body.includes('Pelatih Regu Uji'), 'penugasan baru tidak tampil di riwayat');
+  page.once('dialog', (d) => d.accept());
+  await Promise.all([
+    page.waitForURL('**penugasan=diakhiri'),
+    page.getByRole('button', { name: 'Akhiri penugasan Pelatih Regu Uji' }).click(),
+  ]);
+  assert((await text(page)).includes('Penugasan diakhiri'), 'pemberitahuan penugasan diakhiri tidak tampil');
+  assert((await page.locator('#f-gudepId').inputValue()) === gudepBefore, 'gudep akun berubah karena penugasan');
+  const v = await axeViolations(page);
+  assert(v.length === 0, `axe /dashboard/pengguna/[id]: ${v.join(', ')}`);
+  await page.goto(`${BASE}/dashboard/log`);
+  assert((await text(page)).includes('Mengakhiri penugasan "Pelatih Regu Uji"'), 'akhir penugasan tidak tercatat di log audit');
+  await ctx.close();
+});
+
+await step('penugasan staf: peran tanpa users.manage tidak bisa membuka halaman akun', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'kwarran.indramayu');
+  const r = await page.goto(`${BASE}/dashboard/pengguna`);
+  const body = await text(page);
+  assert(
+    r.status() === 404 || page.url().endsWith('/dashboard') || /tidak (ditemukan|berwenang)/i.test(body),
+    `staf kwarran bisa membuka /dashboard/pengguna (${r.status()} ${page.url()})`,
+  );
+  assert(!body.includes('Penugasan & masa jabatan'), 'panel penugasan bocor ke peran tanpa users.manage');
+  await ctx.close();
+});
+
 await browser.close();
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} langkah lulus.`);

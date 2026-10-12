@@ -88,6 +88,8 @@ const ADMIN = [
   // Rute dinamis: diambil dari tautan pertama yang cocok di halaman daftar.
   { from: '/dashboard/anggota', match: /^\/dashboard\/anggota\/[0-9a-f-]{36}$/ },
   { from: '/dashboard/pengguna', match: /^\/dashboard\/pengguna\/[0-9a-f-]{36}$/ },
+  // Editor pengurus (2.4): kolom masa jabatan.
+  { from: '/dashboard/konten/pengurus', match: /^\/dashboard\/konten\/pengurus\/[0-9a-f-]{36}$/ },
   // Lembar presensi (2.2): tombol Hadir/Izin/Alpa + rekap.
   { from: '/dashboard/pendaftaran', match: /^\/dashboard\/pendaftaran\/[0-9a-f-]{36}$/ },
 ];
