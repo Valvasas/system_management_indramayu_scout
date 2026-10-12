@@ -42,9 +42,10 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | File | Fungsi |
 |---|---|
 | `seed.ts` | `npm run db:seed` (Kwarran + super admin dari env) · `-- --demo` data FIKTIF + 6 akun demo (sandi `demo-pramuka-2026`) |
+| `seed-demo/index.ts` + `NN-*.ts` | Seed per fitur Blok 2 (dimuat otomatis): `21-notifikasi`, `22-presensi`, … — semua data FIKTIF |
 | `migrate.ts` | Migrasi ke `DATABASE_URL` |
 | `a11y-audit.mjs` | `npm run a11y`: axe-core WCAG 2.2 AA + overflow horizontal + header CSP & pelanggaran CSP runtime, 1280 & 390px. Butuh server jalan + data demo |
-| `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar, CSP ber-nonce portal. **Mengubah data**, pakai data demo segar |
+| `e2e-portal.mjs` | `npm run e2e`: lupa sandi → kode akses, mutasi, review berita, CSV pendaftar, CSP ber-nonce portal, regresi peracunan ISR, MFA, persetujuan wali, notifikasi, presensi. **Mengubah data**, pakai data demo segar |
 | `make-icons.mjs` | Membuat ikon PWA PNG + menyelaraskan warna `logo.svg` |
 | `encrypt-backfill.ts` | `npm run db:encrypt-backfill` (`--dry-run`): enkripsi data lama & rotasi kunci, idempoten |
 | `retention.ts` | `npm run db:retention` (`--dry-run`): retensi terjadwal; jalankan dengan pemilik skema |
@@ -97,7 +98,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `pengguna`, `pengguna/[id]` | `users.manage` | Hanya peran yang boleh diberikan (`assignableRoles`) |
 | `akses` | `users.manage`/`members.manage` | Antrean permintaan reset → terbitkan kode akses sekali pakai |
 | `mutasi` | `members.*` | Pengajuan & persetujuan mutasi antar-gudep (cakupan tujuan) |
-| `pendaftaran`, `pendaftaran/[id]` (+`ekspor`) | `content.manage` | Pendaftar per kegiatan + unduh CSV |
+| `pendaftaran`, `pendaftaran/[id]` (+`ekspor`) | `content.manage` | Pendaftar per kegiatan + unduh CSV. **Presensi (2.2)**: tombol Hadir/Izin/Alpa per pendaftar (`attendance.record` + cakupan + hanya pendaftar), rekap, `presensi/ekspor` CSV (+`members.export`) |
+| `notifikasi` | login (semua peran) | **2.1** Kotak masuk milik sendiri, tandai dibaca, filter, preferensi per jenis (prioritas tinggi selalu terkirim). Lonceng berangka di `DashboardShell` |
 | `kontribusi`, `kontribusi/[id]` | `content.contribute` | Staf gudep/kwarran menulis berita → status REVIEW → editor terbitkan/kembalikan |
 | `pengumuman`, `pesan`, `log`, `pengaturan`, `akun` | per izin | Log = audit (`audit.view`) |
 | `log/integritas` | `audit.verify` | Verifikasi rantai HMAC log + kepala rantai |
@@ -105,7 +107,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `persetujuan` | `members.read` | Pusat persetujuan wali (anak < 18 dalam cakupan). Minta kode & catat pencabutan di detail anggota (`ConsentPanel`) |
 | `backup` | `system.backup` | Backup manual, uji pulih, riwayat |
 | **`konten`** (hub) + `konten/{berita,agenda,galeri,dokumen,pengurus,prestasi}` | `content.manage` | **CMS.** Tiap bagian: `page.tsx` daftar + `[id]/page.tsx` editor (`baru` = buat). Galeri `[id]` memuat unggah foto & keterangan |
-| **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan; profil tanpa alamat/telepon/wali |
+| **`kegiatan`**, **`profil`** | `self.portal` (PESERTA) | Daftar/batal kegiatan (batal ditolak setelah presensi dicatat); **Riwayat kehadiran** milik sendiri; profil tanpa alamat/telepon/wali |
 | `/media/[...path]` (di `app/`) | publik | Menyajikan berkas unggahan dari `STORAGE_DIR` |
 | `middleware.ts` | — | Jalan di SEMUA rute halaman: buang header CSP kiriman klien (XSS via cache ISR, GHSA-ffhc), penyaring awal `/dashboard` (cookie ada?) — **bukan** kontrol akses — + CSP ber-nonce untuk `/dashboard/*` & `/masuk` (wajib dinamis) |
 | `instrumentation.ts` | — | Saat server start: validasi env (fail-fast) |
@@ -123,6 +125,8 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 | `dashboard/` | `DashboardShell` (sidebar hutan + bilah bawah ponsel + bottom sheet), `nav.ts` (menu per izin + lencana antrean), `ui.tsx` (`PortalWelcome`, `PortalHeader`, `Panel`, `Notice`, `TableWrap`, `Pagination`, `PublishBadge`, …), `ConfirmButton` (`ActionButton`), `home/`, `members/` (+`TransferForms`), `gudep/`, `users/` (+`IssueCodeForm`) |
 | `dashboard/content/ContentForms.tsx` | Formulir CMS klien: Berita, Agenda, Album, Foto, Dokumen, Pengurus, Prestasi |
 | `dashboard/consent/` | `ConsentBadge` (ikon + teks), `ConsentPanel` (status, riwayat, minta kode, catat pencabutan) |
+| `dashboard/notifications/` | `NotificationBell` (ikon + angka teks + `aria-live`), `NotificationList` |
+| `dashboard/attendance/` | `AttendanceControls` (tombol `aria-pressed`, tanpa JS tetap jalan), `AttendanceRecapTiles`, `AttendanceStatusBadge` |
 | `dashboard/QrCode.tsx`, `MfaForms.tsx`, `MfaGraceNotice.tsx`, `users/MfaAdminPanel.tsx` | QR SVG dari matriks (server) · formulir kode yang menampilkan kode pemulihan sekali · pengingat tenggang · reset MFA Super Admin |
 | `maps/` | `GudepMap`, `GudepMapCanvas`, `LocationPicker` (Leaflet, `ssr:false`) |
 
@@ -130,7 +134,7 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 
 ## `src/features/` — Logika per fitur (Server Action + query)
 
-`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset; **`mfa.ts` + `mfa-actions.ts`** = TOTP, kode pemulihan, verifikasi masuk, reset Super Admin) · **`consent`** (`texts.ts` teks berversi, `status.ts` aturan murni, `consent.ts` + `consent-actions.ts`) · **`retention/retention.ts`** · **`backup/`** (`backup.ts`, `backup-actions.ts`) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi, `anonymize.ts` = hak subjek data) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
+`auth` (login/logout/ganti sandi; `access-codes.ts` + `access-actions.ts` = kode akses & permintaan reset; **`mfa.ts` + `mfa-actions.ts`** = TOTP, kode pemulihan, verifikasi masuk, reset Super Admin) · **`consent`** (`texts.ts` teks berversi, `status.ts` aturan murni, `consent.ts` + `consent-actions.ts`) · **`notifications/`** (`notify.ts` inti penerima+dedupe+preferensi, `triggers.ts` pemicu per peristiwa, `inbox.ts` baca/tandai milik sendiri, `labels.ts`, `actions.ts`) · **`attendance/`** (`attendance.ts` catat/lembar/CSV/riwayat, `attendance-actions.ts`, `labels.ts`) · **`retention/retention.ts`** · **`backup/`** (`backup.ts`, `backup-actions.ts`) · `members` (+`validation.ts`, `import.ts`, `transfers.ts` + `transfer-actions.ts` = mutasi, `anonymize.ts` = hak subjek data) · `gudep` · `kwarran` · `users` · `announcements` · `portal` (peserta) · `site` (pengaturan beranda) · **`content`**: `news.ts` (+kembalikan ke penulis), `contributions.ts` (kontributor), `events.ts`, `gallery.ts`, `documents.ts`, `organization.ts` (pengurus+prestasi) menulis; `queries.ts` membaca (termasuk draf); `shared.ts` (`uniqueSlug`, waktu WIB, **`revalidatePublicSite()`** — wajib dipanggil setelah menulis konten).
 
 ## `src/lib/`, `src/db/`, `src/styles/`, `src/types/`
 

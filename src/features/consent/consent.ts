@@ -136,7 +136,7 @@ export async function submitGuardianDecision(input: GuardianSubmission, now = ne
         decidedAt: now,
       })),
     );
-    return { memberId: req.memberId, childFirstName: firstNameOf(req.fullName) };
+    return { memberId: req.memberId, requestId: req.id, childFirstName: firstNameOf(req.fullName) };
   });
 }
 

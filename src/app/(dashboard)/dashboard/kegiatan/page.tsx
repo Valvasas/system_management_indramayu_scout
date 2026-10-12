@@ -20,6 +20,7 @@ const FAIL_MESSAGES: Record<string, string> = {
   status: 'Pendaftaran hanya untuk anggota berstatus Aktif. Hubungi pembina gudep bila data Anda belum diverifikasi.',
   tutup: 'Pendaftaran kegiatan ini sudah ditutup atau kegiatan telah dimulai.',
   lewat: 'Pendaftaran tidak dapat dibatalkan karena kegiatan sudah dimulai.',
+  presensi: 'Pendaftaran tidak dapat dibatalkan karena kehadiran Anda sudah dicatat pembina.',
 };
 
 export default async function KegiatanPage({ searchParams = {} }: { searchParams?: Search }) {

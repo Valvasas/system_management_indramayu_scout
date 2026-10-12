@@ -80,7 +80,12 @@ describe('persetujuan wali terverifikasi (1.5)', () => {
     const r = await issueConsentRequest(staffA(), childId, NOW, t.db);
     if (!r.ok) throw new Error('harus ok');
     const saved = await submitGuardianDecision({ code: r.code, guardianName: 'Siti Aminah', decisions: yes, ipHash: 'h' }, NOW, t.db);
-    expect(saved).toEqual({ memberId: childId, childFirstName: 'Rara' });
+    expect(saved).toEqual({ memberId: childId, requestId: expect.any(String), childFirstName: 'Rara' });
+    const [claimed] = await t.db
+      .select()
+      .from(schema.guardianConsentRequests)
+      .where(eq(schema.guardianConsentRequests.id, saved!.requestId));
+    expect(claimed.usedAt).toEqual(NOW);
     const { statuses, history } = await memberConsentSummary(childId, NOW, t.db);
     expect([statuses.DATA.kind, statuses.PHOTO.kind, statuses.ACTIVITY.kind]).toEqual(['GRANTED', 'DECLINED', 'GRANTED']);
     expect(

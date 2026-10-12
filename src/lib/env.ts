@@ -57,6 +57,7 @@ const RULES: Record<string, string> = {
   RETENTION_AUDIT_LOG_MONTHS: 'harus bilangan bulat 6–120',
   RETENTION_ACCESS_CODES_DAYS: 'harus bilangan bulat 1–365',
   RETENTION_RESET_REQUESTS_DAYS: 'harus bilangan bulat 7–365',
+  RETENTION_NOTIFICATIONS_DAYS: 'harus bilangan bulat 30–3650',
   SENTRY_DSN: 'harus URL https:// dari Sentry',
   SENTRY_ENVIRONMENT: 'harus teks pendek, mis. production',
   BACKUP_DIR: 'harus berupa path direktori',
@@ -136,6 +137,7 @@ const serverSchema = z
     RETENTION_AUDIT_LOG_MONTHS: intInRange(6, 120, 24),
     RETENTION_ACCESS_CODES_DAYS: intInRange(1, 365, 30),
     RETENTION_RESET_REQUESTS_DAYS: intInRange(7, 365, 90),
+    RETENTION_NOTIFICATIONS_DAYS: intInRange(30, 3650, 180),
     /* Pemantauan galat opsional (hanya server, data pribadi disamarkan). */
     SENTRY_DSN: optionalUrl(['https:']),
     SENTRY_ENVIRONMENT: z.preprocess(blankToUndefined, z.string().max(40).optional()),

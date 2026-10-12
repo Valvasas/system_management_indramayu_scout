@@ -83,11 +83,15 @@ const ADMIN = [
   '/dashboard/log/integritas',
   '/dashboard/log/integritas?periksa=1',
   '/dashboard/backup',
+  '/dashboard/notifikasi',
+  '/dashboard/notifikasi?tampil=belum',
   // Rute dinamis: diambil dari tautan pertama yang cocok di halaman daftar.
   { from: '/dashboard/anggota', match: /^\/dashboard\/anggota\/[0-9a-f-]{36}$/ },
   { from: '/dashboard/pengguna', match: /^\/dashboard\/pengguna\/[0-9a-f-]{36}$/ },
+  // Lembar presensi (2.2): tombol Hadir/Izin/Alpa + rekap.
+  { from: '/dashboard/pendaftaran', match: /^\/dashboard\/pendaftaran\/[0-9a-f-]{36}$/ },
 ];
-const PESERTA = ['/dashboard', '/dashboard/kegiatan', '/dashboard/profil', '/dashboard/akun'];
+const PESERTA = ['/dashboard', '/dashboard/kegiatan', '/dashboard/profil', '/dashboard/akun', '/dashboard/notifikasi'];
 
 async function login(page, user) {
   await page.goto(`${BASE}/masuk`);

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { getDb, schema } from '@/db';
 import { audit } from '@/lib/auth/audit';
 import { requirePermission } from '@/lib/auth/session';
@@ -49,6 +49,14 @@ export async function cancelRegistrationAction(eventId: string): Promise<void> {
     .where(eq(schema.events.id, eventId))
     .limit(1);
   if (!event || event.dateStart < new Date()) redirect('/dashboard/kegiatan?gagal=lewat');
+  // Presensi dibuka sejak 00.00 WIB hari kegiatan: setelah dicatat, pendaftaran menjadi dasar
+  // catatan itu dan tidak boleh hilang (aturan "hanya pendaftar" di src/features/attendance).
+  const [recorded] = await db
+    .select({ one: sql`1` })
+    .from(schema.eventAttendance)
+    .where(and(eq(schema.eventAttendance.eventId, eventId), eq(schema.eventAttendance.memberId, user.memberId)))
+    .limit(1);
+  if (recorded) redirect('/dashboard/kegiatan?gagal=presensi');
   await db
     .delete(schema.eventRegistrations)
     .where(and(eq(schema.eventRegistrations.eventId, eventId), eq(schema.eventRegistrations.memberId, user.memberId)));

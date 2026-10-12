@@ -78,6 +78,9 @@ beforeEach(async () => {
     .values({ title: 'Kemah', slug: 'kemah', dateStart: NOW, location: 'Lapangan', organizer: 'Kwarcab' })
     .returning();
   await t.db.insert(schema.eventRegistrations).values({ eventId: ev.id, memberId });
+  await t.db
+    .insert(schema.eventAttendance)
+    .values({ eventId: ev.id, memberId, status: 'EXCUSED', note: 'Bayu sakit asma, kata ibunya', recordedByName: 'Pembina' });
 });
 afterEach(async () => {
   await t.close();
@@ -131,8 +134,10 @@ describe('anonimisasi anggota nonaktif (hak subjek data, 1.4)', () => {
     expect(consents[1]).toMatchObject({ scope: 'PHOTO', granted: false, method: 'STAFF_REVOCATION', note: null });
     const [tr] = await t.db.select().from(schema.memberTransfers);
     expect(tr).toMatchObject({ status: 'REJECTED', fromGudepId: gudepA, toGudepId: gudepB, decisionNote: null });
-    const rawOther = JSON.stringify(await t.db.execute(sql`SELECT * FROM guardian_consents, member_transfers`));
-    expect(rawOther).not.toMatch(/Bayu|Samudra|0812|SMPN/);
+    const [att] = await t.db.select().from(schema.eventAttendance);
+    expect(att).toMatchObject({ status: 'EXCUSED', note: null });
+    const rawOther = JSON.stringify(await t.db.execute(sql`SELECT * FROM guardian_consents, member_transfers, event_attendance`));
+    expect(rawOther).not.toMatch(/Bayu|Samudra|0812|SMPN|asma/);
     expect(await t.db.select().from(schema.eventRegistrations)).toHaveLength(1);
 
     const [u] = await t.db.select().from(schema.users).where(eq(schema.users.id, userId));

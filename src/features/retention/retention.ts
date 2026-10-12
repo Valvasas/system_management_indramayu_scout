@@ -19,6 +19,7 @@ export interface RetentionPolicy {
   accessCodesDays: number;
   resetRequestsDays: number;
   contactMessagesDays: number;
+  notificationsDays: number;
   auditLogMonths: number;
 }
 
@@ -29,6 +30,7 @@ export interface RetentionReport {
   consentRequests: number;
   rateLimits: number;
   contactMessages: number;
+  notifications: number;
   auditLogs: number | 'tidak-diizinkan';
 }
 
@@ -121,6 +123,8 @@ export async function runRetention(
     ),
     rateLimits: await purge(schema.rateLimits, lt(schema.rateLimits.windowEndsAt, now)),
     contactMessages: await purge(schema.contactMessages, lt(schema.contactMessages.createdAt, daysAgo(now, policy.contactMessagesDays))),
+    // Isi notifikasi tanpa data pribadi, tetapi tetap jejak aktivitas per pengguna: tidak disimpan selamanya.
+    notifications: await purge(schema.notifications, lt(schema.notifications.createdAt, daysAgo(now, policy.notificationsDays))),
     auditLogs: await purgeAuditLogs(db, monthsAgo(now, policy.auditLogMonths), dry, key),
   };
 
@@ -131,7 +135,7 @@ export async function runRetention(
         userId: null,
         actorName: 'Sistem',
         action: 'retention.run',
-        summary: `Retensi: sesi ${report.sessions}, kode akses ${report.accessCodes}, permintaan reset ${report.resetRequests}, kode persetujuan ${report.consentRequests}, rate limit ${report.rateLimits}, pesan kontak ${report.contactMessages}, log audit ${report.auditLogs}`,
+        summary: `Retensi: sesi ${report.sessions}, kode akses ${report.accessCodes}, permintaan reset ${report.resetRequests}, kode persetujuan ${report.consentRequests}, rate limit ${report.rateLimits}, pesan kontak ${report.contactMessages}, notifikasi ${report.notifications}, log audit ${report.auditLogs}`,
         entityType: null,
         entityId: null,
         ip: null,
@@ -147,12 +151,14 @@ export function policyFromEnv(env: {
   RETENTION_ACCESS_CODES_DAYS: number;
   RETENTION_RESET_REQUESTS_DAYS: number;
   RETENTION_CONTACT_MESSAGES_DAYS: number;
+  RETENTION_NOTIFICATIONS_DAYS: number;
   RETENTION_AUDIT_LOG_MONTHS: number;
 }): RetentionPolicy {
   return {
     accessCodesDays: env.RETENTION_ACCESS_CODES_DAYS,
     resetRequestsDays: env.RETENTION_RESET_REQUESTS_DAYS,
     contactMessagesDays: env.RETENTION_CONTACT_MESSAGES_DAYS,
+    notificationsDays: env.RETENTION_NOTIFICATIONS_DAYS,
     auditLogMonths: env.RETENTION_AUDIT_LOG_MONTHS,
   };
 }

@@ -70,6 +70,8 @@ export async function anonymizeMember(actor: SessionUser, memberId: string, now 
       .update(schema.memberTransfers)
       .set({ reason: ANONYMIZED_TEXT, decisionNote: null })
       .where(eq(schema.memberTransfers.memberId, m.id));
+    // Status kehadiran tetap (statistik kegiatan); catatan pembina bisa memuat identitas/kesehatan.
+    await tx.update(schema.eventAttendance).set({ note: null }).where(eq(schema.eventAttendance.memberId, m.id));
     await tx
       .update(schema.guardianConsentRequests)
       .set({ cancelledAt: now })

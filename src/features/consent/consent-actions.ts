@@ -122,7 +122,7 @@ export async function submitConsentAction(prev: GuardianState, formData: FormDat
     entityId: saved.memberId,
   });
   // Ke pembina yang meminta kode + staf dalam cakupan gudep. Tanpa nama wali/anak atau pilihannya.
-  await notifyConsentDecided({ memberId: saved.memberId });
+  await notifyConsentDecided({ memberId: saved.memberId, requestId: saved.requestId });
   revalidatePath('/dashboard/persetujuan');
   return {
     status: 'success',

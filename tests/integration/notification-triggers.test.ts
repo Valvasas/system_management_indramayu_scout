@@ -227,6 +227,27 @@ describe('persetujuan wali diputuskan (2.1)', () => {
     expect(all.some((r) => r.userId === ids.gudepA)).toBe(false);
   });
 
+  it('dua kode untuk anak yang sama terpakai hampir bersamaan: requestId menentukan peminta yang benar', async () => {
+    const used = new Date();
+    const mk = (codeHash: string, by: string, usedAt: Date) =>
+      t.db
+        .insert(schema.guardianConsentRequests)
+        .values({
+          memberId: memberA,
+          codeHash,
+          expiresAt: new Date(Date.now() + 3600_000),
+          usedAt,
+          requestedById: by,
+          requestedByName: 'x',
+        })
+        .returning();
+    const [older] = await mk('k1', ids.kwarran1, new Date(used.getTime() - 1000));
+    await mk('k2', ids.gudepA, used); // terpakai belakangan → tebakan lama akan memilih ini
+    await notifyConsentDecided({ memberId: memberA, requestId: older.id }, t.db);
+    const [n] = await rows('CONSENT_DECIDED');
+    expect(n.dedupeKey).toBe(`consent:${older.id}`);
+  });
+
   it('galat (mis. id rusak) tidak pernah melempar ke aksi utama', async () => {
     await expect(notifyConsentDecided({ memberId: 'bukan-uuid' }, t.db)).resolves.toBe(0);
   });

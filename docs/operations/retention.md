@@ -13,6 +13,8 @@
 | Permintaan reset sandi yang selesai | dibuat lebih dari N hari lalu (yang masih terbuka tidak dihapus) | `RETENTION_RESET_REQUESTS_DAYS` (90) |
 | Penghitung rate limit | jendela waktunya lewat | — |
 | Pesan formulir `/kontak` | diterima lebih dari N hari lalu | `RETENTION_CONTACT_MESSAGES_DAYS` (365) |
+| Notifikasi portal (dibaca atau belum) | dibuat lebih dari N hari lalu | `RETENTION_NOTIFICATIONS_DAYS` (180) |
+| Catatan presensi anggota | saat anggota dianonimkan (status kehadiran tetap untuk statistik) | — |
 | Log audit | lebih tua dari N bulan (minimal 6) | `RETENTION_AUDIT_LOG_MONTHS` (24) |
 
 Yang **tidak** dihapus otomatis: data anggota, riwayat mutasi, pendaftaran kegiatan, keputusan persetujuan wali,

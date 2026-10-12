@@ -280,7 +280,7 @@ export function notifyAccessRequested(
  * hanya menerima tanda terima umum: tanpa nama gudep dan tanpa tautan ke data anggota, supaya
  * notifikasi tidak membocorkan ke mana anak itu pindah.
  */
-export function notifyConsentDecided(input: { memberId: string }, db?: Database): Promise<number> {
+export function notifyConsentDecided(input: { memberId: string; requestId?: string }, db?: Database): Promise<number> {
   return guarded('consent', db, async (d) => {
     const [member] = await d
       .select({ gudepId: schema.members.gudepId, gudepName: schema.gudep.name })
@@ -293,7 +293,9 @@ export function notifyConsentDecided(input: { memberId: string }, db?: Database)
     const [req] = await d
       .select({ id: r.id, requestedById: r.requestedById })
       .from(r)
-      .where(and(eq(r.memberId, input.memberId), isNotNull(r.usedAt)))
+      // requestId dari submitGuardianDecision = permintaan yang benar-benar diklaim. Tanpa itu
+      // (pemanggil lama) jatuh ke kode terakhir yang terpakai — bisa salah bila dua kode terpakai serentak.
+      .where(and(eq(r.memberId, input.memberId), isNotNull(r.usedAt), input.requestId ? eq(r.id, input.requestId) : undefined))
       .orderBy(desc(r.usedAt))
       .limit(1);
     const staff = await resolveRecipients({ permission: 'members.update', gudepId: member.gudepId }, d);

@@ -26,6 +26,8 @@ const memberData = [
   'Status verifikasi, catatan pembinaan, dan tanggal bergabung.',
   'Riwayat gugus depan: setiap mutasi antar-gudep (gudep asal dan tujuan, alasan, serta siapa yang mengajukan dan memutuskan).',
   'Pendaftaran kegiatan yang diikuti lewat portal.',
+  'Kehadiran kegiatan: status hadir, izin, atau alpa per kegiatan, siapa yang mencatat dan kapan, serta catatan singkat pembina (paling banyak 200 karakter; formulirnya meminta pembina tidak menulis data kesehatan atau data pribadi lain).',
+  'Notifikasi di portal: judul singkat, waktu, dan tautan ke halaman terkait, tanpa nama anak atau wali, pilihan persetujuan, alasan mutasi, maupun catatan pemohon.',
 ];
 
 const protections = [
@@ -41,6 +43,9 @@ const accessRules = [
   'Pengecekan izin dilakukan di server pada setiap halaman dan aksi, bukan sekadar menyembunyikan tombol.',
   'Melihat data sensitif lengkap, mengekspor CSV, mengubah data, memverifikasi, memutasi, mengelola akun, meminta atau mencatat pencabutan persetujuan, dan menerbitkan konten dicatat di log aktivitas beserta nama pelaku, waktu, dan alamat IP pelaku. Entri dari formulir publik tanpa akun (keputusan wali, percobaan masuk yang gagal, permintaan reset) hanya menyimpan sidik HMAC alamat IP, bukan IP-nya.',
   'Daftar pendaftar kegiatan yang dapat dibuka pengurus hanya memuat nama, KTA, golongan, dan gugus depan, tanpa kontak maupun data wali.',
+  'Presensi kegiatan hanya dapat dicatat staf berizin untuk anggota di wilayahnya yang terdaftar di kegiatan itu. Unduhan presensi dibatasi wilayah pengunduh dan hanya memuat nama, KTA, golongan, gudep, status, pencatat, dan waktu; tidak memuat catatan, kontak, maupun data wali, dan isinya diamankan dari injeksi formula. Pencatatan, perubahan, dan unduhan presensi tercatat di log aktivitas.',
+  'Peserta hanya melihat riwayat kehadirannya sendiri (berdasarkan akunnya), tanpa catatan dan nama pembina pencatat. Setelah kehadiran dicatat, pendaftaran kegiatan itu tidak dapat dibatalkan peserta.',
+  'Notifikasi hanya dapat dibaca dan ditandai dibaca oleh pemilik akunnya. Penerimanya ditentukan di server dari izin peran dan cakupan wilayah yang sama dengan aturan akses data. Tautan notifikasi hanya boleh menuju halaman di situs ini, dan halaman tujuan memeriksa izinnya sendiri.',
 ];
 
 const accessData = [
@@ -48,6 +53,7 @@ const accessData = [
   'Pengurus menyerahkan kode akses sekali pakai. Kode hanya disimpan dalam bentuk hash, berlaku 24 jam untuk reset dan 7 hari untuk aktivasi akun baru, lalu hangus setelah dipakai.',
   'Pemilik akun membuat kata sandinya sendiri. Pembina dan pengurus tidak pernah melihat atau menentukan kata sandi anggota.',
   'Kode akses hanya menggantikan kata sandi. Akun yang memakai verifikasi dua langkah tetap diminta kodenya setelah itu.',
+  'Formulir lupa sandi memberi jawaban yang sama apa pun hasilnya; pemberitahuan kepada pembina atau pengurus tidak mengubah jawaban itu, sehingga tidak membocorkan akun mana yang terdaftar.',
 ];
 
 const consentFlow = [
@@ -56,10 +62,12 @@ const consentFlow = [
   'Portal tidak menyediakan cara bagi pembina untuk mencatat persetujuan atas nama wali. Persetujuan hanya tercatat lewat halaman wali dengan kode sekali pakai, halaman itu menolak perangkat yang sedang masuk ke portal, dan keputusan yang dikirim dari jaringan yang sama dengan pembina peminta kode ditandai untuk diperiksa. Pembina dapat mencatat pencabutan yang diminta wali; wali juga dapat mengubah pilihan dengan kode baru kapan saja.',
   'Data anak di bawah 18 tahun baru dapat diverifikasi setelah wali menyetujui pengelolaan data pribadinya; anak yang didata pengurus berwenang verifikasi pun tetap menunggu persetujuan itu. Tanggal persetujuan yang dulu diketik pengurus tetap terlihat sebagai catatan lama yang belum terverifikasi.',
   'Pilihan wali ditegakkan: tanpa persetujuan kegiatan, anak tidak dapat mendaftar kegiatan lewat portal. Bila persetujuan data pribadi ditolak atau dicabut, anak tidak dapat diverifikasi ulang, didaftarkan ke kegiatan baru, atau dibuatkan akun portal sampai wali menyetujui kembali.',
+  'Akun portal untuk anak di bawah 18 tahun hanya dapat dibuat setelah wali menyetujui pengelolaan data pribadinya. Koreksi tanggal lahir yang menjadikan anggota aktif tergolong anak mengembalikannya ke antrean verifikasi sampai wali menyetujui.',
 ];
 
 const retention = [
   'Pesan formulir kontak: 365 hari.',
+  'Notifikasi di portal: 180 hari.',
   'Log aktivitas: 24 bulan.',
   'Kode akses dan kode persetujuan yang tidak terpakai: 30 hari setelah kedaluwarsa. Permintaan reset kata sandi yang selesai: 90 hari.',
   'Sesi masuk dan penghitung pembatasan percobaan: dihapus setelah kedaluwarsa.',
@@ -74,6 +82,8 @@ const notYetInEffect = [
   'Jadwal retensi dan pencadangan di server produksi. Sistem menyediakan penghapusan terjadwal, pencadangan, dan uji pemulihan, tetapi jadwal otomatisnya diatur pengelola server dan belum kami verifikasi di server produksi.',
   'Pemeriksaan wajah otomatis. Sistem tidak mendeteksi wajah pada foto; larangan wajah anak di halaman publik ditegakkan lewat pernyataan pengunggah di setiap unggahan dan alur review, dan foto galeri belum ditautkan ke anggota tertentu.',
   'Klasifikasi data empat tingkat. Yang berlaku sekarang dua lapis: data umum dan data sensitif yang dibatasi izin khusus.',
+  'Notifikasi di luar portal. Pemberitahuan hanya tampil di dalam portal; belum ada email, push, atau WhatsApp, dan angka di lonceng diperbarui saat halaman dimuat, bukan seketika.',
+  'Presensi per hari. Kegiatan beberapa hari baru dicatat dengan satu status kehadiran; izin yang diketahui jauh hari baru bisa dicatat pada hari kegiatan.',
 ];
 
 export default function KebijakanPrivasiPage() {

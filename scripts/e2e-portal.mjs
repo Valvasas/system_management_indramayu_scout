@@ -508,6 +508,160 @@ await step('CSP portal: nonce baru tiap permintaan, peta & formulir jalan tanpa 
   await ctx.close();
 });
 
+/* ---------- 2.1 Notifikasi dalam portal (setelah alur di atas: reset sandi, mutasi, berita, persetujuan wali) ---------- */
+await step('notifikasi: tanpa sesi dialihkan ke halaman masuk', async () => {
+  const { ctx, page } = await session(browser);
+  await page.goto(`${BASE}/dashboard/notifikasi`);
+  assert(new URL(page.url()).pathname === '/masuk', `tanpa sesi tidak dialihkan (${page.url()})`);
+  await ctx.close();
+});
+
+await step('notifikasi: lonceng berangka; pembina menerima kabar berita, mutasi & persetujuan wali tanpa data sensitif', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'gudep.smp1');
+  const bellText = (await page.locator('header a[href="/dashboard/notifikasi"]').textContent()) ?? '';
+  assert(/\d+ notifikasi belum dibaca/.test(bellText), `lonceng tanpa jumlah: "${bellText}"`);
+  assert((await page.locator('header [aria-live="polite"]').count()) === 1, 'wilayah aria-live lonceng tidak ada');
+  await page.goto(`${BASE}/dashboard/notifikasi`);
+  const body = await text(page);
+  for (const expected of [
+    'Berita perlu diperbaiki',
+    'Berita Anda terbit',
+    'Pengajuan mutasi disetujui',
+    'Wali telah memberi keputusan persetujuan',
+  ]) {
+    assert(body.includes(expected), `notifikasi "${expected}" tidak tampil`);
+  }
+  for (const secret of ['Pindah sekolah mengikuti orang tua', 'Ibu Wali Fiktif', 'Tambahkan tanggal kegiatan', movedName]) {
+    assert(!secret || !body.includes(secret), `notifikasi memuat data sensitif: ${secret}`);
+  }
+  const violations = await axeViolations(page);
+  assert(violations.length === 0, `pelanggaran a11y halaman notifikasi: ${violations.join(', ')}`);
+  await Promise.all([page.waitForURL('**semua-dibaca=1'), page.getByRole('button', { name: /tandai semua dibaca/i }).click()]);
+  await page.reload();
+  const after = (await page.locator('header a[href="/dashboard/notifikasi"]').textContent()) ?? '';
+  assert(after.includes('Tidak ada notifikasi yang belum dibaca'), `jumlah belum dibaca tidak kembali nol: "${after}"`);
+  await ctx.close();
+});
+
+await step('notifikasi: permintaan reset sandi sampai ke pengurus sebagai prioritas tinggi dan membuka halaman akses', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'admin');
+  await page.goto(`${BASE}/dashboard/notifikasi?tampil=belum`);
+  const body = await text(page);
+  assert(body.includes('Permintaan atur ulang kata sandi'), 'notifikasi permintaan akses tidak tampil');
+  assert(body.includes('Prioritas tinggi'), 'prioritas tinggi tidak ditampilkan sebagai teks');
+  assert(!body.includes('peserta.dimas') && !body.includes('Gudep sekolah'), 'notifikasi memuat nama pengguna/catatan pemohon');
+  await Promise.all([
+    page.waitForURL('**/dashboard/akses'),
+    page
+      .getByRole('button', { name: /buka dan tandai dibaca: permintaan atur ulang kata sandi/i })
+      .first()
+      .click(),
+  ]);
+  await ctx.close();
+});
+
+await step('notifikasi: peserta hanya melihat miliknya dan dapat mematikan pengumuman', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'peserta.dimas', newPassword);
+  await page.goto(`${BASE}/dashboard/notifikasi`);
+  const body = await text(page);
+  assert(body.includes('Selamat datang di Portal Peserta'), 'notifikasi milik peserta tidak tampil');
+  for (const other of ['Berita menunggu review', 'Permintaan atur ulang kata sandi', 'Pengajuan mutasi', 'Pendaftar baru']) {
+    assert(!body.includes(other), `peserta melihat notifikasi pengurus: ${other}`);
+  }
+  const box = page.getByRole('checkbox', { name: /^pengumuman$/i });
+  assert(await box.isChecked(), 'preferensi pengumuman semestinya aktif secara bawaan');
+  await box.uncheck();
+  await page.getByRole('button', { name: /simpan preferensi/i }).click();
+  await page.getByText(/preferensi notifikasi tersimpan/i).waitFor();
+  await page.reload();
+  assert(!(await page.getByRole('checkbox', { name: /^pengumuman$/i }).isChecked()), 'preferensi tidak tersimpan');
+  const violations = await axeViolations(page);
+  assert(violations.length === 0, `pelanggaran a11y notifikasi peserta: ${violations.join(', ')}`);
+  await ctx.close();
+});
+
+/* ---------- 2.2 Presensi kegiatan ---------- */
+const pesertaPassword = typeof newPassword === 'string' ? newPassword : DEMO;
+let presensiPath = '';
+await step('pembina mencatat presensi pendaftar Jambore; tombol & rekap ikut berubah', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'gudep.smp1');
+  await page.goto(`${BASE}/dashboard/pendaftaran`);
+  await Promise.all([
+    page.waitForURL(/\/dashboard\/pendaftaran\/[0-9a-f-]{36}$/),
+    page.getByRole('link', { name: /jambore ranting serentak/i }).click(),
+  ]);
+  presensiPath = new URL(page.url()).pathname;
+  const list = page.getByRole('list', { name: /pendaftar jambore ranting serentak/i });
+  await list.waitFor();
+  const item = list.locator(':scope > li').first();
+  const name = ((await item.locator('h3').textContent()) ?? '').trim();
+  assert(name, 'tidak ada pendaftar dalam cakupan pembina');
+  const pressedBtn = item.locator('button[aria-pressed="true"]');
+  const pressed = (await pressedBtn.count()) ? ((await pressedBtn.first().textContent()) ?? '').trim() : '';
+  const target = pressed === 'Alpa' ? 'Hadir' : 'Alpa';
+  const tile = page
+    .locator('main dl > div')
+    .filter({ has: page.locator('dt', { hasText: new RegExp(`^${target}$`) }) })
+    .locator('dd');
+  const before = Number((await tile.textContent()) ?? 'NaN');
+  await item.getByRole('button', { name: `${target}: ${name}`, exact: true }).click();
+  await item.getByText(`Presensi ${name}: ${target} tersimpan.`).waitFor();
+  await item.locator('button[aria-pressed="true"]', { hasText: target }).waitFor();
+  await page.reload();
+  const after = Number((await tile.textContent()) ?? 'NaN');
+  assert(after === before + 1, `rekap ${target} tidak bertambah (${before} -> ${after})`);
+  const violations = await axeViolations(page);
+  assert(violations.length === 0, `pelanggaran a11y lembar presensi: ${violations.join(', ')}`);
+  await ctx.close();
+});
+
+await step('CSV presensi: kolom tetap, tanpa catatan/kontak; peserta ditolak di server', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'gudep.smp1');
+  await page.goto(`${BASE}${presensiPath}`);
+  const href = await page.getByRole('link', { name: /unduh presensi/i }).getAttribute('href');
+  assert(href && href.endsWith('/presensi/ekspor'), `tautan CSV presensi salah: ${href}`);
+  const res = await page.request.get(`${BASE}${href}`);
+  assert(res.status() === 200, `CSV presensi status ${res.status()}`);
+  assert((res.headers()['content-type'] ?? '').includes('text/csv'), 'CSV presensi bukan text/csv');
+  assert((res.headers()['cache-control'] ?? '').includes('no-store'), 'CSV presensi tanpa no-store');
+  const body = await res.text();
+  assert(
+    body.includes('Nama Lengkap;No KTA;Golongan;Gudep;Status Kehadiran;Dicatat Oleh;Waktu Dicatat (WIB)'),
+    'header CSV presensi berubah',
+  );
+  assert(!body.includes('Izin mengikuti lomba'), 'catatan presensi bocor ke CSV');
+  assert(!/0813-0000-/.test(body), 'telepon wali bocor ke CSV presensi');
+  await ctx.close();
+
+  const p = await session(browser);
+  await login(p.page, 'peserta.dimas', pesertaPassword);
+  const r = await p.page.request.get(`${BASE}${href}`);
+  assert(r.status() === 403 || r.status() === 404, `CSV presensi terbuka untuk peserta (${r.status()})`);
+  const sheet = await p.page.goto(`${BASE}${presensiPath}`);
+  assert(sheet.status() === 404, `lembar presensi terbuka untuk peserta (${sheet.status()})`);
+  await p.ctx.close();
+});
+
+await step('peserta melihat riwayat kehadirannya sendiri di Kegiatan', async () => {
+  const { ctx, page } = await session(browser);
+  await login(page, 'peserta.dimas', pesertaPassword);
+  await page.goto(`${BASE}/dashboard/kegiatan`);
+  const section = page.locator('#riwayat-kehadiran');
+  await section.waitFor();
+  const body = (await section.textContent()) ?? '';
+  assert(body.includes('Jambore Ranting Serentak'), 'riwayat kehadiran tidak memuat Jambore');
+  assert(body.includes('Hadir'), 'status Hadir tidak tampil di riwayat');
+  assert(!body.includes('Izin mengikuti lomba'), 'catatan pembina tampil di portal peserta');
+  const violations = await axeViolations(page);
+  assert(violations.length === 0, `pelanggaran a11y kegiatan peserta: ${violations.join(', ')}`);
+  await ctx.close();
+});
+
 await browser.close();
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} langkah lulus.`);

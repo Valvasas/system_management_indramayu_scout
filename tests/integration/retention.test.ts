@@ -10,7 +10,13 @@ let userId: string;
 const NOW = new Date('2026-10-06T08:00:00Z');
 const day = 86_400_000;
 const ago = (days: number) => new Date(NOW.getTime() - days * day);
-const POLICY: RetentionPolicy = { accessCodesDays: 30, resetRequestsDays: 90, contactMessagesDays: 365, auditLogMonths: 24 };
+const POLICY: RetentionPolicy = {
+  accessCodesDays: 30,
+  resetRequestsDays: 90,
+  contactMessagesDays: 365,
+  notificationsDays: 180,
+  auditLogMonths: 24,
+};
 
 /** Sisipkan entri berantai dengan waktu tertentu (INSERT diizinkan; UPDATE/DELETE tidak). */
 async function chained(at: Date, summary: string) {
@@ -59,6 +65,10 @@ beforeEach(async () => {
     { name: 'Lama', email: 'a@b.id', message: 'pesan lama sekali', createdAt: ago(400) },
     { name: 'Baru', email: 'c@d.id', message: 'pesan masih baru', createdAt: ago(10) },
   ]);
+  await t.db.insert(schema.notifications).values([
+    { userId, kind: 'SYSTEM', title: 'lama', createdAt: ago(200) },
+    { userId, kind: 'SYSTEM', title: 'baru', createdAt: ago(20) },
+  ]);
   await t.db.insert(schema.rateLimits).values([
     { key: 'lewat', count: 3, windowEndsAt: ago(1) },
     { key: 'jalan', count: 1, windowEndsAt: new Date(NOW.getTime() + 60_000) },
@@ -82,6 +92,7 @@ describe('retensi data (1.4)', () => {
       consentRequests: 0,
       rateLimits: 1,
       contactMessages: 1,
+      notifications: 1,
       auditLogs: 2,
     });
     expect((await t.db.select().from(schema.auditLogs)).length).toBe(4);
@@ -90,7 +101,16 @@ describe('retensi data (1.4)', () => {
 
   it('menghapus yang lewat masa simpan, menyisakan yang masih berlaku, dan rantai log tetap terverifikasi', async () => {
     const r = await runRetention(t.db, POLICY, { now: NOW });
-    expect(r).toMatchObject({ sessions: 1, accessCodes: 1, resetRequests: 1, rateLimits: 1, contactMessages: 1, auditLogs: 2 });
+    expect(r).toMatchObject({
+      sessions: 1,
+      accessCodes: 1,
+      resetRequests: 1,
+      rateLimits: 1,
+      contactMessages: 1,
+      notifications: 1,
+      auditLogs: 2,
+    });
+    expect((await t.db.select().from(schema.notifications)).map((x) => x.title)).toEqual(['baru']);
     expect((await t.db.select().from(schema.sessions)).map((s) => s.id)).toEqual(['aktif']);
     expect((await t.db.select().from(schema.passwordResetRequests)).map((x) => x.status)).toEqual(['OPEN']);
     expect((await t.db.select().from(schema.contactMessages)).map((x) => x.name)).toEqual(['Baru']);
