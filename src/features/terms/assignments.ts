@@ -14,7 +14,7 @@ import { roleCan } from '@/lib/auth/permissions';
 import type { SessionUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
 import { daysLeft, termState, wibToday, type TermState } from './dates';
-import { AssignmentSchema } from './validation';
+import { ASSIGNMENT_FIELDS, AssignmentSchema } from './validation';
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -88,7 +88,12 @@ export async function addAssignment(actor: SessionUser, userId: string, formData
   if (parsed.error) return { ok: false, state: parsed.error };
   const v = parsed.data;
   if (v.role === 'SUPER_ADMIN' && actor.role !== 'SUPER_ADMIN') {
-    return { ok: false, state: fail('Periksa kembali isian yang ditandai.', { role: 'Hanya Super Admin yang dapat mencatat penugasan Super Admin.' }) };
+    return {
+      ok: false,
+      state: fail('Periksa kembali isian yang ditandai.', {
+        [ASSIGNMENT_FIELDS.role]: 'Hanya Super Admin yang dapat mencatat penugasan Super Admin.',
+      }),
+    };
   }
 
   // Wilayah hanya untuk peran berwilayah; kwarran penugasan gudep diturunkan dari gudepnya.
@@ -100,12 +105,17 @@ export async function addAssignment(actor: SessionUser, userId: string, formData
       .from(schema.gudep)
       .where(eq(schema.gudep.id, v.gudepId!))
       .limit(1);
-    if (!g) return { ok: false, state: fail('Periksa kembali isian yang ditandai.', { gudepId: 'Gudep tidak ditemukan.' }) };
+    if (!g)
+      return { ok: false, state: fail('Periksa kembali isian yang ditandai.', { [ASSIGNMENT_FIELDS.gudepId]: 'Gudep tidak ditemukan.' }) };
     gudepId = g.id;
     kwarranId = g.kwarranId;
   } else if (v.role === 'STAFF_KWARRAN') {
     const [k] = await d.select({ id: schema.kwarran.id }).from(schema.kwarran).where(eq(schema.kwarran.id, v.kwarranId!)).limit(1);
-    if (!k) return { ok: false, state: fail('Periksa kembali isian yang ditandai.', { kwarranId: 'Kwarran tidak ditemukan.' }) };
+    if (!k)
+      return {
+        ok: false,
+        state: fail('Periksa kembali isian yang ditandai.', { [ASSIGNMENT_FIELDS.kwarranId]: 'Kwarran tidak ditemukan.' }),
+      };
     kwarranId = k.id;
   }
 
@@ -127,8 +137,7 @@ export async function addAssignment(actor: SessionUser, userId: string, formData
 }
 
 export type EndAssignmentResult =
-  | { ok: true; position: string; termEnd: string }
-  | { ok: false; reason: 'tidak-ditemukan' | 'sudah-berakhir' };
+  { ok: true; position: string; termEnd: string } | { ok: false; reason: 'tidak-ditemukan' | 'sudah-berakhir' };
 
 /**
  * Akhiri penugasan: nonaktif + tanggal berakhir = hari ini (WIB), kecuali sudah lebih awal.

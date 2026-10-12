@@ -58,21 +58,48 @@ const optionalId = trimmedInput
   .refine((s) => s === '' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s), 'Pilihan tidak valid.')
   .transform((s) => (s === '' ? null : s));
 
+/**
+ * Nama kolom formulir penugasan. Halaman /dashboard/pengguna/[id] juga memuat formulir akun
+ * (`role`, `kwarranId`, `gudepId`), dan id elemen formulir diturunkan dari nama kolom, jadi
+ * kolom penugasan diberi awalan agar id tidak ganda (WCAG 4.1.1/label).
+ */
+export const ASSIGNMENT_FIELDS = {
+  position: 'assignmentPosition',
+  role: 'assignmentRole',
+  kwarranId: 'assignmentKwarranId',
+  gudepId: 'assignmentGudepId',
+  termStart: 'assignmentStart',
+  termEnd: 'assignmentEnd',
+} as const;
+
+const F = ASSIGNMENT_FIELDS;
+
 export const AssignmentSchema = z
   .object({
-    position: requiredText('Jabatan', 150),
-    role: z.enum(ASSIGNMENT_ROLES as [Exclude<Role, 'PESERTA'>, ...Exclude<Role, 'PESERTA'>[]], {
+    [F.position]: requiredText('Jabatan', 150),
+    [F.role]: z.enum(ASSIGNMENT_ROLES as [Exclude<Role, 'PESERTA'>, ...Exclude<Role, 'PESERTA'>[]], {
       errorMap: () => ({ message: 'Peran wajib dipilih.' }),
     }),
-    kwarranId: optionalId,
-    gudepId: optionalId,
-    termStart: requiredTermDate('Tanggal mulai'),
-    termEnd: termDate,
+    [F.kwarranId]: optionalId,
+    [F.gudepId]: optionalId,
+    [F.termStart]: requiredTermDate('Tanggal mulai'),
+    [F.termEnd]: termDate,
   })
+  .transform((v) => ({
+    position: v[F.position],
+    role: v[F.role],
+    kwarranId: v[F.kwarranId],
+    gudepId: v[F.gudepId],
+    termStart: v[F.termStart],
+    termEnd: v[F.termEnd],
+  }))
   .superRefine((v, ctx) => {
-    endNotBeforeStart(v, ctx);
-    if (v.role === 'STAFF_KWARRAN' && !v.kwarranId) ctx.addIssue({ code: 'custom', path: ['kwarranId'], message: 'Pilih kwarran penugasan.' });
-    if (v.role === 'STAFF_GUDEP' && !v.gudepId) ctx.addIssue({ code: 'custom', path: ['gudepId'], message: 'Pilih gudep penugasan.' });
+    if (v.termEnd && v.termEnd < v.termStart) {
+      ctx.addIssue({ code: 'custom', path: [F.termEnd], message: 'Tanggal berakhir tidak boleh sebelum tanggal mulai.' });
+    }
+    if (v.role === 'STAFF_KWARRAN' && !v.kwarranId)
+      ctx.addIssue({ code: 'custom', path: [F.kwarranId], message: 'Pilih kwarran penugasan.' });
+    if (v.role === 'STAFF_GUDEP' && !v.gudepId) ctx.addIssue({ code: 'custom', path: [F.gudepId], message: 'Pilih gudep penugasan.' });
   });
 
 export type AssignmentInput = z.infer<typeof AssignmentSchema>;

@@ -10,6 +10,7 @@ import type { Role } from '@/db/schema';
 import { addAssignment, endAssignment, listAssignments } from '@/features/terms/assignments';
 import { boardOverview, deleteBoardMember, saveBoardMember } from '@/features/terms/board';
 import { sendTermReminders } from '@/features/terms/reminders';
+import { ASSIGNMENT_FIELDS } from '@/features/terms/validation';
 import { getOrganizationByDepartment, getOrganizationMembers } from '@/lib/repositories/organization';
 import { createTestDb, type TestDb } from '../helpers/test-db';
 import { actor } from '../helpers/actors';
@@ -174,15 +175,20 @@ describe('penugasan staf (informasional, users.manage)', () => {
     ids = { kwarran: k1.id, gudep: g1.id, otherGudep: g2.id };
   });
 
-  const assignment = (over: Record<string, string> = {}) =>
-    fd({
+  /** Formulir penugasan dengan nama kolom sebenarnya (berawalan, lihat ASSIGNMENT_FIELDS). */
+  const assignment = (over: Partial<Record<keyof typeof ASSIGNMENT_FIELDS, string>> = {}) => {
+    const v = {
       position: 'Pembina Gudep',
       role: 'STAFF_GUDEP',
       gudepId: ids.otherGudep,
       termStart: '2026-07-01',
       termEnd: '2027-06-30',
       ...over,
-    });
+    };
+    return fd(
+      Object.fromEntries(Object.entries(v).map(([k, val]) => [ASSIGNMENT_FIELDS[k as keyof typeof ASSIGNMENT_FIELDS], val as string])),
+    );
+  };
 
   it('hanya pemegang users.manage; peran lain mendapat "tidak ditemukan"', async () => {
     const target = await makeUser('pembina.satu', 'STAFF_GUDEP', { gudepId: ids.gudep, kwarranId: ids.kwarran });
@@ -207,7 +213,7 @@ describe('penugasan staf (informasional, users.manage)', () => {
     expect((await addAssignment(kwarcab, superAdmin.id, assignment({ role: 'ADMIN_KWARCAB', position: 'Ketua' }), t.db)).ok).toBe(false);
     const escalate = await addAssignment(kwarcab, staff.id, assignment({ role: 'SUPER_ADMIN', position: 'Admin' }), t.db);
     expect(escalate.ok).toBe(false);
-    if (!escalate.ok) expect(escalate.state.errors?.role).toBeDefined();
+    if (!escalate.ok) expect(escalate.state.errors?.[ASSIGNMENT_FIELDS.role]).toBeDefined();
     expect(await listAssignments(actor('SUPER_ADMIN'), superAdmin.id, NOW, t.db)).toEqual([]);
     expect(
       (await addAssignment(actor('SUPER_ADMIN'), superAdmin.id, assignment({ role: 'SUPER_ADMIN', position: 'Admin' }), t.db)).ok,
@@ -239,12 +245,12 @@ describe('penugasan staf (informasional, users.manage)', () => {
     const kwarcab = actor('ADMIN_KWARCAB');
     const backwards = await addAssignment(kwarcab, target.id, assignment({ termEnd: '2026-06-30' }), t.db);
     expect(backwards.ok).toBe(false);
-    if (!backwards.ok) expect(backwards.state.errors?.termEnd).toMatch(/tidak boleh sebelum/);
+    if (!backwards.ok) expect(backwards.state.errors?.[ASSIGNMENT_FIELDS.termEnd]).toMatch(/tidak boleh sebelum/);
     const noKwarran = await addAssignment(kwarcab, target.id, assignment({ role: 'STAFF_KWARRAN', kwarranId: '' }), t.db);
-    if (!noKwarran.ok) expect(noKwarran.state.errors?.kwarranId).toBeDefined();
+    if (!noKwarran.ok) expect(noKwarran.state.errors?.[ASSIGNMENT_FIELDS.kwarranId]).toBeDefined();
     const unknown = await addAssignment(kwarcab, target.id, assignment({ gudepId: crypto.randomUUID() }), t.db);
     expect(unknown.ok).toBe(false);
-    if (!unknown.ok) expect(unknown.state.errors?.gudepId).toBe('Gudep tidak ditemukan.');
+    if (!unknown.ok) expect(unknown.state.errors?.[ASSIGNMENT_FIELDS.gudepId]).toBe('Gudep tidak ditemukan.');
     expect(noKwarran.ok).toBe(false);
     expect(await t.db.select().from(schema.staffAssignments)).toHaveLength(0);
   });

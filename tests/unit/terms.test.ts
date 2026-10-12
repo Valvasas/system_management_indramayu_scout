@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addDaysIso, daysLeft, isCurrentTerm, termState, wibToday } from '@/features/terms/dates';
-import { AssignmentSchema, BoardMemberSchema } from '@/features/terms/validation';
+import { ASSIGNMENT_FIELDS, AssignmentSchema, BoardMemberSchema } from '@/features/terms/validation';
 
 const form = (fields: Record<string, string>) => {
   const fd = new FormData();
@@ -79,29 +79,32 @@ describe('validasi formulir pengurus', () => {
 
 describe('validasi formulir penugasan staf', () => {
   const gudepId = '11111111-1111-4111-8111-111111111111';
+  /** Kolom formulir penugasan berawalan (lihat ASSIGNMENT_FIELDS) agar id tidak bentrok dengan formulir akun. */
+  const aform = (fields: Partial<Record<keyof typeof ASSIGNMENT_FIELDS, string>>) =>
+    form(Object.fromEntries(Object.entries(fields).map(([k, v]) => [ASSIGNMENT_FIELDS[k as keyof typeof ASSIGNMENT_FIELDS], v as string])));
 
   it('berakhir < mulai ditolak; tanggal mulai wajib', () => {
     const r = AssignmentSchema.safeParse(
-      form({ position: 'Pembina', role: 'STAFF_GUDEP', gudepId, termStart: '2026-07-01', termEnd: '2026-06-30' }),
+      aform({ position: 'Pembina', role: 'STAFF_GUDEP', gudepId, termStart: '2026-07-01', termEnd: '2026-06-30' }),
     );
     expect(r.success).toBe(false);
-    expect(r.error?.issues.map((i) => i.path[0])).toContain('termEnd');
-    expect(AssignmentSchema.safeParse(form({ position: 'Pembina', role: 'STAFF_GUDEP', gudepId, termStart: '' })).success).toBe(false);
+    expect(r.error?.issues.map((i) => i.path[0])).toContain(ASSIGNMENT_FIELDS.termEnd);
+    expect(AssignmentSchema.safeParse(aform({ position: 'Pembina', role: 'STAFF_GUDEP', gudepId, termStart: '' })).success).toBe(false);
   });
 
   it('peran berwilayah wajib wilayahnya; peran peserta tidak bisa jadi penugasan', () => {
-    const noGudep = AssignmentSchema.safeParse(form({ position: 'Pembina', role: 'STAFF_GUDEP', termStart: '2026-07-01' }));
-    expect(noGudep.error?.issues.map((i) => i.path[0])).toContain('gudepId');
-    const noKwarran = AssignmentSchema.safeParse(form({ position: 'Andalan', role: 'STAFF_KWARRAN', termStart: '2026-07-01' }));
-    expect(noKwarran.error?.issues.map((i) => i.path[0])).toContain('kwarranId');
-    expect(AssignmentSchema.safeParse(form({ position: 'X', role: 'PESERTA', termStart: '2026-07-01' })).success).toBe(false);
-    expect(AssignmentSchema.safeParse(form({ position: 'X', role: 'STAFF_GUDEP', gudepId: 'bukan-uuid', termStart: '2026-07-01' })).success).toBe(
-      false,
-    );
+    const noGudep = AssignmentSchema.safeParse(aform({ position: 'Pembina', role: 'STAFF_GUDEP', termStart: '2026-07-01' }));
+    expect(noGudep.error?.issues.map((i) => i.path[0])).toContain(ASSIGNMENT_FIELDS.gudepId);
+    const noKwarran = AssignmentSchema.safeParse(aform({ position: 'Andalan', role: 'STAFF_KWARRAN', termStart: '2026-07-01' }));
+    expect(noKwarran.error?.issues.map((i) => i.path[0])).toContain(ASSIGNMENT_FIELDS.kwarranId);
+    expect(AssignmentSchema.safeParse(aform({ position: 'X', role: 'PESERTA', termStart: '2026-07-01' })).success).toBe(false);
+    expect(
+      AssignmentSchema.safeParse(aform({ position: 'X', role: 'STAFF_GUDEP', gudepId: 'bukan-uuid', termStart: '2026-07-01' })).success,
+    ).toBe(false);
   });
 
   it('penugasan valid', () => {
-    expect(AssignmentSchema.parse(form({ position: ' Pembina Gudep ', role: 'STAFF_GUDEP', gudepId, termStart: '2026-07-01' }))).toEqual({
+    expect(AssignmentSchema.parse(aform({ position: ' Pembina Gudep ', role: 'STAFF_GUDEP', gudepId, termStart: '2026-07-01' }))).toEqual({
       position: 'Pembina Gudep',
       role: 'STAFF_GUDEP',
       kwarranId: null,

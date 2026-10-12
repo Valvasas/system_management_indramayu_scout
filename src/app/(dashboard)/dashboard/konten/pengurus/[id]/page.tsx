@@ -27,7 +27,16 @@ export default async function PengurusEditorPage({ params }: { params: { id: str
           action={saveBoardMemberAction.bind(null, id)}
           defaults={
             row
-              ? { name: row.name, position: row.position, department: row.department, period: row.period, sortOrder: row.sortOrder }
+              ? {
+                  name: row.name,
+                  position: row.position,
+                  department: row.department,
+                  period: row.period,
+                  sortOrder: row.sortOrder,
+                  termStart: row.termStart,
+                  termEnd: row.termEnd,
+                  isActive: row.isActive,
+                }
               : undefined
           }
         />
