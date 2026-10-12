@@ -58,11 +58,15 @@ Ubah konfigurasi  → next.config.mjs, package.json, tsconfig.json, .eslintrc.js
 |---|---|
 | `AGENTS.md` | Protokol agent — **titik masuk** |
 | `TASKS.md` | Rencana P0–P6 + "Status Eksekusi" |
-| `AI_CONTEXT.MD` | Niat desain & konvensi (masih melebih-lebihkan; kebenaran = kode + CODEMAP) |
+| `AI_CONTEXT.MD` | Niat produk, prinsip desain & privasi (ditulis ulang 12 Okt 2026; status & struktur ada di sini/TASKS) |
 | `docs/product/rancangan-v5.md` | Dokumen rancangan sumber V5 (niat produk, bukan status) |
 | `docs/design/design-system.md` | Design system "Hutan & Lapangan": warna, tipografi, radius, ilustrasi, gerak, pola halaman |
 | `docs/design/`, `security/`, `product/`, `operations/`, `architecture/`, `testing/` | Brief desain, kontras terukur, model otorisasi, klasifikasi data, kebijakan consent/audit/backup/unggah, MVP, deployment |
 | `docs/operations/retention.md`, `monitoring.md` | Retensi & anonimisasi + jadwal · health, Sentry, backup & prosedur uji pulih |
+| `docs/operations/keputusan-next-16.md` | P1-6: 23 advisori Next 14 dipetakan ke kode, mitigasi terpasang, rekomendasi migrasi 16.4.x (menunggu keputusan) |
+| `docs/design/asset-brief.md` | Aset nyata yang dibutuhkan (lambang resmi, foto, dokumen) + spesifikasi & aturan privasi |
+| `docs/product/keputusan-multibahasa.md` | Rekomendasi id/en/su (tetap Indonesia; halaman kunci en/su setelah ada peninjau) |
+| `docs/product/fase-4-rancangan.md` | Rancangan Fase 4: PWA tanpa data anggota, push generik, sertifikat, pusat belajar, chat ditunda |
 | `docs/tour/` | Video tur + tangkapan layar situs (dibuat 5 Okt 2026) |
 | `skills/frontend-craft/SKILL.md` | Panduan craft frontend. Baca sebelum ubah UI |
 
