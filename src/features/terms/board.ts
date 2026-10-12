@@ -11,7 +11,6 @@ import { getDb, schema, type Database } from '@/db';
 import { roleCan } from '@/lib/auth/permissions';
 import type { SessionUser } from '@/lib/auth/session';
 import { fail, parseForm, type FormState } from '@/lib/forms';
-import { currentTermWhere } from './conditions';
 import { daysLeft, termState, wibToday, type TermState } from './dates';
 import { BoardMemberSchema } from './validation';
 
@@ -19,17 +18,6 @@ const UUID = /^[0-9a-f-]{36}$/i;
 
 export type BoardMemberRow = typeof schema.boardMembers.$inferSelect;
 export type BoardMemberWithTerm = BoardMemberRow & { state: TermState; daysLeft: number | null };
-
-/** Pengurus yang SEDANG menjabat (untuk situs publik), urut `sortOrder` lalu nama. */
-export async function listCurrentBoardMembers(now: Date = new Date(), db?: Database): Promise<BoardMemberRow[]> {
-  const d = db ?? (await getDb());
-  const t = schema.boardMembers;
-  return d
-    .select()
-    .from(t)
-    .where(currentTermWhere(t, wibToday(now)))
-    .orderBy(asc(t.sortOrder), asc(t.name));
-}
 
 /**
  * Ringkasan CMS: menjabat (termasuk yang akan datang), hampir berakhir (≤ 30 hari), dan riwayat

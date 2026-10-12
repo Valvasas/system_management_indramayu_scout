@@ -1,14 +1,22 @@
 import { asc, count, eq, sql } from 'drizzle-orm';
 import { getDb, schema, type Database } from '@/db';
-import { listCurrentBoardMembers } from '@/features/terms/board';
+import { currentTermWhere } from '@/features/terms/conditions';
+import { wibToday } from '@/features/terms/dates';
 import type { KwarranInfo, OrganizationMember } from '@/types';
 
 /**
- * Pengurus yang SEDANG menjabat saja (2.4): aktif DAN masa jabatan belum berakhir per tanggal WIB
- * (dan sudah mulai). Data lama tanpa tanggal tetap tampil. Riwayat periode hanya di CMS.
+ * Pengurus yang SEDANG menjabat saja (2.4): aktif DAN (berakhir kosong ATAU berakhir ≥ hari ini
+ * WIB) DAN (mulai kosong ATAU sudah mulai). Data lama tanpa tanggal tetap tampil (default aman).
+ * Riwayat periode hanya di CMS (features/terms/board.ts).
  */
 export async function getOrganizationMembers(now: Date = new Date(), db?: Database): Promise<OrganizationMember[]> {
-  const rows = await listCurrentBoardMembers(now, db);
+  const d = db ?? (await getDb());
+  const t = schema.boardMembers;
+  const rows = await d
+    .select()
+    .from(t)
+    .where(currentTermWhere(t, wibToday(now)))
+    .orderBy(asc(t.sortOrder), asc(t.name));
   return rows.map((m) => ({
     id: m.id,
     name: m.name,
