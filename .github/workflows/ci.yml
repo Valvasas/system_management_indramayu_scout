@@ -65,6 +65,14 @@ jobs:
       - name: Audit aksesibilitas (axe-core, WCAG 2.2 AA)
         run: npm run a11y
 
+      # 3.3: belum memblokir (peringatan saja) sampai angka di runner GitHub stabil. Diukur sebelum e2e
+      # karena e2e mengubah data demo. Ambang: lighthouserc.json (profil mobile).
+      - name: Lighthouse CI (beranda, berita, agenda) — tidak memblokir
+        continue-on-error: true
+        run: |
+          export CHROME_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          npm run lhci
+
       - name: Uji end-to-end alur portal (mengubah data demo, jadi dijalankan terakhir)
         run: npm run e2e
 
