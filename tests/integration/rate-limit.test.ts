@@ -17,6 +17,24 @@ const clock = (start = Date.parse('2026-10-06T08:00:00Z')) => {
 };
 
 describe('rate limit bersama berbasis PostgreSQL (1.1)', () => {
+  it('mode hitung-kegagalan: keberhasilan tidak menghabiskan jatah, kegagalan memblokir, lalu pulih', async () => {
+    const c = clock();
+    const rl = createRateLimiter(3, 15 * 60_000, {
+      scope: 'uji-gagal',
+      failClosed: true,
+      store: dbRateLimitStore(async () => t.db),
+      now: c.now,
+    });
+    // 40 pembina masuk berhasil dari Wi-Fi sekretariat yang sama: tidak pernah terblokir.
+    for (let i = 0; i < 40; i++) expect(await rl.blocked('10.9.9.9')).toBe(false);
+    for (let i = 0; i < 3; i++) await rl.fail('10.9.9.9');
+    expect(await rl.blocked('10.9.9.9')).toBe(true);
+    expect(await rl.blocked('10.9.9.8')).toBe(false); // IP lain tidak terpengaruh
+    // blocked() tidak menambah hitungan: setelah jendela lewat, langsung pulih.
+    c.advance(15 * 60_000 + 1);
+    expect(await rl.blocked('10.9.9.9')).toBe(false);
+  });
+
   it('menolak setelah batas, per kunci, lalu pulih setelah jendela', async () => {
     const c = clock();
     const rl = createRateLimiter(3, 10 * 60_000, {
@@ -102,6 +120,7 @@ describe('rate limit bersama berbasis PostgreSQL (1.1)', () => {
   it('DB gagal: fail-closed untuk autentikasi, fail-open untuk formulir publik', async () => {
     const broken: RateLimitStore = {
       hit: () => Promise.reject(new Error('koneksi putus')),
+      peek: () => Promise.reject(new Error('koneksi putus')),
       reset: () => Promise.reject(new Error('koneksi putus')),
       purgeExpired: () => Promise.reject(new Error('koneksi putus')),
     };
@@ -110,6 +129,9 @@ describe('rate limit bersama berbasis PostgreSQL (1.1)', () => {
     const publicForm = createRateLimiter(10, 60_000, { scope: 'kontak-ip', failClosed: false, store: broken });
     expect(await auth.limited('x')).toBe(true);
     expect(await publicForm.limited('x')).toBe(false);
+    expect(await auth.blocked('x')).toBe(true);
+    expect(await publicForm.blocked('x')).toBe(false);
+    await expect(auth.fail('x')).resolves.toBeUndefined();
     await expect(auth.reset('x')).resolves.toBeUndefined();
     spy.mockRestore();
   });

@@ -14,7 +14,10 @@ import { clientIp } from '@/lib/security/request';
 import { createRateLimiter } from '@/lib/security/rate-limit';
 
 // Bersama antar-instance (tabel rate_limits). Fail-closed: DB bermasalah → tolak percobaan masuk.
-const perIp = createRateLimiter(30, 15 * 60_000, { scope: 'login-ip', failClosed: true });
+// Per IP: 30 KEGAGALAN per 15 menit (login sukses tidak dihitung — satu kelas pembina bisa berbagi
+// IP sekretariat) + rem banjir 300 percobaan apa pun. Per akun: 6 percobaan, di-reset saat sukses.
+const failuresPerIp = createRateLimiter(30, 15 * 60_000, { scope: 'login-ip-gagal', failClosed: true });
+const floodPerIp = createRateLimiter(300, 15 * 60_000, { scope: 'login-ip', failClosed: true });
 const perAccount = createRateLimiter(6, 15 * 60_000, { scope: 'login-akun', failClosed: true });
 
 const LoginSchema = z.object({
@@ -33,7 +36,7 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   const { username, password } = parsed.data;
 
   const ip = clientIp();
-  if ((await perIp.limited(ip)) || (await perAccount.limited(username))) {
+  if ((await failuresPerIp.blocked(ip)) || (await floodPerIp.limited(ip)) || (await perAccount.limited(username))) {
     return fail('Terlalu banyak percobaan masuk. Tunggu 15 menit, lalu coba lagi.');
   }
 
@@ -42,11 +45,13 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
 
   if (!user || !user.active) {
     await burnPasswordCheck(password);
+    await failuresPerIp.fail(ip);
     await audit(null, { action: 'auth.login_failed', summary: `Gagal masuk sebagai "${username}"` });
     return fail(user && !user.active ? 'Akun ini dinonaktifkan. Hubungi pengurus Kwarcab.' : GENERIC);
   }
 
   if (!(await verifyPassword(password, user.passwordHash))) {
+    await failuresPerIp.fail(ip);
     await audit(null, { action: 'auth.login_failed', summary: `Sandi salah untuk "${username}"`, entityType: 'user', entityId: user.id });
     return fail(GENERIC);
   }

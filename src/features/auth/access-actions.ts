@@ -75,7 +75,9 @@ export async function requestPasswordResetAction(_prev: FormState, formData: For
 /* Publik: tukar kode akses → buat kata sandi sendiri                   */
 /* ------------------------------------------------------------------ */
 
-const redeemPerIp = createRateLimiter(20, 15 * 60_000, { scope: 'kode-ip', failClosed: true });
+// Per IP: 20 KEGAGALAN per 15 menit (aktivasi akun satu kelas sekaligus tidak terkunci) + rem banjir.
+const redeemFailuresPerIp = createRateLimiter(20, 15 * 60_000, { scope: 'kode-ip-gagal', failClosed: true });
+const redeemFloodPerIp = createRateLimiter(200, 15 * 60_000, { scope: 'kode-ip', failClosed: true });
 const redeemPerAccount = createRateLimiter(6, 15 * 60_000, { scope: 'kode-akun', failClosed: true });
 
 const RedeemSchema = z
@@ -101,7 +103,8 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
   if (parsed.error) return parsed.error;
   const { username, code, next } = parsed.data;
 
-  if ((await redeemPerIp.limited(clientIp())) || (await redeemPerAccount.limited(username))) {
+  const ip = clientIp();
+  if ((await redeemFailuresPerIp.blocked(ip)) || (await redeemFloodPerIp.limited(ip)) || (await redeemPerAccount.limited(username))) {
     return fail('Terlalu banyak percobaan. Tunggu 15 menit, lalu coba lagi.');
   }
   if (!isValidAccessCodeShape(code)) return fail(GENERIC_REDEEM, { code: 'Kode terdiri dari 8 huruf/angka, mis. ABCD-2345.' });
@@ -110,6 +113,7 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
   const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username)).limit(1);
   if (!user || !user.active) {
     await burnPasswordCheck(next); // samakan waktu respons
+    await redeemFailuresPerIp.fail(ip);
     return fail(GENERIC_REDEEM);
   }
   const [valid] = await db
@@ -119,6 +123,7 @@ export async function redeemAccessCodeAction(_prev: FormState, formData: FormDat
     .orderBy(desc(schema.accessCodes.createdAt))
     .limit(1);
   if (!valid || !accessCodeMatches(code, valid.codeHash)) {
+    await redeemFailuresPerIp.fail(ip);
     await audit(null, {
       action: 'auth.code_failed',
       summary: `Kode akses salah untuk "${username}"`,

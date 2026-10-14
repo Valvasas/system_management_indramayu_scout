@@ -7,6 +7,9 @@
  * kini async dan wajib `scope` agar kunci antar-pembatas tidak bertabrakan.
  *
  * Jendela tetap: setiap percobaan dihitung (termasuk yang ditolak) sampai jendela berakhir.
+ * Untuk pembatas yang hanya menghitung KEGAGALAN (mis. login per IP: satu kelas pembina di
+ * Wi-Fi sekretariat memakai IP yang sama), pakai `blocked(key)` sebelum mencoba dan
+ * `fail(key)` setelah gagal — keberhasilan tidak menghabiskan jatah.
  * Bila basis data gagal: `failClosed: true` → ditolak (login, kode akses, MFA);
  * `failClosed: false` → diizinkan (formulir publik yang toh akan gagal menyimpan).
  */
@@ -22,6 +25,8 @@ export interface RateLimitHit {
 export interface RateLimitStore {
   /** Tambah satu hitungan untuk `key` di jendela berjalan; kembalikan hitungan setelahnya. */
   hit(key: string, windowMs: number, now: Date): Promise<RateLimitHit>;
+  /** Hitungan di jendela berjalan tanpa menambahnya (0 bila tidak ada/lewat). */
+  peek(key: string, now: Date): Promise<number>;
   reset(key: string): Promise<void>;
   /** Hapus baris yang jendelanya sudah lewat. Mengembalikan jumlah baris terhapus. */
   purgeExpired(now: Date): Promise<number>;
@@ -48,6 +53,15 @@ export function dbRateLimitStore(database: () => Promise<Database> = getDb): Rat
         })
         .returning({ count: t.count, resetAt: t.windowEndsAt });
       return row;
+    },
+    async peek(key, now) {
+      const db = await database();
+      const [row] = await db
+        .select({ count: t.count })
+        .from(t)
+        .where(sql`${t.key} = ${key} AND ${t.windowEndsAt} > ${ts(now)}`)
+        .limit(1);
+      return row?.count ?? 0;
     },
     async reset(key) {
       const db = await database();
@@ -89,6 +103,23 @@ export function createRateLimiter(max: number, windowMs: number, options: RateLi
       } catch (err) {
         console.error(`[rate-limit] penyimpanan gagal (${options.scope}); ${options.failClosed ? 'ditolak' : 'diizinkan'}`, err);
         return options.failClosed;
+      }
+    },
+    /** Tanpa menambah hitungan: true = sudah mencapai batas kegagalan (ditolak). */
+    async blocked(key: string): Promise<boolean> {
+      try {
+        return (await store.peek(keyOf(key), now())) >= max;
+      } catch (err) {
+        console.error(`[rate-limit] penyimpanan gagal (${options.scope}); ${options.failClosed ? 'ditolak' : 'diizinkan'}`, err);
+        return options.failClosed;
+      }
+    },
+    /** Catat satu kegagalan (pasangan `blocked`). */
+    async fail(key: string): Promise<void> {
+      try {
+        await store.hit(keyOf(key), windowMs, now());
+      } catch (err) {
+        console.error(`[rate-limit] gagal mencatat (${options.scope})`, err);
       }
     },
     async reset(key: string): Promise<void> {
